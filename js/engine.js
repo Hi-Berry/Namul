@@ -1,0 +1,179 @@
+/* =========================================================================
+ * 엔진 — 전역 상태(G) / 입력 / 시간 / 씬 매니저 / 유틸
+ * ======================================================================= */
+
+const G = {
+  canvas: null,
+  ctx: null,
+  W: 800, H: 600,
+
+  scene: "title",        // title | world | trade | combat
+  scenes: {},            // name -> {enter, update(dt), render(ctx), key(e), click(x,y)}
+  paused: false,         // 메뉴/대화 중 시간 정지
+
+  // 시간: 하루 06:00~24:00 = 1080분. min=0 → 06:00
+  time: { day: 1, min: 0 },
+  DAY_START_MIN: 6 * 60, // 06:00
+  DAY_LEN: 18 * 60,      // 1080분
+  _msAcc: 0,             // 실시간 누적(ms) → 1초당 1분
+
+  player: null,          // player.js 에서 생성
+  flags: {},             // 진행/퀘스트 플래그
+
+  // 입력
+  keys: {},
+  justKeys: {},
+  mouse: { x: 0, y: 0, down: false, clicked: false },
+};
+
+/* ---------- 유틸 ---------- */
+function clamp(v, a, b){ return Math.max(a, Math.min(b, v)); }
+function randInt(a, b){ return a + Math.floor(Math.random() * (b - a + 1)); }
+function choice(arr){ return arr[Math.floor(Math.random() * arr.length)]; }
+function chance(p){ return Math.random() < p; }
+
+/* 등급 가중치 채집: tier1 흔함 / tier2 보통 / tier3 희귀 */
+function weightedHerb(herbs, qualityBoost){
+  // qualityBoost: 0~1, 높을수록 상위 등급 확률 증가 (호미 등급 영향)
+  const w = { 1: 70, 2: 24, 3: 6 };
+  if (qualityBoost){ w[1] -= 30*qualityBoost; w[2] += 12*qualityBoost; w[3] += 18*qualityBoost; }
+  const pool = [];
+  herbs.forEach(h => { const n = Math.max(1, Math.round(w[h.tier])); for(let i=0;i<n;i++) pool.push(h); });
+  return choice(pool);
+}
+
+/* ---------- 시간 ---------- */
+const Time = {
+  totalMin(){ return G.time.min; },
+  clockStr(){
+    const t = G.DAY_START_MIN + G.time.min;
+    const h = Math.floor(t / 60) % 24;
+    const m = Math.floor(t % 60);
+    return String(h).padStart(2,"0") + ":" + String(m).padStart(2,"0");
+  },
+  season(){ return DATA.SEASONS[Math.floor((G.time.day - 1) / 30) % 4]; },
+  dayOfSeason(){ return ((G.time.day - 1) % 30) + 1; },
+  // 장날: 매 5일, 10일 (월=30일 기준 5,10,15,20,25,30)
+  isMarketDay(){ return Time.dayOfSeason() % 5 === 0; },
+  // 장날 오전(06~12) 상점 운영 / 오후(12~24) 주막 장사
+  isMorning(){ return (G.DAY_START_MIN + G.time.min) < 12*60; },
+
+  advance(min){
+    if (min <= 0) return;
+    G.time.min += min;
+    Farming.onTimeAdvance();          // 작물 성장 체크는 일 단위라 무시되지만 안전호출
+    if (G.time.min >= G.DAY_LEN){
+      // 24시 강제 취침 (다음날 10시 = 240분)
+      sleep(true);
+    }
+  },
+};
+
+/* 취침: forced=false → 다음날 06:00, forced=true(24시 초과) → 다음날 10:00 */
+function sleep(forced){
+  Sound.sfx("sleep");
+  G.time.day += 1;
+  G.time.min = forced ? (10*60 - G.DAY_START_MIN) : 0; // 10:00 → min=240
+  Player.onNewDay();
+  Farming.onNewDay();
+  World.onNewDay();
+  Save.auto();
+  const head = forced ? "쓰러지듯 잠들었다…" : "잘 잤다!";
+  const md = Time.isMarketDay() ? " 오늘은 <b>장날</b>입니다!" : "";
+  toast(`${head} ${Time.season()} ${Time.dayOfSeason()}일 아침` , "good");
+  if (md) toast("📜 오늘은 장날 — 오전 장보기 / 오후 주막 장사", "gold");
+  UI.refreshHUD();
+}
+
+/* ---------- 토스트 ---------- */
+let _toasts = [];
+function toast(msg, kind){
+  const wrap = document.getElementById("toast-wrap");
+  const el = document.createElement("div");
+  el.className = "toast" + (kind ? " " + kind : "");
+  el.innerHTML = msg;
+  wrap.appendChild(el);
+  const item = { el, t: 2.6 };
+  _toasts.push(item);
+  if (_toasts.length > 5){ const old = _toasts.shift(); old.el.remove(); }
+}
+function updateToasts(dt){
+  for (let i = _toasts.length - 1; i >= 0; i--){
+    _toasts[i].t -= dt;
+    if (_toasts[i].t <= 0){ _toasts[i].el.remove(); _toasts.splice(i,1); }
+    else if (_toasts[i].t < 0.5){ _toasts[i].el.style.opacity = _toasts[i].t / 0.5; }
+  }
+}
+
+/* ---------- 씬 매니저 ---------- */
+function setScene(name){
+  G.scene = name;
+  const s = G.scenes[name];
+  if (s && s.enter) s.enter();
+  Sound.forScene();
+  UI.refreshHUD();
+}
+
+/* ---------- 메인 루프 ---------- */
+let _last = 0;
+function loop(ts){
+  const dt = Math.min(0.05, (ts - _last) / 1000 || 0);
+  _last = ts;
+
+  // 시간 진행: 정지/대화/메뉴 아닐 때 + 월드 씬에서만 실시간 흐름
+  if (!G.paused && G.scene === "world" && !UI.dialogueOpen && !UI.menuOpen){
+    G._msAcc += dt * 1000;
+    while (G._msAcc >= 1000){ G._msAcc -= 1000; Time.advance(1); }
+  }
+
+  const s = G.scenes[G.scene];
+  if (s && s.update) s.update(dt);
+
+  G.ctx.clearRect(0,0,G.W,G.H);
+  if (s && s.render) s.render(G.ctx);
+
+  updateToasts(dt);
+  UI.refreshHUD();
+
+  // 입력 1프레임 플래그 리셋
+  G.justKeys = {};
+  G.mouse.clicked = false;
+
+  requestAnimationFrame(loop);
+}
+
+/* ---------- 입력 바인딩 ---------- */
+function bindInput(){
+  window.addEventListener("keydown", (e) => {
+    const k = e.key.length === 1 ? e.key.toLowerCase() : e.key;
+    if (!G.keys[k]) G.justKeys[k] = true;
+    G.keys[k] = true;
+    // 대화/메뉴/씬별 키 핸들러
+    if (UI.handleKey(e)) { e.preventDefault(); return; }
+    const s = G.scenes[G.scene];
+    if (s && s.key) s.key(e);
+    if (["ArrowUp","ArrowDown","ArrowLeft","ArrowRight"," "].includes(e.key)) e.preventDefault();
+  });
+  window.addEventListener("keyup", (e) => {
+    const k = e.key.length === 1 ? e.key.toLowerCase() : e.key;
+    G.keys[k] = false;
+  });
+
+  const rect = () => G.canvas.getBoundingClientRect();
+  G.canvas.addEventListener("mousemove", (e) => {
+    const r = rect();
+    G.mouse.x = (e.clientX - r.left) * (G.W / r.width);
+    G.mouse.y = (e.clientY - r.top) * (G.H / r.height);
+  });
+  G.canvas.addEventListener("mousedown", () => { G.mouse.down = true; });
+  G.canvas.addEventListener("mouseup", (e) => {
+    G.mouse.down = false; G.mouse.clicked = true;
+    const r = rect();
+    const x = (e.clientX - r.left) * (G.W / r.width);
+    const y = (e.clientY - r.top) * (G.H / r.height);
+    const s = G.scenes[G.scene];
+    if (s && s.click) s.click(x, y);
+  });
+}
+
+function keyPressed(k){ return !!G.justKeys[k]; }

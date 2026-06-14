@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>조선 나물전기</title>
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <div id="game-wrap">
+    <canvas id="game" width="800" height="600"></canvas>
+
+    <!-- 상단 HUD -->
+    <div id="hud" class="overlay">
+      <div class="hud-left">
+        <div id="hud-date">봄 1일</div>
+        <div id="hud-clock">06:00</div>
+      </div>
+      <div class="hud-bars">
+        <div class="bar-row"><span class="bar-label">체력</span>
+          <div class="bar"><div id="bar-hp" class="bar-fill hp"></div></div>
+          <span id="hud-hp" class="bar-num">50/50</span>
+        </div>
+        <div class="bar-row"><span class="bar-label">신력</span>
+          <div class="bar"><div id="bar-mp" class="bar-fill mp"></div></div>
+          <span id="hud-mp" class="bar-num">20/20</span>
+        </div>
+        <div class="bar-row"><span class="bar-label">기력</span>
+          <div class="bar"><div id="bar-st" class="bar-fill st"></div></div>
+          <span id="hud-st" class="bar-num">100/100</span>
+        </div>
+      </div>
+      <div class="hud-right">
+        <div id="hud-money">💰 100 냥</div>
+        <div id="hud-zone">내 집</div>
+      </div>
+    </div>
+
+    <!-- 하단 안내/조작 -->
+    <div id="hint" class="overlay"></div>
+
+    <!-- 토스트 메시지 -->
+    <div id="toast-wrap"></div>
+
+    <!-- 대화창 -->
+    <div id="dialogue" class="panel hidden">
+      <div class="dlg-name" id="dlg-name"></div>
+      <div class="dlg-text" id="dlg-text"></div>
+      <div class="dlg-choices" id="dlg-choices"></div>
+      <div class="dlg-cont" id="dlg-cont">▼ 스페이스/클릭</div>
+    </div>
+
+    <!-- 범용 메뉴 패널 (인벤토리/상점/대장간/무당) -->
+    <div id="menu" class="panel big hidden">
+      <div class="menu-head"><span id="menu-title">메뉴</span><button id="menu-close">✕ 닫기 (Esc)</button></div>
+      <div class="menu-body" id="menu-body"></div>
+    </div>
+
+    <!-- 타이틀 / 게임오버 등 풀스크린 오버레이 -->
+    <div id="screen" class="fullscreen hidden"></div>
+  </div>
+
+  <script src="js/data.js?v=2"></script>
+  <script src="js/engine.js?v=2"></script>
+  <script src="js/audio.js?v=2"></script>
+  <script src="js/save.js?v=2"></script>
+  <script src="js/player.js?v=2"></script>
+  <script src="js/maps.js?v=2"></script>
+  <script src="js/ui.js?v=2"></script>
+  <script src="js/quests.js?v=2"></script>
+  <script src="js/npc.js?v=2"></script>
+  <script src="js/farming.js?v=2"></script>
+  <script src="js/trading.js?v=2"></script>
+  <script src="js/combat.js?v=2"></script>
+  <script src="js/world.js?v=2"></script>
+  <script src="js/main.js?v=2"></script>
+</body>
+</html>
