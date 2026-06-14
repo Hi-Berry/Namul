@@ -67,19 +67,41 @@ DATA.WEAPONS = {
 };
 DATA.WEAPON_UPGRADE = { cost: 60, atkBonus: 4 }; // 대장간 강화
 
-/* ---- 마법 (무당에게서 해금) ---- */
+/* ---- 마법 (당산나무에서 요괴 부산물 헌납으로 해금) ----
+ * shrinePts: 헌납 누적 정기 임계치
+ */
 DATA.MAGIC = {
-  dokkaebi: { id:"dokkaebi", name:"도깨비불",   icon:"🔥", mp:6,  dmg:14, target:"all", effect:null,    learnAff:0,  desc:"적 전체에 화염 피해." },
-  sansin:   { id:"sansin",   name:"산신의 호령",icon:"⛰️", mp:10, dmg:10, target:"all", effect:"slow",  learnAff:3,  desc:"적 전체 피해 + 다음 턴 행동 둔화." },
-  yowoo:    { id:"yowoo",    name:"여우의 홀림",icon:"🦊", mp:8,  dmg:4,  target:"all", effect:"charm", learnAff:5,  desc:"적 다수를 홀려 한 턴 못 움직이게 함." },
+  dokkaebi: { id:"dokkaebi", name:"도깨비불",      icon:"🔥", mp:6,  dmg:14, target:"all", effect:null,    shrinePts:8,  desc:"적 전체에 화염 피해." },
+  sansin:   { id:"sansin",   name:"산신령의 호통", icon:"⛰️", mp:10, dmg:10, target:"all", effect:"slow",  shrinePts:24, desc:"적 전체 피해 + 다음 턴 행동 둔화." },
+  yowoo:    { id:"yowoo",    name:"구미호의 홀림", icon:"🦊", mp:8,  dmg:4,  target:"all", effect:"charm", shrinePts:48, desc:"적 다수를 홀려 한 턴 못 움직이게 함." },
 };
 
-/* ---- 몬스터 (산) ---- */
+/* ---- 장비: 의상(코스튬) / 장신구 ---- */
+DATA.COSTUMES = {
+  plain: { id:"plain", name:"무명 저고리", icon:"👚", color:"#eef0e6", staminaMult:1.0, speedMult:1.0,  price:0,   desc:"기본 옷." },
+  ramie: { id:"ramie", name:"모시 적삼",   icon:"🥻", color:"#dfeede", staminaMult:0.9, speedMult:1.08, price:90,  desc:"기력 소모 -10%, 이동 +8%." },
+  silk:  { id:"silk",  name:"비단 한복",   icon:"👘", color:"#f3c6da", staminaMult:0.8, speedMult:1.18, price:220, desc:"기력 소모 -20%, 이동 +18%." },
+};
+DATA.ACCESSORIES = {
+  none:    { id:"none",    name:"없음",   icon:"➖", mpBonus:0,  dropBonus:0,    price:0,   desc:"장신구 없음." },
+  norigae: { id:"norigae", name:"노리개", icon:"🧿", mpBonus:10, dropBonus:0.15, price:110, desc:"최대 신력 +10, 요괴 부산물 드롭 +15%." },
+  bujeok:  { id:"bujeok",  name:"부적",   icon:"🪬", mpBonus:25, dropBonus:0.05, price:180, desc:"최대 신력 +25, 드롭 +5%." },
+};
+
+/* ---- 요괴 부산물(드롭) — 당산나무 헌납 재료 ---- */
+DATA.DROPS = {
+  dujib_skin: { id:"dujib_skin", name:"두꺼비 진액", icon:"🟢", pts:2 },
+  gumiho_fur: { id:"gumiho_fur", name:"여우 꼬리털", icon:"🟠", pts:4 },
+  dokk_horn:  { id:"dokk_horn",  name:"도깨비 뿔",   icon:"🔵", pts:7 },
+  beom_fang:  { id:"beom_fang",  name:"산범 송곳니", icon:"⚪", pts:14 },
+};
+
+/* ---- 몬스터 (산) — drop: 처치 시 떨구는 부산물 ---- */
 DATA.MONSTERS = {
-  dujib:   { id:"dujib",   name:"두꺼비 요괴", icon:"🐸", hp:20, atk:5,  exp:6,  gold:12 },
-  gumiho:  { id:"gumiho",  name:"새끼 구미호", icon:"🦊", hp:32, atk:8,  exp:12, gold:25 },
-  dokk:    { id:"dokk",    name:"도깨비",      icon:"👹", hp:45, atk:11, exp:20, gold:40 },
-  beom:    { id:"beom",    name:"산범",        icon:"🐯", hp:60, atk:15, exp:32, gold:70 },
+  dujib:   { id:"dujib",   name:"두꺼비 요괴", icon:"🐸", hp:20, atk:5,  exp:6,  gold:12, drop:"dujib_skin", dropRate:0.7 },
+  gumiho:  { id:"gumiho",  name:"새끼 구미호", icon:"🦊", hp:32, atk:8,  exp:12, gold:25, drop:"gumiho_fur", dropRate:0.6 },
+  dokk:    { id:"dokk",    name:"도깨비",      icon:"👹", hp:45, atk:11, exp:20, gold:40, drop:"dokk_horn",  dropRate:0.6 },
+  beom:    { id:"beom",    name:"산범",        icon:"🐯", hp:60, atk:15, exp:32, gold:70, drop:"beom_fang",  dropRate:1.0 },
 };
 /* 계절별 출현 + 마릿수 범위 */
 DATA.encountersBySeason = {
@@ -116,6 +138,8 @@ DATA.NPCS = {
   daejang:   { id:"daejang",   name:"대장장이",   icon:"🔨", color:"#7f5539" },
   chonjang:  { id:"chonjang",  name:"촌장",       icon:"👴", color:"#2c3e50" },
   jumo:      { id:"jumo",      name:"주모",       icon:"🍶", color:"#c0392b" },
+  uisang:    { id:"uisang",    name:"의상점 주인",icon:"🧵", color:"#b5651d" },
+  geonchuk:  { id:"geonchuk",  name:"방물장수",   icon:"🪡", color:"#27708a" },
 };
 
 /* ---- 비용/상수 ---- */

@@ -16,6 +16,7 @@ const Save = {
         weapon: P.weapon, weaponLv: P.weaponLv,
         magic: P.magic, inv: P.inv, affection: P.affection,
         homiTier: P.homiTier, pet: P.pet,
+        costume: P.costume, accessory: P.accessory, shrinePoints: P.shrinePoints,
       },
       farm: Farming.save(),
       quests: Quests.save(),

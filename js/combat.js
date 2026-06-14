@@ -127,10 +127,17 @@ const Combat = {
     const ids = this.enemies.map(e=>e.id);
     this.enemies.forEach(e=>{ gold+=e.gold; exp+=e.exp; });
     P.money += gold;
+    // 요괴 부산물 드롭 (당산나무 헌납 재료) — 장신구 드롭률 보너스 적용
+    const drops={};
+    this.enemies.forEach(e=>{
+      if (e.drop && chance((e.dropRate||0) + Player.dropBonus())){ Player.add(e.drop,1); drops[e.drop]=(drops[e.drop]||0)+1; }
+    });
     setScene("world");
     Sound.sfx("win");
     Player.gainExp(exp);
     toast(`⚔️ 승리! +${gold}냥, 경험치 +${exp}`,"gold");
+    const dtxt = Object.keys(drops).map(id=>`${DATA.DROPS[id].icon}${DATA.DROPS[id].name}×${drops[id]}`).join(" ");
+    if (dtxt) toast(`🦴 부산물 획득: ${dtxt}`,"good");
     Quests.notify("defeat", { ids });
     Quests.notify("gold", {});
     if (this.onWin) this.onWin();
@@ -198,6 +205,9 @@ const Combat = {
         }
       });
 
+      // 플레이어 캐릭터 (적을 향해 오른쪽, 칼 들고)
+      World.drawDallae(ctx, 150, 250, { dir:"right", moving:false, blink:false, hold:"weapon", weaponId:P.weapon, scale:1.7 });
+
       // 플레이어 패널
       ctx.fillStyle="rgba(20,14,8,0.85)"; ctx.fillRect(20,360,250,90);
       ctx.strokeStyle="#6b5736"; ctx.strokeRect(20,360,250,90);
@@ -207,7 +217,7 @@ const Combat = {
       ctx.fillStyle="#f5b0a8"; ctx.font="12px 'Malgun Gothic'";
       ctx.fillText(`체력 ${Math.ceil(P.hp)}/${P.maxHp}`, 34, 406);
       ctx.fillStyle="#9ad0ff";
-      ctx.fillText(`신력 ${P.mp}/${P.maxMp}`, 150, 406);
+      ctx.fillText(`신력 ${P.mp}/${Player.mpCap()}`, 150, 406);
       if (C.defending){ ctx.fillStyle="#58d68d"; ctx.fillText("🛡 방어중", 34, 428); }
 
       // 로그

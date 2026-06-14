@@ -63,6 +63,8 @@ const Maps = {
       { type:"bldg", tx:15, ty:5, w:3, h:2, solid:true, color:"#7f5539", label:"대장간",  npc:"daejang", action:"npc" },
       { type:"bldg", tx:2,  ty:10,w:3, h:2, solid:true, color:"#2c3e50", label:"촌장댁",  npc:"chonjang",action:"npc" },
       { type:"bldg", tx:15, ty:10,w:3, h:2, solid:true, color:"#c0392b", label:"주막",    npc:"jumo",    action:"npc" },
+      { type:"bldg", tx:3,  ty:1, w:3, h:2, solid:true, color:"#b5651d", label:"의상점",  npc:"uisang",  action:"npc" },
+      { type:"bldg", tx:14, ty:1, w:3, h:2, solid:true, color:"#27708a", label:"방물점",  npc:"geonchuk",action:"npc" },
       { type:"stall", tx:9, ty:7, solid:true, label:"장터 좌판", action:"market" },
     ],
     exits: [
@@ -94,6 +96,7 @@ const Maps = {
     ],
     objects: [
       { type:"sign", tx:3, ty:5, solid:true, label:"산 입구 표석", action:"sign_mtn" },
+      { type:"shrine", tx:6, ty:2, w:2, h:2, solid:true, label:"당산나무", action:"shrine" },
     ],
     exits: [ { tx:0, ty:4, to:"village", sx:18, sy:8 } ],
     spawn: { tx:2, ty:4 },
@@ -197,6 +200,21 @@ const Maps = {
         ctx.fillStyle="#caa56e"; ctx.fillRect(px+6, py+8, TILE-12, 14);
         ctx.fillStyle="#3a2410"; ctx.font="9px monospace"; ctx.textAlign="center";
         ctx.fillText("?", px+TILE/2, py+19);
+      } else if (o.type === "shrine"){
+        const cx=px+ow/2, baseY=py+oh-4;
+        // 둥치
+        ctx.fillStyle="#5b3a1a"; ctx.fillRect(cx-7, baseY-30, 14, 30);
+        ctx.fillStyle="#4a2f14"; ctx.fillRect(cx-2, baseY-26, 4, 26);
+        // 무성한 잎 (신목)
+        const season=Time.season();
+        ctx.fillStyle = season==="겨울"?"#cfe0e6":(season==="가을"?"#c98a2e":"#2e7d32");
+        [[-12,-34,20],[12,-34,20],[0,-46,24],[-16,-22,15],[16,-22,15]].forEach(c=>{
+          ctx.beginPath(); ctx.arc(cx+c[0], baseY+c[1], c[2], 0, Math.PI*2); ctx.fill();
+        });
+        // 금줄(왼새끼)과 오색천
+        ctx.strokeStyle="#d9c89a"; ctx.lineWidth=3; ctx.beginPath(); ctx.moveTo(cx-10,baseY-14); ctx.lineTo(cx+10,baseY-14); ctx.stroke();
+        ["#c0392b","#e7c66b","#2980b9","#27ae60","#ffffff"].forEach((cc,i)=>{ ctx.fillStyle=cc; ctx.fillRect(cx-9+i*4.5, baseY-14, 3, 8); });
+        Maps._label(ctx, "당산나무", cx, py-6);
       }
     }
   },

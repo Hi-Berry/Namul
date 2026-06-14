@@ -20,7 +20,7 @@ const UI = {
       document.getElementById(num).textContent = `${Math.ceil(cur)}/${max}`;
     };
     set("bar-hp","hud-hp",P.hp,P.maxHp);
-    set("bar-mp","hud-mp",P.mp,P.maxMp);
+    set("bar-mp","hud-mp",P.mp,Player.mpCap());
     set("bar-st","hud-st",P.stamina,DATA.CONST.MAX_STAMINA);
     document.getElementById("hud-money").textContent = `💰 ${P.money} 냥`;
     document.getElementById("hud-zone").textContent =

@@ -149,7 +149,9 @@ function bindInput(){
     if (!G.keys[k]) G.justKeys[k] = true;
     G.keys[k] = true;
     // 대화/메뉴/씬별 키 핸들러
-    if (UI.handleKey(e)) { e.preventDefault(); return; }
+    // UI가 입력을 소비하면 같은 프레임에 월드 상호작용으로 새어 나가지 않게 플래그 제거
+    // (마지막 대사를 스페이스로 닫는 순간 대화가 다시 열리는 문제 방지)
+    if (UI.handleKey(e)) { G.justKeys[k] = false; e.preventDefault(); return; }
     const s = G.scenes[G.scene];
     if (s && s.key) s.key(e);
     if (["ArrowUp","ArrowDown","ArrowLeft","ArrowRight"," "].includes(e.key)) e.preventDefault();

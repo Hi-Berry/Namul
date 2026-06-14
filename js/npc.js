@@ -10,50 +10,35 @@ const NPC = {
     if (npcId === "daejang")  return NPC.daejang();
     if (npcId === "chonjang") return NPC.chonjang();
     if (npcId === "jumo")     return NPC.jumo();
+    if (npcId === "uisang")   return NPC.uisang();
+    if (npcId === "geonchuk") return NPC.geonchuk();
   },
 
   affLabel(npc){ const a = P.affection[npc]||0; return "♥".repeat(a) + "♡".repeat(10-a); },
 
-  /* ---------------- 무당: 마법 해금 ---------------- */
+  /* ---------------- 무당: 설화/조언 (마법은 당산나무에서) ---------------- */
   mudang(){
+    const learned = P.magic.length;
     UI.startDialogue("무당 🔮",
-      ["산천의 기운이 그대에게 깃들어 있군… 신력을 다루는 법을 알려줄까?",
-       `현재 나와의 정(情): ${NPC.affLabel("mudang")}`],
+      ["산천의 기운이 네게 깃들어 있구나… 헌데 신통력은 내가 주는 게 아니란다.",
+       "<b>산 입구의 당산나무</b>에 요괴의 부산물을 바치거라. 정기가 모이면 신령이 직접 신통력을 내려줄 게야.",
+       `지금 익힌 신통력: ${learned}종 · 모은 정기: ${P.shrinePoints}`,
+       `너와의 정(情): ${NPC.affLabel("mudang")}`],
       { choices: Quests.npcChoices("mudang").concat([
-          { label:"신통력(마법) 배우기", value:"learn" },
           { label:"산삼을 바친다 (정 +2)", value:"gift" },
+          { label:"신령의 이야기 듣기", value:"lore" },
           { label:"그냥 간다", value:"bye" },
         ]),
         onChoice(v){
           if (Quests.handleChoice(v)) return;
-          if (v==="learn") NPC._mudangLearn();
-          else if (v==="gift") NPC._gift("mudang","sansam",2);
+          if (v==="gift") NPC._gift("mudang","sansam",2);
+          else if (v==="lore") UI.startDialogue("무당 🔮", [
+            "이 산의 요괴들은 본디 산을 지키던 정령이었으나, 사람의 욕심에 물들어 사나워졌단다.",
+            "도깨비불·산신령의 호통·구미호의 홀림 — 세 신통력이 당산나무에 잠들어 있지.",
+            "부산물을 바칠수록 더 큰 힘이 깨어날 게다."
+          ]);
         }
       });
-  },
-
-  _mudangLearn(){
-    let rows = `<p class="note">정(情)이 깊을수록 강한 신통력을 전수받습니다. 현재 정: <b>${P.affection.mudang}</b></p>`;
-    Object.values(DATA.MAGIC).forEach(m => {
-      const owned = Player.hasMagic(m.id);
-      const ok = P.affection.mudang >= m.learnAff;
-      const btn = owned
-        ? `<button disabled>전수받음</button>`
-        : ok ? `<button class="" data-act="learn" data-id="${m.id}">전수받기</button>`
-             : `<button disabled>정 ${m.learnAff} 필요</button>`;
-      rows += `<div class="shop-row"><div class="item-ic" style="background:#2a1d33">${m.icon}</div>
-        <div class="grow"><div class="item-name">${m.name} <span class="item-sub">(신력 ${m.mp})</span></div>
-        <div class="item-sub">${m.desc}</div></div>${btn}</div>`;
-    });
-    UI.openMenu("무당 — 신통력 전수", rows, (act,id)=>{
-      if (act==="learn"){
-        Player.learnMagic(id);
-        Sound.sfx("levelup");
-        toast(`✨ '${DATA.MAGIC[id].name}' 신통력을 익혔다!`, "gold");
-        NPC._mudangLearn();
-        UI.refreshHUD();
-      }
-    });
   },
 
   /* ---------------- 대장장이: 무기/강화/호미 ---------------- */
@@ -166,6 +151,56 @@ const NPC = {
           Player.heal(DATA.CONST.PORRIDGE_HEAL);
           toast(`🍲 나물죽을 먹었다. 체력 +${DATA.CONST.PORRIDGE_HEAL}`,"good");
         } else if (v==="talk"){ Player.addAffection("jumo",1); toast("주모와 정담을 나눴다. 정 +1","good"); }
+      }
+    });
+  },
+
+  /* ---------------- 의상점: 한복(코스튬) ---------------- */
+  uisang(){
+    UI.startDialogue("의상점 주인 🧵",
+      ["고운 한복 한 벌 어떠신가? 입는 옷에 따라 몸놀림이 달라진다오."],
+      { choices: Quests.npcChoices("uisang").concat([ {label:"옷 구경하기", value:"shop"}, {label:"나간다", value:"bye"} ]),
+        onChoice(v){ if (Quests.handleChoice(v)) return; if (v==="shop") NPC._uisangShop(); }
+      });
+  },
+  _uisangShop(){
+    let rows = `<p class="note">현재 의상: <b>${Player.costumeData().name}</b> (기력소모 ×${Player.staminaMult()}, 이동 ×${Player.speedMult()})</p>`;
+    Object.values(DATA.COSTUMES).forEach(c=>{
+      const worn = P.costume===c.id;
+      const btn = worn ? `<button disabled>착용중</button>`
+        : `<button data-act="buy" data-id="${c.id}" ${P.money<c.price?"disabled":""}>${c.price?c.price+"냥":"착용"}</button>`;
+      rows += `<div class="shop-row"><div class="item-ic" style="background:#33240f">${c.icon}</div>
+        <div class="grow"><div class="item-name">${c.name}</div><div class="item-sub">${c.desc}</div></div>${btn}</div>`;
+    });
+    UI.openMenu("의상점 🧵", rows, (act,id)=>{
+      if (act==="buy"){ const c=DATA.COSTUMES[id];
+        if (P.money>=c.price){ Player.spendMoney(c.price); P.costume=id; Sound.sfx("confirm"); toast(`${c.name} 착용!`,"good"); NPC._uisangShop(); UI.refreshHUD(); }
+        else Sound.sfx("error");
+      }
+    });
+  },
+
+  /* ---------------- 방물점: 장신구 ---------------- */
+  geonchuk(){
+    UI.startDialogue("방물장수 🪡",
+      ["노리개에 부적이라… 몸에 지니면 신력이 오르고, 요괴 부산물도 잘 챙긴다오."],
+      { choices: Quests.npcChoices("geonchuk").concat([ {label:"장신구 구경", value:"shop"}, {label:"나간다", value:"bye"} ]),
+        onChoice(v){ if (Quests.handleChoice(v)) return; if (v==="shop") NPC._geonchukShop(); }
+      });
+  },
+  _geonchukShop(){
+    let rows = `<p class="note">현재 장신구: <b>${Player.accessoryData().name}</b> (최대 신력 +${Player.accessoryData().mpBonus}, 드롭 +${Math.round(Player.dropBonus()*100)}%)</p>`;
+    Object.values(DATA.ACCESSORIES).forEach(a=>{
+      const worn = P.accessory===a.id;
+      const btn = worn ? `<button disabled>착용중</button>`
+        : `<button data-act="buy" data-id="${a.id}" ${P.money<a.price?"disabled":""}>${a.price?a.price+"냥":"해제"}</button>`;
+      rows += `<div class="shop-row"><div class="item-ic" style="background:#33240f">${a.icon}</div>
+        <div class="grow"><div class="item-name">${a.name}</div><div class="item-sub">${a.desc}</div></div>${btn}</div>`;
+    });
+    UI.openMenu("방물점 🪡", rows, (act,id)=>{
+      if (act==="buy"){ const a=DATA.ACCESSORIES[id];
+        if (P.money>=a.price){ Player.spendMoney(a.price); P.accessory=id; P.mp=clamp(P.mp,0,Player.mpCap()); Sound.sfx("confirm"); toast(`${a.name} 착용!`,"good"); NPC._geonchukShop(); UI.refreshHUD(); }
+        else Sound.sfx("error");
       }
     });
   },

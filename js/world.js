@@ -87,7 +87,7 @@ const World = {
         if (dx&&dy){ dx*=0.707; dy*=0.707; }
         if (Math.abs(dx)>Math.abs(dy)) P.dir = dx<0?"left":"right";
         else P.dir = dy<0?"up":"down";
-        let sp = P.speed * (Player.isSlow()?0.5:1);
+        let sp = P.speed * (Player.isSlow()?0.5:1) * Player.speedMult();
         const nx = P.x + dx*sp*dt, ny = P.y + dy*sp*dt;
         if (!Maps.blocked(z, nx, P.y, World.HALF, World.HALF)) P.x=nx;
         if (!Maps.blocked(z, P.x, ny, World.HALF, World.HALF)) P.y=ny;
@@ -185,69 +185,107 @@ const World = {
 
     key(e){},
     click(x,y){
+      // 대화/메뉴 중에는 무시 (닫는 클릭이 상호작용을 다시 열지 않도록)
+      if (UI.dialogueOpen || UI.menuOpen) return;
       // 클릭으로도 가까운 대상 상호작용
       if (World.near){ World._interact(); }
     },
   },
 
-  // 귀여운 치비 캐릭터 (큰 머리, 또렷한 눈, 발그레 볼)
   _drawPlayer(ctx){
-    const x=P.x, y=P.y;
-    const bob = P.moving ? Math.abs(Math.sin(P.animT))*2.5 : Math.sin(performance.now()/600)*0.8;
+    World.drawDallae(ctx, P.x, P.y, { dir:P.dir, moving:P.moving, blink:P._blink>0, hold:"basket" });
+  },
+
+  // 귀여운 소녀 '달래' — 재사용 (월드=바구니, 전투=무기)
+  //  o: { dir, moving, blink, hold:"basket"|"weapon"|null, weaponId, scale }
+  drawDallae(ctx, x, y, o){
+    o = o || {}; const dir = o.dir || "down";
+    const s = o.scale || 1;
+    const t = performance.now();
+    const bob = o.moving ? Math.abs(Math.sin(P.animT))*2.5*s : Math.sin(t/600)*0.8*s;
     const yy = y - bob;
+    const top = Player.costumeData().color || "#eef0e6";
+    const skirtCol = P.costume==="silk" ? "#c0577e" : P.costume==="ramie" ? "#7fae7a" : "#c64b6e";
+    const legSwing = o.moving ? Math.sin(P.animT)*2 : 0;
+    ctx.save();
+    if (s!==1){ ctx.translate(x,yy); ctx.scale(s,s); ctx.translate(-x,-yy); }
+
     // 그림자
     ctx.fillStyle="rgba(0,0,0,0.28)"; ctx.beginPath(); ctx.ellipse(x,y+15,12,5,0,0,Math.PI*2); ctx.fill();
-    // 다리
-    const legSwing = P.moving ? Math.sin(P.animT)*3 : 0;
-    ctx.fillStyle="#6b7785";
-    ctx.fillRect(x-6, yy+8, 5, 8+legSwing*0.3); ctx.fillRect(x+1, yy+8, 5, 8-legSwing*0.3);
-    // 신
-    ctx.fillStyle="#3a2a1a"; ctx.fillRect(x-7, yy+15, 6, 3); ctx.fillRect(x+1, yy+15, 6, 3);
-    // 저고리(몸) — 둥글게
-    ctx.fillStyle="#eef0e6"; ctx.beginPath(); ctx.roundRect?ctx.roundRect(x-9,yy+1,18,11,5):ctx.rect(x-9,yy+1,18,11); ctx.fill();
-    // 옷고름(파랑)
-    ctx.fillStyle="#5a86c8"; ctx.fillRect(x-1, yy+1, 3, 9);
-    ctx.fillStyle="#d65a7a"; ctx.fillRect(x-1, yy+4, 6, 2);
-    // 팔
-    ctx.fillStyle="#eef0e6"; ctx.fillRect(x-11, yy+2, 4, 7); ctx.fillRect(x+7, yy+2, 4, 7);
-    // 큰 머리
-    ctx.fillStyle="#fbe0bd"; ctx.beginPath(); ctx.arc(x, yy-7, 10, 0, Math.PI*2); ctx.fill();
-    // 머리카락 + 상투
-    ctx.fillStyle="#3a2414";
-    ctx.beginPath(); ctx.arc(x, yy-9, 10, Math.PI*1.05, Math.PI*1.95); ctx.fill();
-    ctx.fillRect(x-10, yy-9, 20, 3);
-    ctx.beginPath(); ctx.arc(x, yy-17, 3.2, 0, Math.PI*2); ctx.fill(); // 상투
-    // 망건 끈
-    ctx.fillStyle="#8a5a2a"; ctx.fillRect(x-10, yy-9, 20, 1.5);
-    // 얼굴 (방향별)
-    const blink = P._blink>0;
-    ctx.fillStyle="#2a1a10";
-    const eyeY = yy-6;
-    function eye(ex){ if(blink){ ctx.fillRect(ex-1.5, eyeY+1, 3, 1.2); } else { ctx.beginPath(); ctx.arc(ex, eyeY, 1.8, 0, Math.PI*2); ctx.fill(); ctx.fillStyle="#fff"; ctx.fillRect(ex-0.5, eyeY-1, 1,1); ctx.fillStyle="#2a1a10"; } }
-    if (P.dir==="up"){
+    // 버선 발
+    ctx.fillStyle="#f3efe6"; ctx.fillRect(x-5+legSwing*0.4, yy+15, 4, 4); ctx.fillRect(x+1-legSwing*0.4, yy+15, 4, 4);
+    // 치마
+    ctx.fillStyle=skirtCol; ctx.beginPath();
+    ctx.moveTo(x-7, yy+7); ctx.lineTo(x+7, yy+7); ctx.lineTo(x+11, yy+16); ctx.lineTo(x-11, yy+16); ctx.closePath(); ctx.fill();
+    ctx.fillStyle="rgba(255,255,255,0.12)"; ctx.fillRect(x-1, yy+8, 2, 8);
+    // 저고리
+    ctx.fillStyle=top; ctx.beginPath(); ctx.roundRect?ctx.roundRect(x-9,yy+1,18,9,5):ctx.rect(x-9,yy+1,18,9); ctx.fill();
+    ctx.fillStyle="#c0392b"; ctx.fillRect(x-1, yy+2, 2, 8);
+    ctx.fillStyle="#e85a7a"; ctx.fillRect(x-3, yy+4, 6, 2);
+    // 소매
+    ctx.fillStyle=top; ctx.fillRect(x-11, yy+2, 4, 6); ctx.fillRect(x+7, yy+2, 4, 6);
+    // 댕기머리(등 뒤)
+    ctx.fillStyle="#241910"; ctx.fillRect(x-2.5, yy-3, 5, (dir==="up"?16:10));
+    if (dir==="up"){ ctx.fillStyle="#c0392b"; ctx.fillRect(x-2.5, yy+9, 5, 3); }
+
+    // ===== 머리 =====
+    // 1) 머리카락 바탕(둥근 단발)
+    ctx.fillStyle="#2a1c10"; ctx.beginPath(); ctx.arc(x, yy-8, 10.5, 0, Math.PI*2); ctx.fill();
+    // 2) 얼굴 살결 — 앞쪽 아래로 내려 이마/눈이 머리카락에 덮이지 않게
+    ctx.fillStyle="#fbe0bd"; ctx.beginPath(); ctx.ellipse(x, yy-5, 9, 8.5, 0, 0, Math.PI*2); ctx.fill();
+
+    const blink = o.blink;
+    const eyeY = yy-5;
+    const dallae = (fx,fy)=>{ ctx.fillStyle="#fff"; for(let i=0;i<5;i++){ const a=i/5*Math.PI*2; ctx.beginPath(); ctx.arc(fx+Math.cos(a)*2.3, fy+Math.sin(a)*2.3, 1.5,0,Math.PI*2); ctx.fill(); } ctx.fillStyle="#f1c40f"; ctx.beginPath(); ctx.arc(fx,fy,1.3,0,Math.PI*2); ctx.fill(); };
+    const bang = (bx,bw)=>{ ctx.fillStyle="#2a1c10"; ctx.beginPath(); ctx.moveTo(bx-bw, yy-11); ctx.lineTo(bx+bw, yy-11); ctx.lineTo(bx, yy-8); ctx.closePath(); ctx.fill(); };
+    const eye = (ex)=>{ ctx.fillStyle="#3a2418"; if(blink){ ctx.fillRect(ex-1.7, eyeY, 3.4, 1.3); } else { ctx.beginPath(); ctx.arc(ex, eyeY, 2.2, 0, Math.PI*2); ctx.fill(); ctx.fillStyle="#fff"; ctx.fillRect(ex-0.6, eyeY-1.3, 1.4,1.4); } };
+    const cheek = (cx2)=>{ ctx.fillStyle="#f7a8a8"; ctx.beginPath(); ctx.arc(cx2, yy-2, 1.9, 0, Math.PI*2); ctx.fill(); };
+
+    if (dir==="up"){
       // 뒤통수
-      ctx.fillStyle="#3a2414"; ctx.beginPath(); ctx.arc(x, yy-7, 9.5, 0, Math.PI*2); ctx.fill();
-      ctx.fillStyle="#3a2414"; ctx.beginPath(); ctx.arc(x, yy-17, 3.2, 0, Math.PI*2); ctx.fill();
-    } else if (P.dir==="left"){
-      eye(x-4);
-      ctx.fillStyle="#f7a8a8"; ctx.beginPath(); ctx.arc(x-6, yy-3, 2, 0, Math.PI*2); ctx.fill(); // 볼
-    } else if (P.dir==="right"){
-      eye(x+4);
-      ctx.fillStyle="#f7a8a8"; ctx.beginPath(); ctx.arc(x+6, yy-3, 2, 0, Math.PI*2); ctx.fill();
+      ctx.fillStyle="#2a1c10"; ctx.beginPath(); ctx.arc(x, yy-7, 10, 0, Math.PI*2); ctx.fill();
+      dallae(x-9, yy-7);
+    } else if (dir==="left"){
+      bang(x-1, 7); eye(x-3); cheek(x-6); dallae(x+8, yy-9);
+    } else if (dir==="right"){
+      bang(x+1, 7); eye(x+3); cheek(x+6); dallae(x-8, yy-9);
     } else {
-      eye(x-4); eye(x+4);
-      // 발그레 볼
-      ctx.fillStyle="#f7a8a8";
-      ctx.beginPath(); ctx.arc(x-6, yy-3, 2, 0, Math.PI*2); ctx.fill();
-      ctx.beginPath(); ctx.arc(x+6, yy-3, 2, 0, Math.PI*2); ctx.fill();
-      // 입
-      ctx.strokeStyle="#b5673a"; ctx.lineWidth=1; ctx.beginPath(); ctx.arc(x, yy-3, 2, 0.15*Math.PI, 0.85*Math.PI); ctx.stroke();
+      // 정면: 앞머리(짧게)는 이마 위에만, 눈은 살결 위에 또렷이
+      ctx.fillStyle="#2a1c10";
+      ctx.beginPath(); ctx.moveTo(x-9, yy-9); ctx.quadraticCurveTo(x, yy-13, x+9, yy-9);
+      ctx.quadraticCurveTo(x+5, yy-8, x, yy-8.5); ctx.quadraticCurveTo(x-5, yy-8, x-9, yy-9); ctx.closePath(); ctx.fill();
+      eye(x-4); eye(x+4); cheek(x-6); cheek(x+6);
+      ctx.strokeStyle="#c0392b"; ctx.lineWidth=1.2; ctx.beginPath(); ctx.arc(x, yy-1.5, 1.8, 0.15*Math.PI, 0.85*Math.PI); ctx.stroke();
+      dallae(x-9, yy-9);
     }
-    // 무기 (들고 있는 느낌)
-    if (P.dir!=="up"){
-      ctx.font="14px serif"; ctx.textAlign="center";
-      ctx.fillText(DATA.WEAPONS[P.weapon].icon, x+(P.dir==="left"?-13:13), yy+6);
+
+    // ===== 손에 든 것 =====
+    if (o.hold === "basket"){
+      // 약초 바구니 (양손 앞)
+      const bx = x + (dir==="left"?-7:dir==="right"?7:0), by = yy+9;
+      // 나물
+      ctx.fillStyle="#4a8a3a"; ctx.beginPath(); ctx.ellipse(bx-3,by-2,3,4,-0.4,0,Math.PI*2); ctx.ellipse(bx+3,by-2,3,4,0.4,0,Math.PI*2); ctx.fill();
+      ctx.fillStyle="#6fbf4a"; ctx.beginPath(); ctx.ellipse(bx,by-4,3,4,0,0,Math.PI*2); ctx.fill();
+      // 바구니 몸통
+      ctx.fillStyle="#a9742f"; ctx.beginPath(); ctx.moveTo(bx-8,by); ctx.lineTo(bx+8,by); ctx.lineTo(bx+6,by+7); ctx.lineTo(bx-6,by+7); ctx.closePath(); ctx.fill();
+      ctx.strokeStyle="#7c531f"; ctx.lineWidth=1;
+      ctx.beginPath(); ctx.moveTo(bx-7,by+2); ctx.lineTo(bx+7,by+2); ctx.moveTo(bx-7,by+4.5); ctx.lineTo(bx+7,by+4.5); ctx.stroke();
+      ctx.fillStyle="#c08a3e"; ctx.fillRect(bx-9,by-1,18,2); // 테두리
+      // 손잡이
+      ctx.strokeStyle="#7c531f"; ctx.lineWidth=1.5; ctx.beginPath(); ctx.arc(bx,by, 8, Math.PI*1.08, Math.PI*1.92); ctx.stroke();
+    } else if (o.hold === "weapon"){
+      // 전투: 앞손 위치에 무기 (손 위치 정렬)
+      const w = DATA.WEAPONS[o.weaponId || P.weapon];
+      const hand = dir==="left" ? {hx:x-12, hy:yy+5} : dir==="right" ? {hx:x+12, hy:yy+5}
+                 : dir==="up" ? {hx:x-11, hy:yy+3} : {hx:x+11, hy:yy+6};
+      // 손
+      ctx.fillStyle="#fbe0bd"; ctx.beginPath(); ctx.arc(hand.hx, hand.hy, 2.4, 0, Math.PI*2); ctx.fill();
+      // 무기 아이콘을 손에 맞춰 중앙 정렬
+      ctx.font="16px serif"; ctx.textAlign="center"; ctx.textBaseline="middle";
+      ctx.fillText(w.icon, hand.hx + (dir==="left"?-6:dir==="right"?6:0), hand.hy-6);
+      ctx.textBaseline="alphabetic";
     }
+    ctx.restore();
   },
 
   /* ---- 펫 ---- */
@@ -330,6 +368,7 @@ const World = {
     if (o.action==="npc") return `${DATA.NPCS[o.npc].icon} ${DATA.NPCS[o.npc].name}와 대화`;
     if (o.action==="market") return Maps.stallActive()?"🪧 장터 좌판":"🪧 장터(장날 오전만)";
     if (o.action==="sign_house"||o.action==="sign_mtn") return "📖 안내판 읽기";
+    if (o.action==="shrine") return "🌳 당산나무 (신통력 해금)";
     if (o.type==="plot"){ const p=Farming.plotState(o.plot);
       return p.state==="empty"?"🌰 메밀 심기":p.state==="ready"?"🌾 메밀 수확":"🌱 자라는 중"; }
     return "조사";
@@ -353,8 +392,8 @@ const World = {
       case "sign_mtn": UI.startDialogue("📖 산 입구 표석",[
         "산에는 계절마다 다른 약초가 돋아난다. 빛나는 표식(🌿✨🌟)에서 채집하라.",
         "요괴(심볼)와 부딪히면 전투가 벌어진다. 기력이 낮으면 살금살금 피할 수도.",
-        "패하면 약초 절반과 시간을 잃으니 조심!"]); break;
-      case "market": NPC.market(); break;
+        "패하면 약초 절반과 시간을 잃으니 조심! 요괴 부산물은 <b>당산나무</b>에 바쳐라."]); break;
+      case "shrine": Shrine.open(); break;
       default:
         if (o.type==="plot") Farming.interactPlot(o.plot);
     }
@@ -377,9 +416,10 @@ const World = {
 
   /* ---------------- 인벤토리 ---------------- */
   openInventory(){
-    const w=Player.weaponData();
-    let html = `<p class="note">Lv.${P.level} (경험치 ${P.exp}/${P.level*25}) · 체력 ${Math.ceil(P.hp)}/${P.maxHp} · 신력 ${P.mp}/${P.maxMp} · 기력 ${Math.ceil(P.stamina)}/100</p>`;
-    html += `<p class="note">무기 ${w.icon}${w.name}(공${w.atk}, 강화+${P.weaponLv}) · 호미 등급 ${P.homiTier} · 신통력 ${P.magic.map(id=>DATA.MAGIC[id].name).join(", ")}</p>`;
+    const w=Player.weaponData(), cs=Player.costumeData(), ac=Player.accessoryData();
+    let html = `<p class="note">Lv.${P.level} (경험치 ${P.exp}/${P.level*25}) · 체력 ${Math.ceil(P.hp)}/${P.maxHp} · 신력 ${P.mp}/${Player.mpCap()} · 기력 ${Math.ceil(P.stamina)}/100</p>`;
+    html += `<p class="note">🗡 무기 ${w.icon}${w.name}(공${w.atk}, 강화+${P.weaponLv}) · 👘 의상 ${cs.icon}${cs.name} · 🧿 장신구 ${ac.icon}${ac.name} · 호미 등급 ${P.homiTier}</p>`;
+    html += `<p class="note">✨ 신통력 ${P.magic.length?P.magic.map(id=>DATA.MAGIC[id].name).join(", "):"없음"} · 🌳 당산 정기 ${P.shrinePoints}</p>`;
     html += `<p class="note">정(情) — 무당 ${P.affection.mudang}♥ · 대장장이 ${P.affection.daejang}♥ · 촌장 ${P.affection.chonjang}♥ · 주모 ${P.affection.jumo}♥</p>`;
     html += `<hr style="border-color:#50412a;margin:10px 0">`;
 
@@ -394,8 +434,15 @@ const World = {
         <div class="item-meta"><div class="item-name tier${h.tier}">${h.name}</div>
         <div class="item-sub">×${P.inv[id]} · ${h.price}냥 · 등급${h.tier}</div></div></div>`; });
 
+    // 요괴 부산물
+    const dropCards = Player.dropList().map(id=>{ const d=DATA.DROPS[id];
+      return `<div class="item-card"><div class="item-ic" style="background:#1f2a1f">${d.icon}</div>
+        <div class="item-meta"><div class="item-name">${d.name}</div>
+        <div class="item-sub">×${P.inv[id]} · 정기 ${d.pts}</div></div></div>`; });
+
     html += `<h4 style="color:#e7c66b;margin:6px 0">📦 재료</h4><div class="grid">${mats.join("")||'<p class="note">없음</p>'}</div>`;
     html += `<h4 style="color:#e7c66b;margin:12px 0 6px">🌿 약초·나물 (${Player.herbTotal()})</h4><div class="grid">${herbCards.join("")||'<p class="note">없음</p>'}</div>`;
+    html += `<h4 style="color:#e7c66b;margin:12px 0 6px">🦴 요괴 부산물 (당산나무 헌납용)</h4><div class="grid">${dropCards.join("")||'<p class="note">없음</p>'}</div>`;
     UI.openMenu("📜 봇짐 (인벤토리)", html, null);
   },
 
