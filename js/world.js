@@ -12,10 +12,12 @@ const World = {
   particles:[],
   _stepT:0, _blinkT:3,
 
+  mtn:{},       // 산 구역별 컨텐츠 캐시 { mtnN:{nodes,symbols,day} }
+
   start(){
     World.zone="house";
+    World.mtn={};
     World.placeAtSpawn();
-    World.spawnMountain();
     World.particles=[];
     if (P.pet) World.initPet();
   },
@@ -23,50 +25,62 @@ const World = {
   initPet(){ World.pet.x=P.x; World.pet.y=P.y; },
 
   placeAtSpawn(){
+    if (!Maps[World.zone]) World.zone="house"; // 구버전 세이브 방어
     const sp = Maps[World.zone].spawn;
     P.x = sp.tx*TILE + TILE/2; P.y = sp.ty*TILE + TILE/2;
+    World._bindZoneContent();
   },
 
   changeZone(to, sx, sy){
     World.zone = to;
     P.x = sx*TILE + TILE/2; P.y = sy*TILE + TILE/2;
-    if (to==="mountain" && World.nodes.length===0 && World.symbols.length===0) World.spawnMountain();
+    World._bindZoneContent();
     toast("➡ " + Maps[to].name, "");
+    Sound.forScene();
     UI.refreshHUD();
   },
 
-  onNewDay(){ World.spawnMountain(); },
+  onNewDay(){ World.mtn={}; World._bindZoneContent(); },
 
-  /* 산 컨텐츠 생성 (매일) */
-  spawnMountain(){
-    World.nodes=[]; World.symbols=[];
-    // 걸을 수 있는 풀밭 타일 수집
+  // 현재 구역이 산이면 컨텐츠 보장 후 nodes/symbols 연결
+  _bindZoneContent(){
+    const z=World.zone;
+    if (DATA.isMtn(z)){
+      if (!World.mtn[z] || World.mtn[z].day!==G.time.day) World._spawnZone(z);
+      World.nodes = World.mtn[z].nodes;
+      World.symbols = World.mtn[z].symbols;
+    } else { World.nodes=[]; World.symbols=[]; }
+  },
+
+  // 산 한 구역의 채집 노드/몬스터 생성
+  _spawnZone(z){
+    const meta = DATA.zoneMeta(z); const grid = Maps[z].grid;
     const walk=[];
     for(let y=1;y<ROWS-1;y++) for(let x=1;x<COLS-1;x++){
-      if(!Maps.isSolidTile("mountain",x,y) && Maps.mountain.grid[y][x]==="." ) walk.push([x,y]);
+      if(!Maps.isSolidTile(z,x,y) && grid[y][x]===".") walk.push([x,y]);
     }
-    const pick=()=>{ const i=randInt(0,walk.length-1); const t=walk.splice(i,1)[0]; return t; };
-    // 채집 노드 7~9개 (등급 혼합)
-    const nNodes = randInt(7,9);
-    for(let i=0;i<nNodes && walk.length;i++){
-      const t=pick(); const r=Math.random();
-      const tier = r<0.55?1 : r<0.85?2 : 3;
-      World.nodes.push({ x:t[0]*TILE+TILE/2, y:t[1]*TILE+TILE/2, tier });
+    const pick=()=>{ const i=randInt(0,walk.length-1); return walk.splice(i,1)[0]; };
+    const nodes=[], symbols=[];
+    if (meta.tier>0){
+      const nNodes=randInt(6,8);
+      for(let i=0;i<nNodes && walk.length;i++){
+        const t=pick(); let tier=meta.tier; if(chance(0.3)) tier=clamp(tier+choice([-1,1]),1,3);
+        nodes.push({ x:t[0]*TILE+TILE/2, y:t[1]*TILE+TILE/2, tier });
+      }
     }
-    // 몬스터 심볼 (계절 인카운터)
-    const enc = DATA.encountersBySeason[Time.season()];
-    const nSym = randInt(3,5);
+    const [lo,hi]=meta.count;
+    const nSym=randInt(lo,hi);
     for(let i=0;i<nSym && walk.length;i++){
       const t=pick();
-      const grp=[];
-      const pickEnc = choice(enc);
-      const cnt = randInt(pickEnc[1], pickEnc[2]);
-      for(let k=0;k<cnt;k++) grp.push(pickEnc[0]);
-      // 가끔 한 종 더
-      if (chance(0.3)){ const e2=choice(enc); grp.push(e2[0]); }
-      World.symbols.push({ x:t[0]*TILE+TILE/2, y:t[1]*TILE+TILE/2, grp,
-        vx:choice([-1,1])*22, vy:choice([-1,1])*22, ic:DATA.MONSTERS[grp[0]].icon, cool:0 });
+      let mid=choice(meta.monsters);
+      if (z==="mtn3" && mid==="dueok" && !chance(0.35)) mid="gumiho"; // 두억시니는 드물게
+      const m=DATA.MONSTERS[mid]; const grp=[mid];
+      if (mid!=="dueok" && chance(0.3)) grp.push(mid);
+      symbols.push({ x:t[0]*TILE+TILE/2, y:t[1]*TILE+TILE/2, grp, mid, ic:m.icon,
+        detect:m.detect, spd:18*(m.speed||1), aggro:!!m.aggro,
+        vx:choice([-1,1])*14, vy:choice([-1,1])*14, cool:0, shake:0 });
     }
+    World.mtn[z]={ nodes, symbols, day:G.time.day };
   },
 
   /* ---------------- 씬 ---------------- */
@@ -109,23 +123,30 @@ const World = {
         }
       }
 
-      // 몬스터 심볼 이동 & 접촉
-      if (z==="mountain" && !blocked){
+      // 몬스터 심볼: 감지 추격 / 접촉 전투
+      if (DATA.isMtn(z) && !blocked){
         World.symbols.forEach(s=>{
-          if (s.cool>0){ s.cool-=dt; }
-          s.x+=s.vx*dt; s.y+=s.vy*dt;
-          if (Maps.blocked("mountain",s.x,s.y,10,10)){
-            // 되돌리고 방향 전환
-            s.x-=s.vx*dt; s.y-=s.vy*dt;
-            if (chance(0.5)) s.vx*=-1; else s.vy*=-1;
+          if (s.cool>0) s.cool-=dt;
+          const dist=Math.hypot(s.x-P.x, s.y-P.y);
+          const detected = s.cool<=0 && dist <= s.detect*TILE;
+          if (detected){
+            const dx=P.x-s.x, dy=P.y-s.y, d=dist||1;
+            const nx=s.x+dx/d*s.spd*1.35*dt, ny=s.y+dy/d*s.spd*1.35*dt;
+            if(!Maps.blocked(z,nx,s.y,10,10)) s.x=nx;
+            if(!Maps.blocked(z,s.x,ny,10,10)) s.y=ny;
+            s.shake = (s.mid==="dueok") ? 1 : 0;  // 두억시니: 다가올 때 진동
+          } else {
+            s.x+=s.vx*dt; s.y+=s.vy*dt;
+            if (Maps.blocked(z,s.x,s.y,10,10)){ s.x-=s.vx*dt; s.y-=s.vy*dt; if(chance(0.5))s.vx*=-1; else s.vy*=-1; }
+            if (chance(0.01)){ s.vx=choice([-1,1])*14; s.vy=choice([-1,1])*14; }
+            s.shake=0;
           }
-          if (chance(0.01)){ s.vx=choice([-1,1])*22; s.vy=choice([-1,1])*22; }
         });
         for(let i=World.symbols.length-1;i>=0;i--){
           const s=World.symbols[i];
           if (Math.hypot(s.x-P.x, s.y-P.y) < 22){
-            // 기력 낮으면 회피 가능
-            if (Player.isSlow() && chance(0.5)){ toast("기력이 낮아 살금살금 피했다…",""); s.cool=2; s.x+=s.vx>0?-40:40; continue; }
+            // 비공격형이고 기력 낮으면 회피 가능 (구미호 등 aggro는 불가)
+            if (!s.aggro && Player.isSlow() && chance(0.5)){ toast("기력이 낮아 살금살금 피했다…",""); s.cool=2.5; s.x+=s.vx>0?-50:50; continue; }
             const grp=s.grp; World.symbols.splice(i,1);
             Combat.begin(grp);
             return;
@@ -147,9 +168,10 @@ const World = {
 
     render(ctx){
       const z=World.zone;
+      const isMtn = DATA.isMtn(z);
       Maps.drawTiles(ctx,z);
       // 채집 노드
-      if (z==="mountain"){
+      if (isMtn){
         World.nodes.forEach(nd=>{
           const tcol = nd.tier===3?"#ffd27a":nd.tier===2?"#9ad0ff":"#bfece0";
           ctx.fillStyle="rgba(0,0,0,0.25)"; ctx.beginPath(); ctx.ellipse(nd.x,nd.y+10,14,6,0,0,Math.PI*2); ctx.fill();
@@ -160,15 +182,23 @@ const World = {
       }
       Maps.drawObjects(ctx,z);
       // 몬스터 심볼
-      if (z==="mountain"){
+      if (isMtn){
         World.symbols.forEach(s=>{
+          const jx = s.shake ? randInt(-2,2) : 0, jy = s.shake ? randInt(-2,2) : 0;
           ctx.fillStyle="rgba(0,0,0,0.3)"; ctx.beginPath(); ctx.ellipse(s.x,s.y+12,12,5,0,0,Math.PI*2); ctx.fill();
-          ctx.font="26px serif"; ctx.textAlign="center"; ctx.fillText(s.ic, s.x, s.y+8);
+          ctx.font="26px serif"; ctx.textAlign="center"; ctx.fillText(s.ic, s.x+jx, s.y+8+jy);
         });
       }
       World._drawPet(ctx);
       World._drawPlayer(ctx);
       World._drawParticles(ctx);
+
+      // 구역 분위기 (틴트 / 안개)
+      const meta = DATA.zoneMeta(z);
+      if (meta){
+        if (meta.tint){ ctx.fillStyle=meta.tint; ctx.fillRect(0,0,G.W,G.H); }
+        if (meta.fog){ World._drawFog(ctx); }
+      }
 
       // 상호작용 하이라이트 & 힌트
       if (World.near){
@@ -176,9 +206,10 @@ const World = {
         ctx.save();
         ctx.fillStyle="#fff7c0"; ctx.font="bold 16px 'Malgun Gothic'"; ctx.textAlign="center";
         ctx.shadowColor="#000"; ctx.shadowBlur=4;
-        ctx.fillText("▼", t.hx, t.hy-14 + Math.sin(P.animT*0.6+performance.now()/250)*3);
+        ctx.fillText("▼", t.hx, t.hy-12);   // 고정 위치(떨림 제거)
         ctx.restore();
       }
+      World._drawQuestTracker(ctx);
       // 힌트 바
       World._hint();
     },
@@ -193,98 +224,119 @@ const World = {
   },
 
   _drawPlayer(ctx){
-    World.drawDallae(ctx, P.x, P.y, { dir:P.dir, moving:P.moving, blink:P._blink>0, hold:"basket" });
+    World.drawDallae(ctx, P.x, P.y, { dir:P.dir, moving:P.moving, blink:P._blink>0, hold:"basket", scale:0.76 });
   },
 
-  // 귀여운 소녀 '달래' — 재사용 (월드=바구니, 전투=무기)
-  //  o: { dir, moving, blink, hold:"basket"|"weapon"|null, weaponId, scale }
+  // 달래 렌더 — 기획서 스프라이트 시트 우선, 미로드 시 벡터 폴백
+  //  o: { dir, moving, blink, hold, weaponId, scale, frame }
   drawDallae(ctx, x, y, o){
+    o = o || {}; const dir = o.dir || "down";
+    if (Sprites.ready){
+      // 그림자
+      const sc = o.scale || 1;
+      ctx.fillStyle="rgba(0,0,0,0.26)"; ctx.beginPath(); ctx.ellipse(x, y+15, 12*sc, 5*sc, 0,0,Math.PI*2); ctx.fill();
+      const nm = o.frame || Sprites.frameFor(dir, o.moving, P.animT);
+      const targetH = 54 * sc;
+      const footY = y + 19*sc;
+      if (Sprites.drawFrame(ctx, nm, x, footY, targetH, !!o.flip)) return;
+    }
+    World._drawDallaeVector(ctx, x, y, o);
+  },
+
+  // (폴백) 벡터 드로잉
+  _drawDallaeVector(ctx, x, y, o){
     o = o || {}; const dir = o.dir || "down";
     const s = o.scale || 1;
     const t = performance.now();
     const bob = o.moving ? Math.abs(Math.sin(P.animT))*2.5*s : Math.sin(t/600)*0.8*s;
     const yy = y - bob;
-    const top = Player.costumeData().color || "#eef0e6";
-    const skirtCol = P.costume==="silk" ? "#c0577e" : P.costume==="ramie" ? "#7fae7a" : "#c64b6e";
+    const top = Player.costumeData().color || "#f2c531";                    // 저고리(노랑 기본)
+    const skirtCol = P.costume==="silk" ? "#c0577e" : P.costume==="ramie" ? "#6fae54" : "#d23b35"; // 치마(빨강 기본)
+    const HAIR="#6e4a2a", SKIN="#fbe0bd";
     const legSwing = o.moving ? Math.sin(P.animT)*2 : 0;
     ctx.save();
     if (s!==1){ ctx.translate(x,yy); ctx.scale(s,s); ctx.translate(-x,-yy); }
 
     // 그림자
     ctx.fillStyle="rgba(0,0,0,0.28)"; ctx.beginPath(); ctx.ellipse(x,y+15,12,5,0,0,Math.PI*2); ctx.fill();
+    // 등 뒤로 흘러내린 긴 머리 (몸보다 먼저)
+    ctx.fillStyle=HAIR;
+    if (dir==="up") ctx.fillRect(x-5, yy-6, 10, 21);
+    else ctx.fillRect(x-3, yy-3, 6, 13);
     // 버선 발
     ctx.fillStyle="#f3efe6"; ctx.fillRect(x-5+legSwing*0.4, yy+15, 4, 4); ctx.fillRect(x+1-legSwing*0.4, yy+15, 4, 4);
-    // 치마
+    // 치마(빨강)
     ctx.fillStyle=skirtCol; ctx.beginPath();
     ctx.moveTo(x-7, yy+7); ctx.lineTo(x+7, yy+7); ctx.lineTo(x+11, yy+16); ctx.lineTo(x-11, yy+16); ctx.closePath(); ctx.fill();
-    ctx.fillStyle="rgba(255,255,255,0.12)"; ctx.fillRect(x-1, yy+8, 2, 8);
-    // 저고리
+    ctx.fillStyle="rgba(0,0,0,0.10)"; ctx.fillRect(x-1, yy+8, 2, 8);
+    // 저고리(노랑)
     ctx.fillStyle=top; ctx.beginPath(); ctx.roundRect?ctx.roundRect(x-9,yy+1,18,9,5):ctx.rect(x-9,yy+1,18,9); ctx.fill();
+    // 깃·고름(빨강)
     ctx.fillStyle="#c0392b"; ctx.fillRect(x-1, yy+2, 2, 8);
-    ctx.fillStyle="#e85a7a"; ctx.fillRect(x-3, yy+4, 6, 2);
-    // 소매
+    ctx.fillStyle="#e0503a"; ctx.fillRect(x-3, yy+3, 6, 2);
+    // 소매(노랑) + 흰 끝동
     ctx.fillStyle=top; ctx.fillRect(x-11, yy+2, 4, 6); ctx.fillRect(x+7, yy+2, 4, 6);
-    // 댕기머리(등 뒤)
-    ctx.fillStyle="#241910"; ctx.fillRect(x-2.5, yy-3, 5, (dir==="up"?16:10));
-    if (dir==="up"){ ctx.fillStyle="#c0392b"; ctx.fillRect(x-2.5, yy+9, 5, 3); }
+    ctx.fillStyle="#f3efe6"; ctx.fillRect(x-11, yy+7, 4, 2); ctx.fillRect(x+7, yy+7, 4, 2);
 
-    // ===== 머리 =====
-    // 1) 머리카락 바탕(둥근 단발)
-    ctx.fillStyle="#2a1c10"; ctx.beginPath(); ctx.arc(x, yy-8, 10.5, 0, Math.PI*2); ctx.fill();
-    // 2) 얼굴 살결 — 앞쪽 아래로 내려 이마/눈이 머리카락에 덮이지 않게
-    ctx.fillStyle="#fbe0bd"; ctx.beginPath(); ctx.ellipse(x, yy-5, 9, 8.5, 0, 0, Math.PI*2); ctx.fill();
-
-    const blink = o.blink;
-    const eyeY = yy-5;
-    const dallae = (fx,fy)=>{ ctx.fillStyle="#fff"; for(let i=0;i<5;i++){ const a=i/5*Math.PI*2; ctx.beginPath(); ctx.arc(fx+Math.cos(a)*2.3, fy+Math.sin(a)*2.3, 1.5,0,Math.PI*2); ctx.fill(); } ctx.fillStyle="#f1c40f"; ctx.beginPath(); ctx.arc(fx,fy,1.3,0,Math.PI*2); ctx.fill(); };
-    const bang = (bx,bw)=>{ ctx.fillStyle="#2a1c10"; ctx.beginPath(); ctx.moveTo(bx-bw, yy-11); ctx.lineTo(bx+bw, yy-11); ctx.lineTo(bx, yy-8); ctx.closePath(); ctx.fill(); };
-    const eye = (ex)=>{ ctx.fillStyle="#3a2418"; if(blink){ ctx.fillRect(ex-1.7, eyeY, 3.4, 1.3); } else { ctx.beginPath(); ctx.arc(ex, eyeY, 2.2, 0, Math.PI*2); ctx.fill(); ctx.fillStyle="#fff"; ctx.fillRect(ex-0.6, eyeY-1.3, 1.4,1.4); } };
-    const cheek = (cx2)=>{ ctx.fillStyle="#f7a8a8"; ctx.beginPath(); ctx.arc(cx2, yy-2, 1.9, 0, Math.PI*2); ctx.fill(); };
+    // ===== 머리 (갈색, 중앙 가르마) =====
+    ctx.fillStyle=HAIR; ctx.beginPath(); ctx.arc(x, yy-8, 10, 0, Math.PI*2); ctx.fill();
+    const blink=o.blink, eyeY=yy-5;
+    const eye=(ex)=>{ ctx.fillStyle="#3a2418"; if(blink){ ctx.fillRect(ex-1.5,eyeY,3,1.2);} else { ctx.beginPath(); ctx.arc(ex,eyeY,1.9,0,Math.PI*2); ctx.fill(); ctx.fillStyle="#fff"; ctx.fillRect(ex-0.5,eyeY-1,1.1,1.1);} };
+    const cheek=(cx2)=>{ ctx.fillStyle="#f5a9a0"; ctx.beginPath(); ctx.arc(cx2,yy-2,1.7,0,Math.PI*2); ctx.fill(); };
 
     if (dir==="up"){
-      // 뒤통수
-      ctx.fillStyle="#2a1c10"; ctx.beginPath(); ctx.arc(x, yy-7, 10, 0, Math.PI*2); ctx.fill();
-      dallae(x-9, yy-7);
-    } else if (dir==="left"){
-      bang(x-1, 7); eye(x-3); cheek(x-6); dallae(x+8, yy-9);
-    } else if (dir==="right"){
-      bang(x+1, 7); eye(x+3); cheek(x+6); dallae(x-8, yy-9);
+      // 뒤통수: 머리 바탕만 (얼굴 없음)
+    } else if (dir==="left" || dir==="right"){
+      const sgn = dir==="left"?-1:1;
+      ctx.fillStyle=SKIN; ctx.beginPath(); ctx.ellipse(x+sgn*2, yy-5, 8, 8, 0, 0, Math.PI*2); ctx.fill();
+      // 옆 가르마 + 앞쪽 옆머리 한 갈래
+      ctx.fillStyle=HAIR; ctx.beginPath(); ctx.arc(x, yy-8, 10, Math.PI*1.05, Math.PI*1.95); ctx.fill();
+      ctx.fillRect(x-2, yy-10, 4, 4);
+      ctx.fillRect(x+sgn*7, yy-7, 3, 11);
+      eye(x+sgn*4); cheek(x+sgn*6);
     } else {
-      // 정면: 앞머리(짧게)는 이마 위에만, 눈은 살결 위에 또렷이
-      ctx.fillStyle="#2a1c10";
-      ctx.beginPath(); ctx.moveTo(x-9, yy-9); ctx.quadraticCurveTo(x, yy-13, x+9, yy-9);
-      ctx.quadraticCurveTo(x+5, yy-8, x, yy-8.5); ctx.quadraticCurveTo(x-5, yy-8, x-9, yy-9); ctx.closePath(); ctx.fill();
+      // 정면: 얼굴 + 중앙 가르마 앞머리(좌/우 두 덩이) + 양옆 머리 갈래
+      ctx.fillStyle=SKIN; ctx.beginPath(); ctx.ellipse(x, yy-5, 8.5, 8, 0, 0, Math.PI*2); ctx.fill();
+      ctx.fillStyle=HAIR;
+      ctx.beginPath(); ctx.moveTo(x-10,yy-9); ctx.quadraticCurveTo(x-1,yy-12,x-0.6,yy-7); ctx.quadraticCurveTo(x-6,yy-8,x-10,yy-4.5); ctx.closePath(); ctx.fill();
+      ctx.beginPath(); ctx.moveTo(x+10,yy-9); ctx.quadraticCurveTo(x+1,yy-12,x+0.6,yy-7); ctx.quadraticCurveTo(x+6,yy-8,x+10,yy-4.5); ctx.closePath(); ctx.fill();
+      ctx.fillRect(x-10, yy-7, 3, 11); ctx.fillRect(x+7, yy-7, 3, 11);   // 양옆 머리(얼굴 감싸기)
       eye(x-4); eye(x+4); cheek(x-6); cheek(x+6);
-      ctx.strokeStyle="#c0392b"; ctx.lineWidth=1.2; ctx.beginPath(); ctx.arc(x, yy-1.5, 1.8, 0.15*Math.PI, 0.85*Math.PI); ctx.stroke();
-      dallae(x-9, yy-9);
+      ctx.strokeStyle="#c0392b"; ctx.lineWidth=1.1; ctx.beginPath(); ctx.arc(x,yy-1.5,1.6,0.15*Math.PI,0.85*Math.PI); ctx.stroke();
     }
 
     // ===== 손에 든 것 =====
     if (o.hold === "basket"){
-      // 약초 바구니 (양손 앞)
       const bx = x + (dir==="left"?-7:dir==="right"?7:0), by = yy+9;
-      // 나물
       ctx.fillStyle="#4a8a3a"; ctx.beginPath(); ctx.ellipse(bx-3,by-2,3,4,-0.4,0,Math.PI*2); ctx.ellipse(bx+3,by-2,3,4,0.4,0,Math.PI*2); ctx.fill();
       ctx.fillStyle="#6fbf4a"; ctx.beginPath(); ctx.ellipse(bx,by-4,3,4,0,0,Math.PI*2); ctx.fill();
-      // 바구니 몸통
       ctx.fillStyle="#a9742f"; ctx.beginPath(); ctx.moveTo(bx-8,by); ctx.lineTo(bx+8,by); ctx.lineTo(bx+6,by+7); ctx.lineTo(bx-6,by+7); ctx.closePath(); ctx.fill();
       ctx.strokeStyle="#7c531f"; ctx.lineWidth=1;
       ctx.beginPath(); ctx.moveTo(bx-7,by+2); ctx.lineTo(bx+7,by+2); ctx.moveTo(bx-7,by+4.5); ctx.lineTo(bx+7,by+4.5); ctx.stroke();
-      ctx.fillStyle="#c08a3e"; ctx.fillRect(bx-9,by-1,18,2); // 테두리
-      // 손잡이
+      ctx.fillStyle="#c08a3e"; ctx.fillRect(bx-9,by-1,18,2);
       ctx.strokeStyle="#7c531f"; ctx.lineWidth=1.5; ctx.beginPath(); ctx.arc(bx,by, 8, Math.PI*1.08, Math.PI*1.92); ctx.stroke();
     } else if (o.hold === "weapon"){
-      // 전투: 앞손 위치에 무기 (손 위치 정렬)
-      const w = DATA.WEAPONS[o.weaponId || P.weapon];
-      const hand = dir==="left" ? {hx:x-12, hy:yy+5} : dir==="right" ? {hx:x+12, hy:yy+5}
-                 : dir==="up" ? {hx:x-11, hy:yy+3} : {hx:x+11, hy:yy+6};
-      // 손
-      ctx.fillStyle="#fbe0bd"; ctx.beginPath(); ctx.arc(hand.hx, hand.hy, 2.4, 0, Math.PI*2); ctx.fill();
-      // 무기 아이콘을 손에 맞춰 중앙 정렬
-      ctx.font="16px serif"; ctx.textAlign="center"; ctx.textBaseline="middle";
-      ctx.fillText(w.icon, hand.hx + (dir==="left"?-6:dir==="right"?6:0), hand.hy-6);
-      ctx.textBaseline="alphabetic";
+      const wid = o.weaponId || P.weapon;
+      const hand = dir==="left" ? {hx:x-11, hy:yy+4} : dir==="right" ? {hx:x+11, hy:yy+4}
+                 : dir==="up" ? {hx:x-10, hy:yy+3} : {hx:x+10, hy:yy+5};
+      ctx.fillStyle=SKIN; ctx.beginPath(); ctx.arc(hand.hx, hand.hy, 2.3, 0, Math.PI*2); ctx.fill();
+      if (wid==="natt") World._drawSickle(ctx, hand.hx, hand.hy);
+      else { ctx.font="16px serif"; ctx.textAlign="center"; ctx.textBaseline="middle";
+        ctx.fillText(DATA.WEAPONS[wid].icon, hand.hx+(dir==="left"?-6:dir==="right"?6:0), hand.hy-6); ctx.textBaseline="alphabetic"; }
     }
+    ctx.restore();
+  },
+
+  // 낫(sickle) — 자루 + 곡선 날 (어깨 위로 든 모습)
+  _drawSickle(ctx, hx, hy){
+    ctx.save();
+    ctx.lineCap="round";
+    ctx.strokeStyle="#8a5a2a"; ctx.lineWidth=2.4;                 // 나무 자루
+    ctx.beginPath(); ctx.moveTo(hx, hy+2); ctx.lineTo(hx, hy-15); ctx.stroke();
+    ctx.strokeStyle="#cfd3d6"; ctx.lineWidth=2.8;                 // 쇠 날(곡선)
+    ctx.beginPath(); ctx.arc(hx-6, hy-15, 7, -0.25, Math.PI*0.95); ctx.stroke();
+    ctx.strokeStyle="#eef1f3"; ctx.lineWidth=1;
+    ctx.beginPath(); ctx.arc(hx-6, hy-15, 7, -0.1, Math.PI*0.6); ctx.stroke();
     ctx.restore();
   },
 
@@ -340,20 +392,64 @@ const World = {
     ctx.globalAlpha=1;
   },
 
+  /* 화면 좌상단 임무 추적기 (현재 진행 중 의뢰) */
+  _drawQuestTracker(ctx){
+    const lines = Quests.trackerLines();
+    if (!lines.length) return;
+    const show = lines.slice(0,4);
+    ctx.save();
+    ctx.font = "12px 'Malgun Gothic'";
+    let w = 150;
+    show.forEach(l=>{ const s=`${l.title}  ${l.cur}/${l.total}`; w=Math.max(w, ctx.measureText(s).width+22); });
+    const x=10, y=72, h=18*show.length+24;
+    ctx.fillStyle="rgba(20,14,8,0.78)"; ctx.fillRect(x,y,w,h);
+    ctx.fillStyle="#6b5736"; ctx.fillRect(x,y,w,18);
+    ctx.fillStyle="#e7c66b"; ctx.textAlign="left"; ctx.font="bold 12px 'Malgun Gothic'";
+    ctx.fillText("📜 의뢰 (J: 일지)", x+8, y+13);
+    show.forEach((l,i)=>{
+      const ly=y+24+i*18;
+      ctx.font="12px 'Malgun Gothic'";
+      ctx.fillStyle = l.done ? "#8fe0a0" : "#f3e9d2";
+      const mark = l.done ? "✓ " : "• ";
+      ctx.fillText(`${mark}${l.title}`, x+8, ly+9);
+      ctx.fillStyle = l.done ? "#8fe0a0" : "#cbb892";
+      ctx.textAlign="right"; ctx.fillText(`${l.cur}/${l.total}`, x+w-8, ly+9); ctx.textAlign="left";
+    });
+    if (lines.length>4){ ctx.fillStyle="#9c8a68"; ctx.fillText(`…외 ${lines.length-4}건`, x+8, y+h-4); }
+    ctx.restore();
+  },
+
+  /* 깊은 숲 안개 — 떠다니는 반투명 덩어리로 시야 방해 */
+  _drawFog(ctx){
+    const t=performance.now()/1000;
+    ctx.save();
+    for(let i=0;i<6;i++){
+      const x=((i*167 + t*18*(i%2?1:-1))% (G.W+200))-100;
+      const y=60 + (i*97 % (G.H-120));
+      const r=80+ (i%3)*30;
+      const g=ctx.createRadialGradient(x,y,0,x,y,r);
+      g.addColorStop(0,"rgba(210,225,220,0.16)"); g.addColorStop(1,"rgba(210,225,220,0)");
+      ctx.fillStyle=g; ctx.beginPath(); ctx.arc(x,y,r,0,Math.PI*2); ctx.fill();
+    }
+    ctx.restore();
+  },
+
   /* 가까운 상호작용 대상 찾기 (오브젝트/노드/출구) */
   _findNear(){
-    const z=World.zone; const R=TILE*1.1;
+    const z=World.zone; const R=TILE*1.35;
     let best=null, bestD=R;
-    // 오브젝트
+    // 오브젝트 — 사각형과의 최단거리(큰 건물도 문 앞에서 인식)
     for(const o of Maps[z].objects){
       if (!o.action) continue;
-      const cx=(o.tx+ (o.w||1)/2)*TILE, cy=(o.ty+(o.h||1)/2)*TILE;
-      const d=Math.hypot(cx-P.x, cy-P.y);
-      if (d<bestD){ bestD=d; best={ kind:"obj", o, hx:cx, hy:o.ty*TILE,
+      const ox=o.tx*TILE, oy=o.ty*TILE, ow=(o.w||1)*TILE, oh=(o.h||1)*TILE;
+      const dx=Math.max(ox-P.x, 0, P.x-(ox+ow));
+      const dy=Math.max(oy-P.y, 0, P.y-(oy+oh));
+      const d=Math.hypot(dx,dy);
+      if (d<bestD){ bestD=d; best={ kind:"obj", o, hx:ox+ow/2, hy:(o.type==="bldg"?oy+oh:oy),
         hint: World._objHint(o) }; }
     }
     // 채집 노드
-    if (z==="mountain"){
+    if (DATA.isMtn(z)){
       for(const nd of World.nodes){
         const d=Math.hypot(nd.x-P.x, nd.y-P.y);
         if (d<bestD){ bestD=d; best={ kind:"node", nd, hx:nd.x, hy:nd.y,
@@ -365,10 +461,13 @@ const World = {
 
   _objHint(o){
     if (o.action==="sleep") return "🏠 집 (잠자기/저장)";
+    if (o.action==="enter"){ const b=DATA.BUILDINGS[o.bldg]; return `🚪 ${b?b.name:"건물"} 들어가기`; }
+    if (o.action==="exit_interior") return "🚪 나가기";
     if (o.action==="npc") return `${DATA.NPCS[o.npc].icon} ${DATA.NPCS[o.npc].name}와 대화`;
     if (o.action==="market") return Maps.stallActive()?"🪧 장터 좌판":"🪧 장터(장날 오전만)";
     if (o.action==="sign_house"||o.action==="sign_mtn") return "📖 안내판 읽기";
-    if (o.action==="shrine") return "🌳 당산나무 (신통력 해금)";
+    if (o.action==="shrine") return "🌳 당나무 제단 (신통력 해금)";
+    if (o.action==="altar") return "⛩️ 산정 제단 살펴보기";
     if (o.type==="plot"){ const p=Farming.plotState(o.plot);
       return p.state==="empty"?"🌰 메밀 심기":p.state==="ready"?"🌾 메밀 수확":"🌱 자라는 중"; }
     return "조사";
@@ -383,17 +482,23 @@ const World = {
     const o=t.o;
     switch(o.action){
       case "sleep": World._sleepMenu(); break;
+      case "enter": Interior.enter(o.bldg, Math.floor(P.x/TILE), Math.floor(P.y/TILE)); break;
+      case "exit_interior": Interior.exit(); break;
       case "npc": NPC.interact(o.npc); break;
       case "market": NPC.market(); break;
       case "sign_house": UI.startDialogue("📖 안내판",[
         "여기는 내 집. 문 앞에서 잠을 자면 다음 날이 되고 기력이 회복된다.",
         "마당의 밭에 <b>메밀 종자</b>를 심으면 4일 뒤 수확할 수 있다.",
         "오른쪽으로 나가면 <b>마을</b>이다."]); break;
-      case "sign_mtn": UI.startDialogue("📖 산 입구 표석",[
-        "산에는 계절마다 다른 약초가 돋아난다. 빛나는 표식(🌿✨🌟)에서 채집하라.",
-        "요괴(심볼)와 부딪히면 전투가 벌어진다. 기력이 낮으면 살금살금 피할 수도.",
-        "패하면 약초 절반과 시간을 잃으니 조심! 요괴 부산물은 <b>당산나무</b>에 바쳐라."]); break;
+      case "sign_mtn": UI.startDialogue("📖 산 표석",[
+        "산은 네 구역으로 나뉜다 — <b>입구(도깨비) → 중턱(물귀신) → 깊은 숲(구미호·두억시니) → 정상</b>.",
+        "안쪽으로 갈수록 약초 등급도, 요괴도 강해진다. 요괴는 멀리서도 너를 감지해 쫓아온다!",
+        "패하면 약초 절반과 시간을 잃으니 조심. 요괴 부산물(공물)은 <b>당나무 제단</b>에 바쳐 신통력을 얻어라."]); break;
       case "shrine": Shrine.open(); break;
+      case "altar": UI.startDialogue("⛩️ 산정 제단",[
+        "산 정상의 오래된 제단. 차가운 바람이 분다.",
+        "달래는 까닭 모를 익숙함을 느낀다… 마치 누군가 자신을 부르는 듯한.",
+        "(후반 스토리에서 풀릴 비밀이 잠들어 있다.)"]); break;
       default:
         if (o.type==="plot") Farming.interactPlot(o.plot);
     }
@@ -419,14 +524,22 @@ const World = {
     const w=Player.weaponData(), cs=Player.costumeData(), ac=Player.accessoryData();
     let html = `<p class="note">Lv.${P.level} (경험치 ${P.exp}/${P.level*25}) · 체력 ${Math.ceil(P.hp)}/${P.maxHp} · 신력 ${P.mp}/${Player.mpCap()} · 기력 ${Math.ceil(P.stamina)}/100</p>`;
     html += `<p class="note">🗡 무기 ${w.icon}${w.name}(공${w.atk}, 강화+${P.weaponLv}) · 👘 의상 ${cs.icon}${cs.name} · 🧿 장신구 ${ac.icon}${ac.name} · 호미 등급 ${P.homiTier}</p>`;
-    html += `<p class="note">✨ 신통력 ${P.magic.length?P.magic.map(id=>DATA.MAGIC[id].name).join(", "):"없음"} · 🌳 당산 정기 ${P.shrinePoints}</p>`;
-    html += `<p class="note">정(情) — 무당 ${P.affection.mudang}♥ · 대장장이 ${P.affection.daejang}♥ · 촌장 ${P.affection.chonjang}♥ · 주모 ${P.affection.jumo}♥</p>`;
+    html += `<p class="note">✨ 신통력 ${P.magic.length?P.magic.map(id=>DATA.MAGIC[id].name).join(", "):"없음 (당나무 제단에서 공물로 해금)"}</p>`;
+    html += `<p class="note">🍲 요리 숙련 Lv.${Player.cookLv()} (xp ${P.cookXp}) · 🏅 명성 ${P.fame} · 아는 요리 ${P.recipes.length}가지</p>`;
     html += `<hr style="border-color:#50412a;margin:10px 0">`;
 
-    // 재료
+    // 요리책
+    const recipeCards = P.recipes.map(id=>{ const r=DATA.RECIPES[id]; if(!r)return"";
+      const steps=r.steps.map(s=>DATA.INGREDIENTS[s].icon).join("→");
+      return `<div class="item-card"><div class="item-ic" style="background:#33240f">${r.icon}</div>
+        <div class="item-meta"><div class="item-name">${r.name} <span class="item-sub">${r.price}냥</span></div>
+        <div class="item-sub">${steps}</div></div></div>`; }).join("");
+    html += `<h4 style="color:#e7c66b;margin:6px 0">🍲 요리책 (${P.recipes.length})</h4><div class="grid">${recipeCards}</div>`;
+
+    // 재료 (전 종류)
     const mats=[];
-    if(Player.count("flour")) mats.push(`<div class="item-card"><div class="item-ic" style="background:#33240f">🌾</div><div class="item-meta"><div class="item-name">메밀가루</div><div class="item-sub">×${Player.count("flour")}</div></div></div>`);
-    if(Player.count("season")) mats.push(`<div class="item-card"><div class="item-ic" style="background:#33240f">🥢</div><div class="item-meta"><div class="item-name">양념장</div><div class="item-sub">×${Player.count("season")}</div></div></div>`);
+    Object.values(DATA.INGREDIENTS).forEach(g=>{ if(g.id==="namul")return; if(Player.count(g.id)>0)
+      mats.push(`<div class="item-card"><div class="item-ic" style="background:#33240f">${g.icon}</div><div class="item-meta"><div class="item-name">${g.name}</div><div class="item-sub">×${Player.count(g.id)}</div></div></div>`); });
     if(Player.count("seed")) mats.push(`<div class="item-card"><div class="item-ic" style="background:#33240f">🌰</div><div class="item-meta"><div class="item-name">메밀 종자</div><div class="item-sub">×${Player.count("seed")}</div></div></div>`);
     // 약초
     const herbCards = Player.herbList().map(id=>{ const h=DATA.HERBS[id];

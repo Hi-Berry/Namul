@@ -67,18 +67,20 @@ DATA.WEAPONS = {
 };
 DATA.WEAPON_UPGRADE = { cost: 60, atkBonus: 4 }; // 대장간 강화
 
-/* ---- 마법 (당산나무에서 요괴 부산물 헌납으로 해금) ----
- * shrinePts: 헌납 누적 정기 임계치
+/* ---- 마법 (당나무 제단에서 '공물'을 바쳐 해금) ----
+ * tribute: 필요한 공물(드롭) id, need: 필요 수량
+ * target: 2(랜덤 2체) | "all"(전체)
  */
 DATA.MAGIC = {
-  dokkaebi: { id:"dokkaebi", name:"도깨비불",      icon:"🔥", mp:6,  dmg:14, target:"all", effect:null,    shrinePts:8,  desc:"적 전체에 화염 피해." },
-  sansin:   { id:"sansin",   name:"산신령의 호통", icon:"⛰️", mp:10, dmg:10, target:"all", effect:"slow",  shrinePts:24, desc:"적 전체 피해 + 다음 턴 행동 둔화." },
-  yowoo:    { id:"yowoo",    name:"구미호의 홀림", icon:"🦊", mp:8,  dmg:4,  target:"all", effect:"charm", shrinePts:48, desc:"적 다수를 홀려 한 턴 못 움직이게 함." },
+  dokkaebi: { id:"dokkaebi", name:"도깨비불", sub:"화염", icon:"🔥", mp:6,  dmg:14, target:2,     effect:"burn",    burnPct:0.05, eff:3, tribute:"dokkaebi_fire", need:30, desc:"적 2체 타격 + 3턴간 화상(매턴 5% DoT)." },
+  hangi:    { id:"hangi",    name:"한기 서림", sub:"빙결", icon:"❄️", mp:10, dmg:10, target:"all", effect:"agiDown", eff:2, tribute:"cold_mist", need:25, desc:"적 전체 타격 + 2턴 민첩 30% 감소." },
+  hyeonhok: { id:"hyeonhok", name:"현혹의 춤", sub:"매혹", icon:"🦊", mp:8,  dmg:6,  target:2,     effect:"stun",    eff:1, tribute:"fox_orb",   need:15, desc:"적 2체 타격 + 1턴 확정 기절." },
+  taesan:   { id:"taesan",   name:"태산 압사", sub:"대지", icon:"⛰️", mp:12, dmg:18, target:"all", effect:"atkDown", eff:2, tribute:"red_horn",  need:5,  desc:"적 전체 강타 + 2턴 공격력 20% 감소." },
 };
 
 /* ---- 장비: 의상(코스튬) / 장신구 ---- */
 DATA.COSTUMES = {
-  plain: { id:"plain", name:"무명 저고리", icon:"👚", color:"#eef0e6", staminaMult:1.0, speedMult:1.0,  price:0,   desc:"기본 옷." },
+  plain: { id:"plain", name:"노랑 저고리", icon:"👚", color:"#f2c531", staminaMult:1.0, speedMult:1.0,  price:0,   desc:"달래의 기본 한복(노랑 저고리·빨강 치마)." },
   ramie: { id:"ramie", name:"모시 적삼",   icon:"🥻", color:"#dfeede", staminaMult:0.9, speedMult:1.08, price:90,  desc:"기력 소모 -10%, 이동 +8%." },
   silk:  { id:"silk",  name:"비단 한복",   icon:"👘", color:"#f3c6da", staminaMult:0.8, speedMult:1.18, price:220, desc:"기력 소모 -20%, 이동 +18%." },
 };
@@ -88,40 +90,71 @@ DATA.ACCESSORIES = {
   bujeok:  { id:"bujeok",  name:"부적",   icon:"🪬", mpBonus:25, dropBonus:0.05, price:180, desc:"최대 신력 +25, 드롭 +5%." },
 };
 
-/* ---- 요괴 부산물(드롭) — 당산나무 헌납 재료 ---- */
+/* ---- 요괴 부산물(드롭) ----
+ * common: 잡템(판매용, price) / tribute: 당나무 공물(마법 해금 재료)
+ */
 DATA.DROPS = {
-  dujib_skin: { id:"dujib_skin", name:"두꺼비 진액", icon:"🟢", pts:2 },
-  gumiho_fur: { id:"gumiho_fur", name:"여우 꼬리털", icon:"🟠", pts:4 },
-  dokk_horn:  { id:"dokk_horn",  name:"도깨비 뿔",   icon:"🔵", pts:7 },
-  beom_fang:  { id:"beom_fang",  name:"산범 송곳니", icon:"⚪", pts:14 },
+  // 도깨비
+  dok_club:      { id:"dok_club",      name:"부러진 방망이", icon:"🦯", price:6,  common:true },
+  dok_hide:      { id:"dok_hide",      name:"질긴 가죽",     icon:"🟫", price:8,  common:true },
+  dokkaebi_fire: { id:"dokkaebi_fire", name:"도깨비의 불",   icon:"🔥", tribute:true },
+  // 물귀신
+  wet_cloth:     { id:"wet_cloth",     name:"젖은 무명천",   icon:"🧶", price:7,  common:true },
+  sea_mustard:   { id:"sea_mustard",   name:"물미역",        icon:"🟩", price:9,  common:true },
+  cold_mist:     { id:"cold_mist",     name:"서늘한 물안개", icon:"🌫️", tribute:true },
+  // 구미호
+  fox_meat:      { id:"fox_meat",      name:"여우 고기",     icon:"🍖", price:14, common:true },
+  fox_tail:      { id:"fox_tail",      name:"부드러운 꼬리털",icon:"🟠", price:16, common:true },
+  fox_orb:       { id:"fox_orb",       name:"여우 구슬",     icon:"🔮", tribute:true },
+  // 두억시니
+  yokai_bone:    { id:"yokai_bone",    name:"두꺼운 요괴 뼈",icon:"🦴", price:18, common:true },
+  hard_blood:    { id:"hard_blood",    name:"짐승의 굳은 피",icon:"🩸", price:20, common:true },
+  red_horn:      { id:"red_horn",      name:"붉은 뿔 조각",  icon:"🔺", tribute:true },
 };
 
-/* ---- 몬스터 (산) — drop: 처치 시 떨구는 부산물 ---- */
+/* ---- 몬스터 (산) ----
+ * zone: 출몰 구역, detect: 감지 반경(타일), speed: 필드 추격 속도 배율, gimmick: 전투 기믹
+ * acc: 명중률, commonDrops/tribute/tributeRate: 처치 보상
+ */
 DATA.MONSTERS = {
-  dujib:   { id:"dujib",   name:"두꺼비 요괴", icon:"🐸", hp:20, atk:5,  exp:6,  gold:12, drop:"dujib_skin", dropRate:0.7 },
-  gumiho:  { id:"gumiho",  name:"새끼 구미호", icon:"🦊", hp:32, atk:8,  exp:12, gold:25, drop:"gumiho_fur", dropRate:0.6 },
-  dokk:    { id:"dokk",    name:"도깨비",      icon:"👹", hp:45, atk:11, exp:20, gold:40, drop:"dokk_horn",  dropRate:0.6 },
-  beom:    { id:"beom",    name:"산범",        icon:"🐯", hp:60, atk:15, exp:32, gold:70, drop:"beom_fang",  dropRate:1.0 },
-};
-/* 계절별 출현 + 마릿수 범위 */
-DATA.encountersBySeason = {
-  "봄":   [["dujib",1,2],["gumiho",1,1]],
-  "여름": [["dujib",1,2],["gumiho",1,2],["dokk",1,1]],
-  "가을": [["gumiho",1,2],["dokk",1,2]],
-  "겨울": [["dokk",1,2],["beom",1,1]],
+  dokkaebi_m:{ id:"dokkaebi_m", name:"도깨비",   icon:"👹", hp:24,  atk:7,  acc:0.7,  exp:8,  gold:14, zone:"mtn1", detect:3,  speed:0.7, gimmick:"mischief",
+               commonDrops:["dok_club","dok_hide"], tribute:"dokkaebi_fire", tributeRate:0.18, desc:"장난꾸러기. 가끔 기력을 훔친다." },
+  mulgwisin: { id:"mulgwisin",  name:"물귀신",   icon:"👻", hp:36,  atk:9,  acc:0.9,  exp:14, gold:26, zone:"mtn2", detect:5,  speed:1.0, gimmick:"agiDown",
+               commonDrops:["wet_cloth","sea_mustard"], tribute:"cold_mist", tributeRate:0.18, desc:"피격 시 민첩을 떨군다. 마법이 유효." },
+  gumiho:    { id:"gumiho",     name:"구미호",   icon:"🦊", hp:40,  atk:12, acc:0.95, exp:22, gold:45, zone:"mtn3", detect:8,  speed:1.5, aggro:true, gimmick:"evasion",
+               commonDrops:["fox_meat","fox_tail"], tribute:"fox_orb", tributeRate:0.18, desc:"물리 회피 50%. 마법은 반드시 적중." },
+  dueok:     { id:"dueok",      name:"두억시니", icon:"🗿", hp:108, atk:14, acc:1.0,  exp:50, gold:90, zone:"mtn3", detect:10, speed:1.2, gimmick:"taesan",
+               commonDrops:["yokai_bone","hard_blood"], tribute:"red_horn", tributeRate:0.18, desc:"태산 같은 맷집. 3턴마다 태산 찍기." },
 };
 
-/* ---- 주막 손님 (장사 미니게임) ----
- * 손님은 메밀가루+나물(아무거나)+양념장 = 메밀전병/나물전 을 주문.
- * patience: 인내 초, basePay: 기본 보수.
+/* ---- 산 4개 구역(Zone) ---- */
+DATA.MOUNTAIN_ZONES = [
+  { key:"mtn1", name:"산 입구", tint:null,                     fog:false, tier:1, monsters:["dokkaebi_m"],         count:[3,4] },
+  { key:"mtn2", name:"산 중턱", tint:"rgba(18,22,66,0.34)",    fog:false, tier:2, monsters:["mulgwisin"],          count:[3,4] },
+  { key:"mtn3", name:"깊은 숲", tint:"rgba(10,28,18,0.30)",    fog:true,  tier:3, monsters:["gumiho","dueok"],     count:[3,5] },
+  { key:"mtn4", name:"산 정상", tint:"rgba(255,236,190,0.05)", fog:false, tier:0, monsters:[],                     count:[0,0] },
+];
+DATA.zoneMeta = function(key){ return DATA.MOUNTAIN_ZONES.find(z=>z.key===key) || null; };
+DATA.isMtn = function(key){ return /^mtn/.test(key); };
+
+/* ---- 주막 손님 (요리 타이쿤) ----
+ * patience: 인내(초), payMult: 음식값 배율, tip: 고정 팁
+ * wants: 특정 음식 선호(있으면 그 음식 주문, 없으면 해금 메뉴 중 랜덤)
+ * 기획자 편집: 손님 추가/배율 조절은 이 배열에서.
  */
 DATA.CUSTOMERS = [
-  { name:"보부상",     icon:"🧑‍🌾", patience:14, basePay:30 },
-  { name:"양반 도령",  icon:"🎩",   patience:11, basePay:45 },
-  { name:"주모 단골",  icon:"👵",   patience:16, basePay:25 },
-  { name:"포졸",       icon:"👮",   patience:12, basePay:35 },
-  { name:"떠돌이 화가",icon:"🎨",   patience:13, basePay:40 },
-  { name:"비단 상인",  icon:"🧣",   patience:10, basePay:55 },
+  { name:"농부",        icon:"🧑‍🌾", patience:18, payMult:1.0, tip:0 },
+  { name:"보부상",      icon:"🎒",   patience:15, payMult:1.1, tip:3 },
+  { name:"주모 단골",   icon:"👵",   patience:20, payMult:0.9, tip:2 },
+  { name:"포졸",        icon:"👮",   patience:13, payMult:1.15, tip:5 },
+  { name:"떠돌이 화가", icon:"🎨",   patience:14, payMult:1.2, tip:4 },
+  { name:"양반 도령",   icon:"🎩",   patience:10, payMult:1.5, tip:10 },
+  { name:"비단 상인",   icon:"🧣",   patience:11, payMult:1.4, tip:8 },
+  { name:"훈장님",      icon:"📜",   patience:12, payMult:1.25, tip:6, wants:"kalguksu" },
+  { name:"한량",        icon:"🍶",   patience:9,  payMult:1.6, tip:12, wants:"dongdongju" },
+  { name:"스님",        icon:"🧎",   patience:22, payMult:1.0, tip:0, veggie:true }, // 고기 안 먹음
+  { name:"사또",        icon:"👑",   patience:8,  payMult:2.0, tip:20 },             // 큰손·급함
+  { name:"아이",        icon:"🧒",   patience:24, payMult:0.7, tip:1 },
 ];
 
 /* 빠른 서빙 보너스 배율 (서빙 소요 초 → 배율) */
@@ -132,7 +165,7 @@ DATA.servePayBonus = function(seconds){
   return 1.0;
 };
 
-/* ---- NPC ---- */
+/* ---- NPC (12종) ---- */
 DATA.NPCS = {
   mudang:    { id:"mudang",    name:"무당",       icon:"🔮", color:"#8e44ad" },
   daejang:   { id:"daejang",   name:"대장장이",   icon:"🔨", color:"#7f5539" },
@@ -140,6 +173,71 @@ DATA.NPCS = {
   jumo:      { id:"jumo",      name:"주모",       icon:"🍶", color:"#c0392b" },
   uisang:    { id:"uisang",    name:"의상점 주인",icon:"🧵", color:"#b5651d" },
   geonchuk:  { id:"geonchuk",  name:"방물장수",   icon:"🪡", color:"#27708a" },
+  uiwon:     { id:"uiwon",     name:"의원",       icon:"💉", color:"#2e8b57" },
+  yakcho:    { id:"yakcho",    name:"약초상",     icon:"🌿", color:"#4a7a3a" },
+  hunjang:   { id:"hunjang",   name:"훈장",       icon:"📜", color:"#5a4a8a" },
+  bobu:      { id:"bobu",      name:"보부상",     icon:"🎒", color:"#a0522d" },
+  nongbu:    { id:"nongbu",    name:"농부",       icon:"🧑‍🌾", color:"#6b8e23" },
+  banga:     { id:"banga",     name:"방앗간지기", icon:"🌾", color:"#9c7a3a" },
+  pujut:     { id:"pujut",     name:"푸줏간 주인",icon:"🔪", color:"#a83232" },
+};
+
+/* ---- 마을 건물 (내부 진입 가능) ----
+ * 마을 외부 문 위치 + 내부 NPC + 기능(station)
+ * 기획자 편집: 건물/문 위치/기능은 여기서. floor=내부 바닥색.
+ */
+DATA.BUILDINGS = {
+  jumak:   { name:"주막",      npc:"jumo",     floor:"#6e4326", sign:"#c0392b" },
+  daejang: { name:"대장간",    npc:"daejang",  floor:"#4a4036", sign:"#7f5539" },
+  mudang:  { name:"무당집",    npc:"mudang",   floor:"#3a2d44", sign:"#8e44ad" },
+  chonjang:{ name:"촌장댁",    npc:"chonjang", floor:"#4a4232", sign:"#2c3e50" },
+  uisang:  { name:"의상점",    npc:"uisang",   floor:"#5a4636", sign:"#b5651d" },
+  banga:   { name:"방앗간",    npc:"banga",    floor:"#5a4a30", sign:"#9c7a3a" },
+  uiwon:   { name:"의원",      npc:"uiwon",    floor:"#3a4a3a", sign:"#2e8b57" },
+  yakcho:  { name:"약초방",    npc:"yakcho",   floor:"#3f4a32", sign:"#4a7a3a" },
+  hunjang: { name:"서당",      npc:"hunjang",  floor:"#46406a", sign:"#5a4a8a" },
+  pujut:   { name:"푸줏간",    npc:"pujut",    floor:"#5a3636", sign:"#a83232" },
+};
+
+/* ---- 요리 재료 ----
+ * src: 획득처 안내(텍스트). buy>0 이면 장터/해당 상점에서 구매 가능.
+ * 기획자 편집: 재료 추가/가격은 여기서.
+ */
+DATA.INGREDIENTS = {
+  flour:   { id:"flour",   name:"메밀가루", icon:"🌾", buy:0,  src:"집 메밀밭 수확" },
+  season:  { id:"season",  name:"양념장",   icon:"🥢", buy:5,  src:"장터/약초방" },
+  rice:    { id:"rice",    name:"쌀",       icon:"🍚", buy:8,  src:"장터/농부" },
+  pa:      { id:"pa",      name:"파",       icon:"🧅", buy:6,  src:"장터/농부" },
+  bean:    { id:"bean",    name:"녹두",     icon:"🫘", buy:9,  src:"장터/농부" },
+  pork:    { id:"pork",    name:"돼지고기", icon:"🥩", buy:18, src:"푸줏간" },
+  fish:    { id:"fish",    name:"조기",     icon:"🐟", buy:14, src:"푸줏간(생선)" },
+  tofu:    { id:"tofu",    name:"두부",     icon:"⬜", buy:10, src:"방앗간" },
+  noodle:  { id:"noodle",  name:"국수사리", icon:"🍜", buy:0,  src:"방앗간(메밀가루 가공)" },
+  nuruk:   { id:"nuruk",   name:"누룩",     icon:"🟡", buy:12, src:"주모/방앗간" },
+  dotori:  { id:"dotori",  name:"도토리",   icon:"🌰", buy:0,  src:"가을 산 채집" },
+  namul:   { id:"namul",   name:"나물",     icon:"🌿", buy:0,  src:"산 채집(아무 나물)" },
+};
+// 어떤 재고가 있는지 셀 때 'namul'은 보유 약초 전체를 의미
+DATA.isIngredient = function(id){ return !!DATA.INGREDIENTS[id]; };
+
+/* ---- 요리 레시피 (조선 주막 음식) ----
+ * steps: 재료를 넣어야 하는 '순서'(타이쿤). price: 기본 음식값.
+ * unlock: 시작 해금 여부. learn: 해금 비용(주모에게 배움). by: 해금 출처 메모.
+ * 기획자 편집: 음식 추가/순서/가격/해금은 여기서.
+ */
+DATA.RECIPES = {
+  jeon:      { id:"jeon",      name:"메밀전",   icon:"🫓", steps:["flour","namul","season"], price:30, unlock:true,  by:"기본" },
+  jumeokbap: { id:"jumeokbap", name:"주먹밥",   icon:"🍙", steps:["rice","namul","season"],  price:28, unlock:true,  by:"기본" },
+  pajeon:    { id:"pajeon",    name:"파전",     icon:"🥞", steps:["flour","pa","season"],    price:42, learn:80,    by:"주모" },
+  dotorimuk: { id:"dotorimuk", name:"도토리묵", icon:"🟫", steps:["dotori","namul","season"],price:46, learn:100,   by:"주모" },
+  bindaetteok:{id:"bindaetteok",name:"빈대떡",  icon:"🟡", steps:["bean","pa","season"],     price:58, learn:140,   by:"주모" },
+  kalguksu:  { id:"kalguksu",  name:"칼국수",   icon:"🍜", steps:["noodle","namul","season"],price:54, learn:160,   by:"방앗간" },
+  jumeok2:   { id:"jumeok2",   name:"두부조림", icon:"⬜", steps:["tofu","pa","season"],     price:52, learn:150,   by:"방앗간" },
+  gukbap:    { id:"gukbap",    name:"국밥",     icon:"🍲", steps:["rice","pork","season"],   price:72, learn:220,   by:"주모", meat:true },
+  sanjeok:   { id:"sanjeok",   name:"산적",     icon:"🍢", steps:["pork","pa","season"],     price:68, learn:200,   by:"푸줏간", meat:true },
+  jogi:      { id:"jogi",      name:"조기구이", icon:"🐟", steps:["fish","season"],          price:62, learn:180,   by:"푸줏간" },
+  dongdongju:{ id:"dongdongju",name:"동동주",   icon:"🍶", steps:["rice","nuruk"],           price:84, learn:260,   by:"주모", drink:true },
+  injeolmi:  { id:"injeolmi",  name:"인절미",   icon:"🍡", steps:["rice","bean"],            price:38, learn:120,   by:"방앗간" },
 };
 
 /* ---- 비용/상수 ---- */
@@ -150,4 +248,11 @@ DATA.CONST = {
   PORRIDGE_HEAL: 25,    // 나물죽 회복량
   PORRIDGE_HERBS: 2,    // 나물죽 재료(나물 2개)
   DEFEAT_TIME_LOSS: 300,// 패배 시 게임시간 5시간(분)
+  // 진행/성장
+  COOK_XP_PER_SERVE: 3, // 손님 1명 대접 시 요리 숙련 경험치
+  FAME_PER_SERVE: 1,    // 명성 (메뉴/손님 해금에 사용)
 };
+
+/* 요리 숙련도: 레벨에 따른 보수 배율 & 빠른서빙 관대함 */
+DATA.cookLevel = function(xp){ return Math.floor(Math.sqrt(xp/20)); }; // 0,1,2... 완만
+DATA.cookPayBonus = function(xp){ return 1 + DATA.cookLevel(xp)*0.08; }; // 레벨당 +8%

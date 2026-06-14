@@ -12,11 +12,12 @@ const Game = {
     World.start();
     UI.hideScreen();
     setScene("world");
-    UI.startDialogue("조선 나물전기", [
-      "산 너머에서 약초를 캐며 떠돌던 그대는, 작은 마을 어귀의 빈 초가집에 짐을 풀었다.",
-      "낮엔 <b>산에서 약초를 캐고</b>, 밭엔 <b>메밀</b>을 기르며,",
-      "<b>장날(5·10일)</b>엔 주막에서 <b>메밀전</b>을 팔아 살림을 꾸려보자.",
-      "먼저 오른쪽 <b>마을</b>로 나가 사람들을 만나보는 게 좋겠다. (이동: 방향키/WASD)"
+    UI.startDialogue("조선 나물전기 — 달래", [
+      "신빨 떨어진 무당집에서 구박만 받던 열다섯 살 <b>달래</b>. 끝내 쫓겨나 작은 마을 어귀 빈 초가집에 짐을 풀었다.",
+      "「흥, 나물 지식 하나는 끝내주거든? 이깟 거 굶어 죽기야 하겠어!」 — 천방지축이지만 강철 멘탈이다.",
+      "낮엔 <b>산에서 약초를 캐고</b>, 밭엔 <b>메밀</b>을 기르며, <b>장날(5·10일)</b>엔 주막에서 <b>메밀전</b>을 팔아보자.",
+      "산은 <b>입구→중턱→깊은 숲→정상</b> 4구역. 요괴 공물을 <b>당나무 제단</b>에 바치면 신통력을 얻는다.",
+      "먼저 오른쪽 <b>마을</b>로 나가 사람들을 만나보자. (이동: WASD)"
     ]);
   },
 
@@ -24,8 +25,8 @@ const Game = {
     Sound.resume();
     if (!Save.load()){ toast("저장된 기록이 없다","bad"); return; }
     Farming.onNewDay();
+    World.mtn={};
     World.placeAtSpawn();
-    World.spawnMountain();
     if (P.pet) World.initPet();
     UI.hideScreen();
     setScene("world");
@@ -87,6 +88,7 @@ window.addEventListener("load", ()=>{
     combat:  Combat.scene,
   };
 
+  Sprites.load();
   Player.init();
   Farming.init();
   Quests.init();

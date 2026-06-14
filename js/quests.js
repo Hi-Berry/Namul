@@ -48,9 +48,9 @@ const Quests = {
       desc:"산을 어지럽히는 요괴 4마리를 물리치기.",
       goal:{ type:"defeat", count:4 },
       start:["요즘 산기운이 흉흉해… 요괴들이 부쩍 날뛰는구나.",
-             "네 마리만 잡아 산을 달래거라. 그럼 더 강한 신통력을 내려주마."],
-      ready:["산이 한결 잠잠해졌구나. 약속한 신통력을 받거라."],
-      reward:{ money:120, exp:25, magic:"sansin" },
+             "네 마리만 잡아 산을 달래거라. 그럼 당나무 제단에 바칠 공물을 보태주마."],
+      ready:["산이 한결 잠잠해졌구나. 자, 공물에 보태거라."],
+      reward:{ money:120, exp:25, item:{id:"cold_mist",n:8} },
     },
     q_pet: {
       giver:"mudang", story:true, prereq:"q_magic", title:"산삼과 작은 친구",
@@ -62,12 +62,12 @@ const Quests = {
       reward:{ money:200, exp:20, pet:{ id:"squirrel", name:"도토리", icon:"🐿️" } },
     },
     q_boss: {
-      giver:"chonjang", story:true, prereq:"q_pet", title:"산범 토벌",
-      desc:"마을을 위협하는 산범(호랑이 요괴)을 물리치기. (겨울 산에 출몰)",
-      goal:{ type:"defeat", count:1, mon:"beom" },
-      start:["큰일일세! 겨울 산에 산범이 나타나 마을을 노린다네.",
-             "자네밖에 믿을 사람이 없네. 부디 그놈을 물리쳐주게!"],
-      ready:["사… 산범을 잡았다고?! 자네는 이 마을의 은인일세!!"],
+      giver:"chonjang", story:true, prereq:"q_pet", title:"두억시니 토벌",
+      desc:"깊은 숲(산 3구역)의 두억시니를 물리치기.",
+      goal:{ type:"defeat", count:1, mon:"dueok" },
+      start:["큰일일세! 깊은 숲에 두억시니가 나타나 마을을 노린다네.",
+             "태산 같은 놈이라 '태산 압사' 같은 강한 신통력이 필요할 게야. 부디 물리쳐주게!"],
+      ready:["두억시니를 잡았다고?! 자네는 이 마을의 은인일세!!"],
       reward:{ money:400, exp:60, item:{id:"season",n:10} },
     },
 
@@ -91,18 +91,53 @@ const Quests = {
     s_dokkaebi: {
       giver:"mudang", prereq:"q_magic", title:"도깨비의 내기",
       desc:"도깨비 3마리를 혼쭐내기. (도깨비가 무당에게 시비를 걸었다나)",
-      goal:{ type:"defeat", count:3, mon:"dokk" },
-      start:["글쎄 도깨비 녀석들이 내 신당 앞에서 씨름 내기를 걸지 뭐냐!","대신 세 놈만 혼쭐을 내주렴. 분이 풀리게."],
-      ready:["깔깔! 그 녀석들 코가 납작해졌겠구나. 속이 다 시원하다!"],
-      reward:{ money:130, exp:18, magic:"yowoo" },
+      goal:{ type:"defeat", count:3, mon:"dokkaebi_m" },
+      start:["글쎄 도깨비 녀석들이 내 신당 앞에서 씨름 내기를 걸지 뭐냐!","산 입구에서 세 놈만 혼쭐을 내주렴. 분이 풀리게."],
+      ready:["깔깔! 그 녀석들 코가 납작해졌겠구나. 자, 공물에 보태거라."],
+      reward:{ money:130, exp:18, item:{id:"fox_orb",n:3} },
+    },
+
+    /* ---------- 요리/경영 진행 ---------- */
+    s_firstcook: {
+      giver:"jumo", prereq:"q_jumo", title:"메뉴를 늘려라",
+      desc:"새 요리 레시피를 3가지 이상 익히기. (주모·방앗간·푸줏간·보부상에게 배움)",
+      goal:{ type:"recipes", count:5 }, // 기본 2 + 3가지
+      start:["메밀전 하나로는 단골이 안 늘어! 다른 음식도 배워보게.","나한테도, 방앗간·푸줏간·보부상한테도 배울 게 많지."],
+      ready:["메뉴가 푸짐해졌구먼! 손님들이 좋아하겠어."],
+      reward:{ money:120, exp:10, item:{id:"season",n:8} },
+    },
+    s_master: {
+      giver:"hunjang", title:"요리 명인의 길",
+      desc:"요리 숙련을 Lv.3까지 올리기. (장사로 손님을 많이 대접)",
+      goal:{ type:"cooklv", count:3 },
+      start:["솜씨는 갈고닦아야 느는 법. 장사로 손님을 많이 치러 숙련을 쌓거라.","경지에 이르면 같은 음식도 값을 더 받지."],
+      ready:["허허, 이젠 명인 소리 듣겠구나!"],
+      reward:{ money:200, exp:20 },
+    },
+    s_fame: {
+      giver:"chonjang", prereq:"q_jumo", title:"마을의 명물",
+      desc:"명성 40 달성. (장사·의뢰로 이름을 알리기)",
+      goal:{ type:"fame", count:40 },
+      start:["자네 주막이 제법 소문이 났더군. 마을의 명물이 되어보게!","명성 마흔이면 인근에 자자할 걸세."],
+      ready:["이제 자네 모르는 이가 없네그려!"],
+      reward:{ money:300, exp:25, aff:{npc:"chonjang",n:2} },
+    },
+    s_feast: {
+      giver:"pujut", prereq:"q_smith", title:"사또의 잔칫상",
+      desc:"국밥을 3그릇 대접하기. (푸줏간에서 국밥 배우고 돼지고기 준비)",
+      goal:{ type:"serve", count:3, dish:"gukbap" },
+      start:["사또께서 국밥 맛집을 찾으신다네! 자네가 한번 해보게.","국밥 레시피랑 돼지고기는 내가 대줄 테니."],
+      ready:["국밥 솜씨가 일품이라고 사또께서 칭찬이 자자하네!"],
+      reward:{ money:260, exp:20, item:{id:"pork",n:3} },
     },
   },
 
   /* ---- 초기화/저장 ---- */
-  init(){ this.active=[]; this.done=[]; this.progress={}; this._talked={}; },
+  init(){ this.active=[]; this.done=[]; this.progress={}; this._talked={}; this._announced=new Set(); },
   save(){ return { active:this.active, done:this.done, progress:this.progress, talked:Object.fromEntries(Object.entries(this._talked).map(([k,v])=>[k,[...v]])) }; },
   restore(d){ if(!d){ this.init(); return; } this.active=d.active||[]; this.done=d.done||[]; this.progress=d.progress||{};
-    this._talked={}; if(d.talked) for(const k in d.talked) this._talked[k]=new Set(d.talked[k]); },
+    this._talked={}; if(d.talked) for(const k in d.talked) this._talked[k]=new Set(d.talked[k]);
+    this._announced=new Set(this.active.filter(id=>this.reached(id))); },
 
   isDone(id){ return this.done.includes(id); },
   isActive(id){ return this.active.includes(id); },
@@ -126,6 +161,9 @@ const Quests = {
     const q=this.defs[id], g=q.goal;
     if (g.type==="deliver") return Player.count(g.item) >= g.count;
     if (g.type==="gold") return P.money >= g.count;
+    if (g.type==="fame") return P.fame >= g.count;
+    if (g.type==="cooklv") return Player.cookLv() >= g.count;
+    if (g.type==="recipes") return P.recipes.length >= g.count;
     return (this.progress[id]||0) >= this.goalCount(g);
   },
 
@@ -172,7 +210,7 @@ const Quests = {
     const r=q.reward; let lines=[];
     if (r.money){ P.money+=r.money; lines.push(`💰 ${r.money}냥`); }
     if (r.exp){ Player.gainExp(r.exp); lines.push(`⭐ 경험치 ${r.exp}`); }
-    if (r.item){ Player.add(r.item.id, r.item.n); lines.push(`📦 ${DATA.GOODS[r.item.id]?DATA.GOODS[r.item.id].name:r.item.id} ×${r.item.n}`); }
+    if (r.item){ Player.add(r.item.id, r.item.n); const def=DATA.GOODS[r.item.id]||DATA.DROPS[r.item.id]||DATA.HERBS[r.item.id]; lines.push(`📦 ${def?def.name:r.item.id} ×${r.item.n}`); }
     if (r.aff){ Player.addAffection(r.aff.npc, r.aff.n); lines.push(`♥ 정 +${r.aff.n}`); }
     if (r.weaponUpgrade){ P.weaponLv+=r.weaponUpgrade; lines.push(`⚒️ 무기 강화 +${r.weaponUpgrade}`); }
     if (r.magic && Player.learnMagic(r.magic)){ lines.push(`✨ 신통력 '${DATA.MAGIC[r.magic].name}'`); }
@@ -185,21 +223,33 @@ const Quests = {
   /* ---- 이벤트 알림 ---- */
   notify(ev, data){
     let completedNow=[];
+    if (!this._announced) this._announced=new Set();
     this.active.forEach(id=>{
       const q=this.defs[id], g=q.goal;
-      const was=this.reached(id);
       if (ev==="talk" && g.type==="talkAll"){
         if (g.who.includes(data) && this._talked[id]){ this._talked[id].add(data); this.progress[id]=this._talked[id].size; }
       } else if (ev==="gather" && g.type==="gather"){ this.progress[id]+= (data.count||0);
       } else if (ev==="defeat" && g.type==="defeat"){
         const c = g.mon ? (data.ids||[]).filter(x=>x===g.mon).length : (data.ids||[]).length;
         this.progress[id]+= c;
-      } else if (ev==="serve" && g.type==="serve"){ this.progress[id]+=1;
+      } else if (ev==="serve" && g.type==="serve"){ if(!g.dish || g.dish===(data&&data.dish)) this.progress[id]+=1;
       } else if (ev==="sell" && g.type==="sell"){ this.progress[id]+=(data.count||0);
-      } else if (ev==="gold" && g.type==="gold"){ /* reached()가 P.money로 판정 */ }
-      if (!was && this.reached(id)) completedNow.push(id);
+      }
+      // 상태 기반(gold/fame/cooklv/recipes)은 reached()가 직접 판정
+      if (this.reached(id) && !this._announced.has(id)){ this._announced.add(id); completedNow.push(id); }
     });
     completedNow.forEach(id=>{ Sound.sfx("quest"); toast(`📜 의뢰 조건 달성! '${this.defs[id].title}' — ${DATA.NPCS[this.defs[id].giver].name}에게 보고하자`,"gold"); });
+  },
+
+  /* 화면 추적기용 진행 요약 (활성 퀘스트) */
+  trackerLines(){
+    return this.active.map(id=>{
+      const q=this.defs[id], g=q.goal, total=this.goalCount(g);
+      const cur = g.type==="deliver"?Player.count(g.item) : g.type==="gold"?P.money
+               : g.type==="fame"?P.fame : g.type==="cooklv"?Player.cookLv() : g.type==="recipes"?P.recipes.length
+               : (this.progress[id]||0);
+      return { title:q.title, cur:Math.min(cur,total), total, done:this.reached(id), giver:DATA.NPCS[q.giver].name };
+    });
   },
 
   /* ---- 퀘스트 일지 (J) ---- */
@@ -210,7 +260,9 @@ const Quests = {
       html+=`<h4 style="color:#e7c66b;margin:4px 0 8px">진행 중</h4>`;
       this.active.forEach(id=>{
         const q=this.defs[id], g=q.goal;
-        let cur = g.type==="deliver"?Player.count(g.item) : g.type==="gold"?P.money : (this.progress[id]||0);
+        let cur = g.type==="deliver"?Player.count(g.item) : g.type==="gold"?P.money
+                : g.type==="fame"?P.fame : g.type==="cooklv"?Player.cookLv() : g.type==="recipes"?P.recipes.length
+                : (this.progress[id]||0);
         const total = this.goalCount(g);
         const done=this.reached(id);
         html+=`<div class="shop-row"><div class="item-ic" style="background:#33240f">${q.story?"📖":"📜"}</div>

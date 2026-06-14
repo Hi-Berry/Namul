@@ -44,63 +44,172 @@ const Maps = {
     grid: [
       "TTTTTTTTTTTTTTTTTTTT",
       "T..................T",
-      "T...........WWW....T",
-      "T...........WWW....T",
-      ",,,,,,,,,,,,,,,,,,,,",  // 좌측 집 출구
-      "T...,,,,,,,,,,,,,...T",
-      "T...,............,.T",
-      "T...,............,.T",
-      "T...,,,,,,,,,,,,,,,,,",  // 우측 산 출구
-      "T...,............,.T",
-      "T...,............,.T",
-      "T...,,,,,,,,,,,,,...T",
+      "T..................T",
+      "T..................T",
+      "T..................T",
+      "T..................T",
+      "T..................T",
+      ",..................,",  // 좌(집)·우(산) 출구
+      "T..................T",
+      "T..................T",
+      "T..................T",
+      "T..................T",
       "T..................T",
       "T..................T",
       "TTTTTTTTTTTTTTTTTTTT",
     ],
     objects: [
-      { type:"bldg", tx:2,  ty:5, w:3, h:2, solid:true, color:"#8e44ad", label:"무당집",  npc:"mudang",  action:"npc" },
-      { type:"bldg", tx:15, ty:5, w:3, h:2, solid:true, color:"#7f5539", label:"대장간",  npc:"daejang", action:"npc" },
-      { type:"bldg", tx:2,  ty:10,w:3, h:2, solid:true, color:"#2c3e50", label:"촌장댁",  npc:"chonjang",action:"npc" },
-      { type:"bldg", tx:15, ty:10,w:3, h:2, solid:true, color:"#c0392b", label:"주막",    npc:"jumo",    action:"npc" },
-      { type:"bldg", tx:3,  ty:1, w:3, h:2, solid:true, color:"#b5651d", label:"의상점",  npc:"uisang",  action:"npc" },
-      { type:"bldg", tx:14, ty:1, w:3, h:2, solid:true, color:"#27708a", label:"방물점",  npc:"geonchuk",action:"npc" },
-      { type:"stall", tx:9, ty:7, solid:true, label:"장터 좌판", action:"market" },
+      // 윗줄 5채 (문 아래로 향함)
+      { type:"bldg", tx:1,  ty:1, w:3, h:2, solid:true, bldg:"mudang",  action:"enter" },
+      { type:"bldg", tx:5,  ty:1, w:3, h:2, solid:true, bldg:"uiwon",   action:"enter" },
+      { type:"bldg", tx:9,  ty:1, w:3, h:2, solid:true, bldg:"uisang",  action:"enter" },
+      { type:"bldg", tx:13, ty:1, w:3, h:2, solid:true, bldg:"yakcho",  action:"enter" },
+      { type:"bldg", tx:16, ty:1, w:3, h:2, solid:true, bldg:"hunjang", action:"enter" },
+      // 아랫줄 5채
+      { type:"bldg", tx:1,  ty:11,w:3, h:2, solid:true, bldg:"daejang", action:"enter" },
+      { type:"bldg", tx:5,  ty:11,w:3, h:2, solid:true, bldg:"pujut",   action:"enter" },
+      { type:"bldg", tx:9,  ty:11,w:3, h:2, solid:true, bldg:"banga",   action:"enter" },
+      { type:"bldg", tx:13, ty:11,w:3, h:2, solid:true, bldg:"chonjang",action:"enter" },
+      { type:"bldg", tx:16, ty:11,w:3, h:2, solid:true, bldg:"jumak",   action:"enter" },
+      // 장터 좌판 + 노점 NPC(방물장수/농부/보부상)
+      { type:"stall",  tx:9, ty:7, solid:true, label:"장터 좌판", action:"market" },
+      { type:"person", tx:5, ty:7, npc:"geonchuk", action:"npc" },
+      { type:"person", tx:14,ty:7, npc:"nongbu",   action:"npc" },
+      { type:"person", tx:11,ty:5, npc:"bobu",     action:"npc" },
     ],
     exits: [
-      { tx:0,  ty:4, to:"house", sx:18, sy:7 },
-      { tx:19, ty:8, to:"mountain", sx:1, sy:7 },
+      { tx:0,  ty:7, to:"house", sx:18, sy:7 },
+      { tx:19, ty:7, to:"mtn1", sx:1, sy:7 },
     ],
-    spawn: { tx:9, ty:9 },
+    spawn: { tx:10, ty:9 },
   },
 
-  /* 산 — 약초 채집 / 몬스터 심볼 인카운터 */
-  mountain: {
-    name: "산", danger: true,
+  /* ===== 산 — 4개 구역(Zone) ===== */
+  /* Zone 1: 산 입구 (도깨비 / 당나무 제단) */
+  mtn1: {
+    name: "산 입구", danger: true,
     grid: [
       "TTTTTTTTTTTTTTTTTTTT",
-      "T...R...TT....R....T",
-      "T.......TT.........T",
-      "T..RR.........RR...T",
-      ",,,,,,,......,,,,,,T",  // 좌측 마을 출구
-      "T....,...RR...,....T",
+      "T...R..........R...T",
+      "T..................T",
+      "T....TT......RR....T",
+      ",,,,,,,......,,,,,,,",  // 좌(마을) ↔ 우(중턱)
       "T....,........,....T",
-      "T....,,,,..,,,,...RT",
-      "T.......,..,.......T",
-      "T..RR...,..,...RR..T",
-      "T.......,..,.......T",
-      "T....TT.,..,.TT....T",
-      "T.......,..,.......T",
-      "T.......,..,.......T",
+      "T....,........,....T",
+      "T..................T",
+      "T...RR........TT...T",
+      "T..................T",
+      "T.......TT.........T",
+      "T..R...........R...T",
+      "T..................T",
+      "T..................T",
       "TTTTTTTTTTTTTTTTTTTT",
     ],
     objects: [
       { type:"sign", tx:3, ty:5, solid:true, label:"산 입구 표석", action:"sign_mtn" },
-      { type:"shrine", tx:6, ty:2, w:2, h:2, solid:true, label:"당산나무", action:"shrine" },
+      { type:"shrine", tx:9, ty:2, w:2, h:2, solid:true, label:"당나무 제단", action:"shrine" },
     ],
-    exits: [ { tx:0, ty:4, to:"village", sx:18, sy:8 } ],
+    exits: [ { tx:0, ty:4, to:"village", sx:18, sy:7 }, { tx:19, ty:4, to:"mtn2", sx:1, sy:7 } ],
     spawn: { tx:2, ty:4 },
-    // 채집 노드 / 몬스터는 동적 생성 (world.js)
+  },
+  /* Zone 2: 산 중턱 (물귀신 / 어두운 틴트) */
+  mtn2: {
+    name: "산 중턱", danger: true,
+    grid: [
+      "TTTTTTTTTTTTTTTTTTTT",
+      "T..R....TT.........T",
+      "T..................T",
+      "T....RR.......TT...T",
+      ",,,,,,,......,,,,,,,",
+      "T.....,.......,....T",
+      "T.....,.......,....T",
+      "T..TT.........RR...T",
+      "T..................T",
+      "T......RR..........T",
+      "T..........TT......T",
+      "T..R...........R...T",
+      "T..................T",
+      "T..................T",
+      "TTTTTTTTTTTTTTTTTTTT",
+    ],
+    objects: [ { type:"sign", tx:3, ty:5, solid:true, label:"중턱 이정표", action:"sign_mtn" } ],
+    exits: [ { tx:0, ty:4, to:"mtn1", sx:18, sy:4 }, { tx:19, ty:4, to:"mtn3", sx:1, sy:7 } ],
+    spawn: { tx:2, ty:4 },
+  },
+  /* Zone 3: 깊은 숲 (구미호·두억시니 / 안개) */
+  mtn3: {
+    name: "깊은 숲", danger: true,
+    grid: [
+      "TTTTTTTTTTTTTTTTTTTT",
+      "TT.TT....TT....TT..T",
+      "T..................T",
+      "T.TT...RR.....TT...T",
+      ",,,,,,,......,,,,,,,",
+      "T....TT.......,....T",
+      "T.............,....T",
+      "T..RR.....TT.......T",
+      "T..................T",
+      "T....TT.....RR.....T",
+      "TT.........TT.....TT",
+      "T..R...........R...T",
+      "T...TT.......TT....T",
+      "T..................T",
+      "TTTTTTTTTTTTTTTTTTTT",
+    ],
+    objects: [ { type:"sign", tx:3, ty:5, solid:true, label:"안개 표석", action:"sign_mtn" } ],
+    exits: [ { tx:0, ty:4, to:"mtn2", sx:18, sy:4 }, { tx:19, ty:4, to:"mtn4", sx:1, sy:7 } ],
+    spawn: { tx:2, ty:4 },
+  },
+  /* Zone 4: 산 정상 (제단 / 고요·후반 스토리) */
+  mtn4: {
+    name: "산 정상", danger: false,
+    grid: [
+      "TTTTTTTTTTTTTTTTTTTT",
+      "T..R............R..T",
+      "T..................T",
+      "T.....RR....RR.....T",
+      ",,,,,,........,,,,,T",
+      "T..................T",
+      "T........RR........T",
+      "T..................T",
+      "T.......R..R.......T",
+      "T..................T",
+      "T..R............R..T",
+      "T..................T",
+      "T.....RR....RR.....T",
+      "T..................T",
+      "TTTTTTTTTTTTTTTTTTTT",
+    ],
+    objects: [
+      { type:"altar", tx:9, ty:6, w:2, h:2, solid:true, label:"산정 제단", action:"altar" },
+    ],
+    exits: [ { tx:0, ty:4, to:"mtn3", sx:18, sy:4 } ],
+    spawn: { tx:2, ty:4 },
+  },
+
+  /* ---- 건물 내부 (Interior.enter 가 objects/floorColor/exits 채움) ---- */
+  interior: {
+    name:"실내", danger:false, floorColor:"#5a4632",
+    grid: [
+      "####################",
+      "#FFFFFFFFFFFFFFFFFF#",
+      "#FFFFFFFFFFFFFFFFFF#",
+      "#FFFFFFFFFFFFFFFFFF#",
+      "#FFFFFFFFFFFFFFFFFF#",
+      "#FFFFFFFFFFFFFFFFFF#",
+      "#FFFFFFFFFFFFFFFFFF#",
+      "#FFFFFFFFFFFFFFFFFF#",
+      "#FFFFFFFFFFFFFFFFFF#",
+      "#FFFFFFFFFFFFFFFFFF#",
+      "#FFFFFFFFFFFFFFFFFF#",
+      "#FFFFFFFFFFFFFFFFFF#",
+      "#FFFFFFFFFFFFFFFFFF#",
+      "#FFFFFFFFFFFFFFFFFF#",
+      "####################",
+    ],
+    objects: [],
+    exits: [],
+    spawn: { tx:10, ty:11 },
   },
 
   /* ---- 고체 판정 ---- */
@@ -108,7 +217,7 @@ const Maps = {
     const z = Maps[zone];
     if (tx < 0 || ty < 0 || tx >= COLS || ty >= ROWS) return true;
     const c = z.grid[ty][tx];
-    return c === "T" || c === "W" || c === "R";
+    return c === "T" || c === "W" || c === "R" || c === "#";
   },
 
   // 픽셀 좌표가 고체와 충돌하는지 (오브젝트 포함). w,h = 캐릭터 박스
@@ -140,6 +249,15 @@ const Maps = {
       for (let x=0;x<COLS;x++){
         const c = z.grid[y][x];
         const px = x*TILE, py = y*TILE;
+        // 실내(F=마루, #=벽)
+        if (c === "F" || c === "#"){
+          const fc = z.floorColor || "#5a4632";
+          ctx.fillStyle = ((x+y)&1) ? fc : Maps._shade(fc,-12);
+          ctx.fillRect(px,py,TILE,TILE);
+          if (c === "#"){ ctx.fillStyle="#2a2018"; ctx.fillRect(px,py,TILE,TILE); ctx.fillStyle="#3a2e22"; ctx.fillRect(px+2,py+2,TILE-4,6); }
+          else { ctx.strokeStyle="rgba(0,0,0,0.08)"; ctx.strokeRect(px+0.5,py+0.5,TILE,TILE); }
+          continue;
+        }
         // 바탕 풀
         ctx.fillStyle = ((x+y)&1) ? grassTop : grassBot;
         ctx.fillRect(px,py,TILE,TILE);
@@ -176,15 +294,26 @@ const Maps = {
         ctx.beginPath(); ctx.moveTo(px-6, py+oh*0.5); ctx.lineTo(px+ow/2, py-4); ctx.lineTo(px+ow+6, py+oh*0.5); ctx.closePath(); ctx.fill();
         ctx.fillStyle = "#3a2410"; ctx.fillRect(px+ow/2-9, py+oh-26, 18, 26);   // 문
       } else if (o.type === "bldg"){
+        const b = DATA.BUILDINGS[o.bldg] || {};
+        const color = o.color || b.sign || "#7f5539";
+        const label = o.label || b.name || "";
         ctx.fillStyle = "#caa56e"; ctx.fillRect(px, py+8, ow, oh-8);
-        ctx.fillStyle = o.color; // 지붕(기와색)
+        ctx.fillStyle = color; // 지붕(기와색)
         ctx.beginPath(); ctx.moveTo(px-4, py+12); ctx.lineTo(px+ow/2, py-6); ctx.lineTo(px+ow+4, py+12); ctx.closePath(); ctx.fill();
-        ctx.fillStyle = "#3a2410"; ctx.fillRect(px+ow/2-8, py+oh-22, 16, 22);
-        // 간판
-        Maps._label(ctx, o.label, px+ow/2, py-10);
-        // NPC 아이콘
-        const npc = DATA.NPCS[o.npc];
-        if (npc){ ctx.font="20px serif"; ctx.textAlign="center"; ctx.fillText(npc.icon, px+ow/2, py+oh-26); }
+        ctx.fillStyle = "#3a2410"; ctx.fillRect(px+ow/2-8, py+oh-22, 16, 22); // 문
+        ctx.fillStyle = "#caa56e"; ctx.fillRect(px+ow/2-7, py+oh-21, 14, 4);  // 문 위 인방
+        Maps._label(ctx, label, px+ow/2, py-8);
+        const npc = DATA.NPCS[o.npc || b.npc];
+        if (npc){ ctx.font="18px serif"; ctx.textAlign="center"; ctx.fillText(npc.icon, px+ow/2, py+oh-26); }
+      } else if (o.type === "person"){
+        Maps._person(ctx, px, py, DATA.NPCS[o.npc]);
+      } else if (o.type === "npc_in"){
+        Maps._person(ctx, px+ (ow-TILE)/2, py+8, DATA.NPCS[o.npc], true);
+        Maps._label(ctx, (DATA.NPCS[o.npc]||{}).name||"", px+ow/2, py-2);
+      } else if (o.type === "door_out"){
+        ctx.fillStyle="#3a2410"; ctx.fillRect(px+ow/2-12, py+2, 24, oh-2);
+        ctx.fillStyle="#caa56e"; ctx.fillRect(px+ow/2-12, py, 24, 5);
+        Maps._label(ctx, "나가기 ▼", px+ow/2, py-4);
       } else if (o.type === "stall"){
         const active = Maps.stallActive();
         ctx.fillStyle = active ? "#caa56e" : "#6e5a3c"; ctx.fillRect(px, py+6, ow, oh-6);
@@ -214,7 +343,16 @@ const Maps = {
         // 금줄(왼새끼)과 오색천
         ctx.strokeStyle="#d9c89a"; ctx.lineWidth=3; ctx.beginPath(); ctx.moveTo(cx-10,baseY-14); ctx.lineTo(cx+10,baseY-14); ctx.stroke();
         ["#c0392b","#e7c66b","#2980b9","#27ae60","#ffffff"].forEach((cc,i)=>{ ctx.fillStyle=cc; ctx.fillRect(cx-9+i*4.5, baseY-14, 3, 8); });
-        Maps._label(ctx, "당산나무", cx, py-6);
+        Maps._label(ctx, o.label||"당나무 제단", cx, py-6);
+      } else if (o.type === "altar"){
+        const cx=px+ow/2, baseY=py+oh-2;
+        // 돌 제단
+        ctx.fillStyle="#8a8a8a"; ctx.fillRect(cx-16, baseY-10, 32, 12);
+        ctx.fillStyle="#a8a8a8"; ctx.fillRect(cx-13, baseY-18, 26, 10);
+        ctx.fillStyle="#6e6e6e"; ctx.fillRect(cx-10, baseY-24, 20, 8);
+        // 향로 불빛
+        ctx.fillStyle="rgba(231,198,107,0.8)"; ctx.beginPath(); ctx.arc(cx, baseY-26, 3+Math.sin(performance.now()/300)*1, 0, Math.PI*2); ctx.fill();
+        Maps._label(ctx, "산정 제단", cx, py-6);
       }
     }
   },
@@ -226,9 +364,24 @@ const Maps = {
     ctx.fillStyle = "#e7c66b"; ctx.fillText(text, cx, cy);
   },
 
+  _shade(hex, d){ const m=hex.match(/\w\w/g); if(!m)return hex; return "#"+m.map(h=>clamp(parseInt(h,16)+d,0,255).toString(16).padStart(2,"0")).join(""); },
+
+  // 간단한 마을 사람 (조선 복식) — 아이콘 머리 + 도포
+  _person(ctx, px, py, npc, big){
+    if (!npc) return;
+    const cx=px+TILE/2, cy=py+TILE/2 + (big?2:0), bob=Math.sin(performance.now()/700 + px)*1.2;
+    ctx.fillStyle="rgba(0,0,0,0.22)"; ctx.beginPath(); ctx.ellipse(cx,cy+13,9,4,0,0,Math.PI*2); ctx.fill();
+    ctx.fillStyle=npc.color||"#8a6a3a"; ctx.beginPath(); // 도포
+    ctx.moveTo(cx-9,cy+12-bob); ctx.lineTo(cx-7,cy-2-bob); ctx.lineTo(cx+7,cy-2-bob); ctx.lineTo(cx+9,cy+12-bob); ctx.closePath(); ctx.fill();
+    ctx.fillStyle="#f0d3a8"; ctx.beginPath(); ctx.arc(cx,cy-7-bob,6,0,Math.PI*2); ctx.fill(); // 머리
+    ctx.fillStyle="#2a1a0a"; ctx.fillRect(cx-6,cy-12-bob,12,3); // 머리/갓 테
+    ctx.font="14px serif"; ctx.textAlign="center"; ctx.textBaseline="middle";
+    ctx.fillText(npc.icon, cx, cy-7-bob); ctx.textBaseline="alphabetic";
+  },
+
   // 장터 좌판은 장날 오전에만 활성
   stallActive(){ return Time.isMarketDay() && Time.isMorning(); },
 };
 
 // zones 참조 등록
-Maps.zones = { house: Maps.house, village: Maps.village, mountain: Maps.mountain };
+Maps.zones = { house: Maps.house, village: Maps.village, mtn1: Maps.mtn1, mtn2: Maps.mtn2, mtn3: Maps.mtn3, mtn4: Maps.mtn4, interior: Maps.interior };

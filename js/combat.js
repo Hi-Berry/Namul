@@ -8,21 +8,24 @@ const Combat = {
   log:"", busyT:0, after:null, defending:false,
   preStamina:100, onWin:null, onLose:null, btns:[],
 
+  pStatus:{slow:0},
   begin(monIds, opts){
     opts = opts || {};
     this.enemies = monIds.map((id,i)=>{
       const m = DATA.MONSTERS[id];
-      return { ...m, hp:m.hp, maxHp:m.hp, alive:true, slot:i, status:{stun:0,charm:0,slow:0}, hitT:0 };
+      return { ...m, hp:m.hp, maxHp:m.hp, alive:true, slot:i,
+        status:{stun:0,charm:0,slow:0,burn:0,atkDown:0}, taesan:0, hitT:0 };
     });
+    this.pStatus = { slow:0 };
     this.preStamina = P.stamina;
     this.defending=false; this.onWin=opts.onWin; this.onLose=opts.onLose;
-    this.log = `산속에서 요괴 ${this.enemies.length}마리가 나타났다!`;
+    this.log = `요괴 ${this.enemies.length}마리가 나타났다!`;
     this.busyT = 1.0; this.phase="busy"; this.after=()=>this._startRound();
     Time.advance(30); // 전투는 게임시간 30분
     setScene("combat");
   },
 
-  pSpeed(){ return 12 + P.level*2 - Player.weaponData().weight*1.5; },
+  pSpeed(){ let s = 12 + P.level*2 - Player.weaponData().weight*1.5; if (this.pStatus.slow>0) s*=0.6; return s; },
   eSpeed(e){ let s = 7 + e.atk*0.25; if (e.status.slow>0) s*=0.5; return s; },
   livingEnemies(){ return this.enemies.filter(e=>e.alive); },
 
@@ -33,6 +36,7 @@ const Combat = {
     actors.sort((a,b)=> b.spd - a.spd);
     this.order = actors; this.ptr = 0;
     this.defending = false;
+    if (this.pStatus.slow>0) this.pStatus.slow--;  // 플레이어 민첩 저하 회복
     this._processNext();
   },
 
@@ -44,16 +48,47 @@ const Combat = {
     // 적 차례
     const e = a.e;
     if (!e.alive){ this.ptr++; return this._processNext(); }
+    // 화상 DoT (턴 시작 시)
+    if (e.status.burn>0){
+      const bd = Math.max(1, Math.round(e.maxHp*0.05));
+      e.hp -= bd; e.hitT=0.3; e.status.burn--;
+      if (e.hp<=0){ e.alive=false; e.hp=0; this._say(`🔥 ${e.icon}${e.name}이(가) 화상으로 쓰러졌다! (-${bd})`); return; }
+    }
     if (e.status.charm>0){ e.status.charm--; this._say(`${e.icon}${e.name}은(는) 홀려서 멍하니 서 있다.`); return; }
-    if (e.status.stun>0){ e.status.stun--; this._say(`${e.icon}${e.name}은(는) 기절해서 움직이지 못한다.`); return; }
-    if (e.status.slow>0){ e.status.slow--; }
-    // 공격
-    let dmg = e.atk + randInt(-2,2);
+    if (e.status.stun>0){ e.status.stun--; this._say(`💫 ${e.icon}${e.name}은(는) 기절해 움직이지 못한다.`); return; }
+    if (e.status.slow>0) e.status.slow--;
+    if (e.status.atkDown>0) e.status.atkDown--;
+
+    // 두억시니: 3턴마다 '태산 찍기' (즉사급 광역)
+    if (e.gimmick==="taesan"){
+      e.taesan = (e.taesan||0) + 1;
+      if (e.taesan % 3 === 0){
+        let big = Math.round(P.maxHp * 0.6);
+        if (this.defending) big = Math.round(big*0.5);
+        P.hp = clamp(P.hp - big, 0, P.maxHp);
+        Sound.sfx("enemyhit");
+        this._say(`🗿 ${e.name}의 『태산 찍기』! 대지가 흔들린다! 체력 -${big}`, 1.3);
+        return;
+      }
+    }
+    // 명중 판정
+    if (Math.random() > (e.acc!=null?e.acc:0.9)){ this._say(`${e.icon}${e.name}의 공격이 빗나갔다!`); return; }
+    // 도깨비 장난: 가끔 기력을 훔침
+    if (e.gimmick==="mischief" && chance(0.4)){
+      const st = randInt(1,2); Player.spendStamina(st);
+      this._say(`😈 ${e.name}의 『장난』! 기력 -${st}`); return;
+    }
+    // 일반 공격 (공격력 감소 디버프 반영)
+    let atk = e.atk * (e.status.atkDown>0?0.8:1);
+    let dmg = Math.round(atk) + randInt(-2,2);
     if (this.defending) dmg = Math.round(dmg*0.5);
     dmg = Math.max(1,dmg);
     P.hp = clamp(P.hp - dmg, 0, P.maxHp);
     Sound.sfx("enemyhit");
-    this._say(`${e.icon}${e.name}의 공격! 체력 -${dmg}`);
+    let suf="";
+    // 물귀신: 피격 시 민첩 하락
+    if (e.gimmick==="agiDown"){ this.pStatus.slow = 2; suf=" 으슬… 민첩이 떨어졌다!"; }
+    this._say(`${e.icon}${e.name}의 공격! 체력 -${dmg}${suf}`);
   },
 
   _say(msg, t){ this.log=msg; this.busyT = t||0.9; this.phase="busy"; this.after=()=>{ this.ptr++; this._processNext(); }; },
@@ -65,12 +100,19 @@ const Combat = {
     // 가장 앞(살아있는) 적 공격
     const e = this.livingEnemies()[0]; if (!e) return;
     const w = Player.weaponData();
+    // 구미호: 물리 공격 50% 회피
+    if (e.gimmick==="evasion" && chance(0.5)){
+      Sound.sfx("cancel");
+      this._say(`${e.icon}${e.name}이(가) 환영으로 물리 공격을 흘렸다! (마법이 필요하다)`);
+      return;
+    }
     let dmg = w.atk + randInt(-2,3);
     e.hp -= dmg; e.hitT=0.3;
     let extra="";
     if (w.stun && chance(w.stun)){ e.status.stun = 1; extra=" 💫기절!"; }
     if (e.hp<=0){ e.alive=false; e.hp=0; extra=" 쓰러뜨렸다!"; }
     Sound.sfx("hit");
+    this.swingT = 0.45;   // 낫 휘두르기 프레임
     this._say(`${w.icon}${w.name}(으)로 ${e.icon}${e.name} 공격! -${dmg}${extra}`);
   },
   defend(){
@@ -87,17 +129,30 @@ const Combat = {
     const m = DATA.MAGIC[id];
     if (P.mp < m.mp){ toast("신력이 부족하다","bad"); this.phase="menu"; return; }
     P.mp -= m.mp;
-    const targets = this.livingEnemies();
-    let txt = `${m.icon}${m.name}!`;
+    // 타겟: 전체 or 랜덤 2체 (마법은 구미호 환영 무시, 반드시 적중)
+    let living = this.livingEnemies();
+    let targets;
+    if (m.target==="all") targets = living;
+    else { // 랜덤 2체
+      const pool = living.slice(); targets=[];
+      for (let i=0;i<(m.target||2) && pool.length;i++) targets.push(pool.splice(randInt(0,pool.length-1),1)[0]);
+    }
     targets.forEach(e=>{
-      if (m.dmg){ e.hp -= m.dmg + randInt(-2,2); e.hitT=0.3; if(e.hp<=0){e.alive=false;e.hp=0;} }
-      if (m.effect==="slow") e.status.slow = 2;
-      if (m.effect==="charm") { if(chance(0.7)) e.status.charm = 1; }
+      if (m.dmg){
+        let d = m.dmg + randInt(-2,2);
+        if (e.gimmick==="evasion") d = Math.round(d*1.3); // 구미호엔 추가 피해
+        e.hp -= d; e.hitT=0.3; if(e.hp<=0){e.alive=false;e.hp=0;}
+      }
+      if (m.effect==="burn")    e.status.burn = m.eff;
+      if (m.effect==="agiDown") e.status.slow = m.eff;
+      if (m.effect==="stun")    e.status.stun = m.eff;
+      if (m.effect==="atkDown") e.status.atkDown = m.eff;
     });
     Sound.sfx("magic");
-    if (m.dmg) txt += ` 적 전체에 피해!`;
-    if (m.effect==="slow") txt += " 적이 둔해졌다.";
-    if (m.effect==="charm") txt += " 적이 홀렸다.";
+    let txt = `${m.icon}${m.name}(${m.sub})! `;
+    txt += m.target==="all" ? "적 전체를 휩쓴다!" : `적 ${targets.length}체 강타!`;
+    const efl = {burn:" 🔥화상",agiDown:" ❄️민첩↓",stun:" 💫기절",atkDown:" ⛰️공격력↓"}[m.effect];
+    if (efl) txt += efl;
     this.phase="menu";
     this._say(txt);
   },
@@ -127,10 +182,12 @@ const Combat = {
     const ids = this.enemies.map(e=>e.id);
     this.enemies.forEach(e=>{ gold+=e.gold; exp+=e.exp; });
     P.money += gold;
-    // 요괴 부산물 드롭 (당산나무 헌납 재료) — 장신구 드롭률 보너스 적용
+    // 요괴 부산물 드롭: 잡템(80~100%) + 공물(15~20%, 장신구 보너스)
     const drops={};
+    const give=(id,n)=>{ if(!id)return; Player.add(id,n); drops[id]=(drops[id]||0)+n; };
     this.enemies.forEach(e=>{
-      if (e.drop && chance((e.dropRate||0) + Player.dropBonus())){ Player.add(e.drop,1); drops[e.drop]=(drops[e.drop]||0)+1; }
+      if (e.commonDrops && e.commonDrops.length && chance(0.9)) give(choice(e.commonDrops),1);
+      if (e.tribute && chance((e.tributeRate||0) + Player.dropBonus())) give(e.tribute,1);
     });
     setScene("world");
     Sound.sfx("win");
@@ -154,8 +211,8 @@ const Combat = {
     Time.advance(DATA.CONST.DEFEAT_TIME_LOSS); // 5시간 손실
     P.hp = 1;
     P.stamina = this.preStamina; // 전투 전 기력으로 복구
-    // 산 입구로 귀환
-    World.zone = "mountain";
+    // 산 입구(안전지대)로 귀환
+    World.zone = "mtn1";
     World.placeAtSpawn();
     setScene("world");
     Sound.sfx("lose");
@@ -172,6 +229,7 @@ const Combat = {
     enter(){},
     update(dt){
       const C=Combat;
+      if (C.swingT>0) C.swingT-=dt;
       C.enemies.forEach(e=>{ if(e.hitT>0) e.hitT-=dt; });
       if (C.busyT>0){ C.busyT-=dt; if (C.busyT<=0 && C.after){ const f=C.after; C.after=null; f(); } }
     },
@@ -205,8 +263,9 @@ const Combat = {
         }
       });
 
-      // 플레이어 캐릭터 (적을 향해 오른쪽, 칼 들고)
-      World.drawDallae(ctx, 150, 250, { dir:"right", moving:false, blink:false, hold:"weapon", weaponId:P.weapon, scale:1.7 });
+      // 플레이어 캐릭터 (적을 향해 — b4 전투 프레임, 좌향 시트라 우향 플립)
+      const swinging = (C.swingT||0) > 0;
+      World.drawDallae(ctx, 150, 252, { dir:"right", frame: swinging?"b4_1":"b4_0", flip:true, scale:1.9, hold:"weapon", weaponId:P.weapon });
 
       // 플레이어 패널
       ctx.fillStyle="rgba(20,14,8,0.85)"; ctx.fillRect(20,360,250,90);

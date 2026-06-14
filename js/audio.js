@@ -126,8 +126,8 @@ const Sound = {
     if (G.scene==="combat") return this.playMusic("combat");
     if (G.scene==="trade") return this.playMusic("trade");
     if (G.scene==="world"){
-      if (World.zone==="house") return this.playMusic("house");
-      if (World.zone==="mountain") return this.playMusic("mountain");
+      if (World.zone==="house"||World.zone==="interior") return this.playMusic("house");
+      if (DATA.isMtn(World.zone)) return this.playMusic("mountain");
       return this.playMusic("village");
     }
   },

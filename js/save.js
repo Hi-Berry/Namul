@@ -17,6 +17,7 @@ const Save = {
         magic: P.magic, inv: P.inv, affection: P.affection,
         homiTier: P.homiTier, pet: P.pet,
         costume: P.costume, accessory: P.accessory, shrinePoints: P.shrinePoints,
+        cookXp: P.cookXp, fame: P.fame, recipes: P.recipes, cookTrain: P.cookTrain, farmPlots: P.farmPlots,
       },
       farm: Farming.save(),
       quests: Quests.save(),

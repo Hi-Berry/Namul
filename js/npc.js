@@ -12,7 +12,22 @@ const NPC = {
     if (npcId === "jumo")     return NPC.jumo();
     if (npcId === "uisang")   return NPC.uisang();
     if (npcId === "geonchuk") return NPC.geonchuk();
+    if (npcId === "uiwon")    return NPC.uiwon();
+    if (npcId === "yakcho")   return NPC.yakcho();
+    if (npcId === "hunjang")  return NPC.hunjang();
+    if (npcId === "bobu")     return NPC.bobu();
+    if (npcId === "nongbu")   return NPC.nongbu();
+    if (npcId === "banga")    return NPC.banga();
+    if (npcId === "pujut")    return NPC.pujut();
   },
+
+  // 재료/물품 구매 공통 행
+  _buyRow(label, icon, price, act, id, sub){
+    return `<div class="shop-row"><div class="item-ic" style="background:#33240f">${icon}</div>
+      <div class="grow"><div class="item-name">${label}</div><div class="item-sub">${sub||""}</div></div>
+      <button data-act="${act}" data-id="${id}" ${P.money<price?"disabled":""}>${price}냥</button></div>`;
+  },
+  _buy(id, price, n){ if(Player.spendMoney(price)){ Player.add(id,n||1); Sound.sfx("confirm"); toast(`${(DATA.INGREDIENTS[id]||DATA.GOODS[id]||{name:id}).name} 구입`,"good"); return true;} Sound.sfx("error"); return false; },
 
   affLabel(npc){ const a = P.affection[npc]||0; return "♥".repeat(a) + "♡".repeat(10-a); },
 
@@ -21,8 +36,8 @@ const NPC = {
     const learned = P.magic.length;
     UI.startDialogue("무당 🔮",
       ["산천의 기운이 네게 깃들어 있구나… 헌데 신통력은 내가 주는 게 아니란다.",
-       "<b>산 입구의 당산나무</b>에 요괴의 부산물을 바치거라. 정기가 모이면 신령이 직접 신통력을 내려줄 게야.",
-       `지금 익힌 신통력: ${learned}종 · 모은 정기: ${P.shrinePoints}`,
+       "<b>산 입구의 당나무 제단</b>에 요괴의 공물을 바치거라. 신령이 직접 신통력을 내려줄 게야.",
+       `지금 익힌 신통력: ${learned}/4종`,
        `너와의 정(情): ${NPC.affLabel("mudang")}`],
       { choices: Quests.npcChoices("mudang").concat([
           { label:"산삼을 바친다 (정 +2)", value:"gift" },
@@ -33,9 +48,9 @@ const NPC = {
           if (Quests.handleChoice(v)) return;
           if (v==="gift") NPC._gift("mudang","sansam",2);
           else if (v==="lore") UI.startDialogue("무당 🔮", [
-            "이 산의 요괴들은 본디 산을 지키던 정령이었으나, 사람의 욕심에 물들어 사나워졌단다.",
-            "도깨비불·산신령의 호통·구미호의 홀림 — 세 신통력이 당산나무에 잠들어 있지.",
-            "부산물을 바칠수록 더 큰 힘이 깨어날 게다."
+            "산은 네 구역이란다 — 입구의 도깨비, 중턱의 물귀신, 깊은 숲의 구미호와 두억시니, 그리고 고요한 정상.",
+            "도깨비의 불·서늘한 물안개·여우 구슬·붉은 뿔 조각 — 그 공물들이 당나무에 신통력을 깨운단다.",
+            "도깨비불(화염)·한기 서림(빙결)·현혹의 춤(매혹)·태산 압사(대지). 네 신통력을 모두 모으거라."
           ]);
         }
       });
@@ -133,6 +148,7 @@ const NPC = {
     const choices = [];
     if (canTrade) choices.push({ label:"🍲 주막 장사 시작! (기력 70)", value:"trade" });
     else choices.push({ label:"(장사는 장날 5·10일 오후에)", value:"noop" });
+    choices.push({ label:"📜 새 요리 배우기", value:"learn" });
     choices.push({ label:`나물죽 끓이기 (나물 ${DATA.CONST.PORRIDGE_HERBS}개 → 체력 +${DATA.CONST.PORRIDGE_HEAL})`, value:"porridge" });
     choices.push({ label:"정담 나누기 (정 +1)", value:"talk" });
     choices.push({ label:"나간다", value:"bye" });
@@ -143,6 +159,7 @@ const NPC = {
         if (v==="trade"){
           if (!Player.hasStamina(DATA.CONST.TRADE_STAMINA)){ toast("기력이 부족해 장사를 할 수 없다 (70 필요)","bad"); return; }
           Trading.begin();
+        } else if (v==="learn"){ NPC.recipeShop("jumo");
         } else if (v==="porridge"){
           const herbs = Player.herbList();
           if (Player.herbTotal() < DATA.CONST.PORRIDGE_HERBS){ toast("나물이 부족하다","bad"); return; }
@@ -235,6 +252,11 @@ const NPC = {
       <div class="grow"><div class="item-name">양념장 <span class="item-sub">(보유 ${Player.count("season")})</span></div>
       <div class="item-sub">주막 요리 필수 재료</div></div>
       <button data-act="season" ${P.money<DATA.GOODS.season.price?"disabled":""}>${DATA.GOODS.season.price}냥</button></div>`;
+    // 일반 식재료 (쌀·파·녹두·누룩)
+    rows += `<p class="note" style="margin-top:8px">요리 재료</p>`;
+    ["rice","pa","bean","nuruk"].forEach(id=>{ const g=DATA.INGREDIENTS[id];
+      rows += NPC._buyRow(`${g.name} <span class="item-sub">(보유 ${Player.count(id)})</span>`, g.icon, g.buy, "buying", id, g.src);
+    });
     rows += `<hr style="border-color:#50412a;margin:12px 0"><p class="note">약초·나물 팔기 (전 종류)</p>`;
     const herbs = Player.herbList();
     if (!herbs.length) rows += `<p class="note">팔 약초가 없다.</p>`;
@@ -246,13 +268,195 @@ const NPC = {
         <button class="sell" data-act="sell" data-id="${id}">팔기</button></div>`;
     });
     if (herbs.length) rows += `<div class="shop-row"><div class="grow"></div><button class="sell" data-act="sellall">전부 팔기</button></div>`;
+    // 요괴 잡템(공물 외 부산물) 팔기
+    const junk = Player.dropList().filter(id=>DATA.DROPS[id].common);
+    if (junk.length){
+      rows += `<hr style="border-color:#50412a;margin:12px 0"><p class="note">요괴 잡템 팔기</p>`;
+      junk.forEach(id=>{ const d=DATA.DROPS[id];
+        rows += `<div class="shop-row"><div class="item-ic" style="background:#1f2a1f">${d.icon}</div>
+          <div class="grow"><div class="item-name">${d.name} ×${P.inv[id]}</div><div class="item-sub">개당 ${d.price}냥</div></div>
+          <button class="sell" data-act="selljunk" data-id="${id}">팔기</button></div>`;
+      });
+    }
 
     UI.openMenu("장터 좌판 🪧", rows, (act,id)=>{
       if (act==="seed"){ if (Player.spendMoney(DATA.BUCKWHEAT.seedPrice)){ Player.add("seed",1); Sound.sfx("confirm"); toast("메밀 종자 구입","good"); } else Sound.sfx("error"); }
       else if (act==="season"){ if (Player.spendMoney(DATA.GOODS.season.price)){ Player.add("season",1); Sound.sfx("confirm"); toast("양념장 구입","good"); } else Sound.sfx("error"); }
+      else if (act==="buying"){ NPC._buy(id, DATA.INGREDIENTS[id].buy); }
       else if (act==="sell"){ const h=DATA.HERBS[id]; if (Player.remove(id,1)){ P.money+=h.price; Sound.sfx("coin"); Quests.notify("sell",{count:1}); Quests.notify("gold",{}); toast(`${h.name} 판매 +${h.price}냥`,"gold"); } }
       else if (act==="sellall"){ let g=0,cnt=0; Player.herbList().forEach(hid=>{ const h=DATA.HERBS[hid]; g+=h.price*P.inv[hid]; cnt+=P.inv[hid]; delete P.inv[hid]; }); P.money+=g; Sound.sfx("money"); Quests.notify("sell",{count:cnt}); Quests.notify("gold",{}); toast(`약초 전부 판매 +${g}냥`,"gold"); }
+      else if (act==="selljunk"){ const d=DATA.DROPS[id]; if (Player.remove(id,1)){ P.money+=d.price; Sound.sfx("coin"); Quests.notify("gold",{}); toast(`${d.name} 판매 +${d.price}냥`,"gold"); } }
       NPC._marketShop(); UI.refreshHUD();
     });
+  },
+
+  /* ---------------- 레시피 학습 (주모/방앗간/푸줏간) ---------------- */
+  recipeShop(by){
+    let rows = `<p class="note">배울 수 있는 요리 (요리 숙련 Lv.${Player.cookLv()} · 명성 ${P.fame})</p>`;
+    const byName = ({jumo:"주모",banga:"방앗간",pujut:"푸줏간"})[by];
+    const learnable = Object.values(DATA.RECIPES).filter(r=>!r.unlock && r.by===byName);
+    if (!learnable.length) rows += `<p class="note">여기서 배울 요리가 없다.</p>`;
+    learnable.forEach(r=>{
+      const has=Player.hasRecipe(r.id);
+      const steps=r.steps.map(s=>DATA.INGREDIENTS[s].icon).join(" → ");
+      const btn = has?`<button disabled>배움</button>`:`<button data-act="learn" data-id="${r.id}" ${P.money<r.learn?"disabled":""}>${r.learn}냥</button>`;
+      rows += `<div class="shop-row"><div class="item-ic" style="background:#33240f">${r.icon}</div>
+        <div class="grow"><div class="item-name">${r.name} <span class="item-sub">(음식값 ${r.price})</span></div>
+        <div class="item-sub">${steps}</div></div>${btn}</div>`;
+    });
+    UI.openMenu(`${DATA.NPCS[by].icon} 요리 전수`, rows, (act,id)=>{
+      if (act==="learn"){ const r=DATA.RECIPES[id]; if(P.money>=r.learn){ Player.spendMoney(r.learn); Player.learnRecipe(id); Sound.sfx("levelup"); toast(`📜 '${r.name}' 요리를 배웠다!`,"gold"); Quests.notify("recipe",{id}); NPC.recipeShop(by); UI.refreshHUD(); } else Sound.sfx("error"); }
+    });
+  },
+
+  /* ---------------- 의원: 치료/최대치 증강 ---------------- */
+  uiwon(){
+    UI.startDialogue("의원 💉", ["어디 편찮으신가? 침 한 대면 거뜬하지."],
+      { choices: Quests.npcChoices("uiwon").concat([
+          { label:`치료 (체력·신력 완전 회복) — 30냥`, value:"heal" },
+          { label:`보약 (최대 체력 +10) — 120냥`, value:"hp" },
+          { label:`총명탕 (최대 신력 +5) — 120냥`, value:"mp" },
+          { label:"나간다", value:"bye" }]),
+        onChoice(v){
+          if (Quests.handleChoice(v)) return;
+          if (v==="heal"){ if(Player.spendMoney(30)){ P.hp=P.maxHp; P.mp=Player.mpCap(); Sound.sfx("levelup"); toast("몸이 개운하다! 완전 회복","good"); } else Sound.sfx("error"); }
+          else if (v==="hp"){ if(Player.spendMoney(120)){ P.maxHp+=10; P.hp=P.maxHp; Sound.sfx("levelup"); toast("최대 체력 +10","gold"); } else Sound.sfx("error"); }
+          else if (v==="mp"){ if(Player.spendMoney(120)){ P.maxMp+=5; P.mp=Player.mpCap(); Sound.sfx("levelup"); toast("최대 신력 +5","gold"); } else Sound.sfx("error"); }
+          UI.refreshHUD();
+        }});
+  },
+
+  /* ---------------- 약초상: 약초 고가 매입 + 양념/도토리 판매 ---------------- */
+  yakcho(){
+    UI.startDialogue("약초상 🌿", ["산에서 캔 약초, 내 후하게 쳐주지. 귀한 산삼은 더더욱."],
+      { choices: Quests.npcChoices("yakcho").concat([ {label:"약초 팔기 (장터보다 +30%)", value:"sell"}, {label:"양념장·재료 사기", value:"buy"}, {label:"나간다", value:"bye"} ]),
+        onChoice(v){ if (Quests.handleChoice(v)) return; if (v==="sell") NPC._yakchoSell(); else if (v==="buy") NPC._yakchoBuy(); }
+      });
+  },
+  _yakchoSell(){
+    let rows=`<p class="note">약초 매입가 +30% (산삼 등 명품일수록 이득)</p>`;
+    const herbs=Player.herbList();
+    if(!herbs.length) rows+=`<p class="note">팔 약초가 없다.</p>`;
+    herbs.forEach(id=>{ const h=DATA.HERBS[id]; const pr=Math.round(h.price*1.3);
+      rows+=`<div class="shop-row"><div class="item-ic" style="background:#241a0e">${h.icon}</div>
+        <div class="grow"><div class="item-name tier${h.tier}">${h.name} ×${P.inv[id]}</div><div class="item-sub">개당 ${pr}냥</div></div>
+        <button class="sell" data-act="s" data-id="${id}">팔기</button></div>`; });
+    if(herbs.length) rows+=`<div class="shop-row"><div class="grow"></div><button class="sell" data-act="sall">전부 팔기</button></div>`;
+    UI.openMenu("약초상 — 매입", rows, (act,id)=>{
+      if(act==="s"){ const h=DATA.HERBS[id]; if(Player.remove(id,1)){ const pr=Math.round(h.price*1.3); P.money+=pr; Sound.sfx("coin"); Quests.notify("sell",{count:1}); Quests.notify("gold",{}); toast(`${h.name} +${pr}냥`,"gold"); NPC._yakchoSell(); UI.refreshHUD(); } }
+      else if(act==="sall"){ let g=0,c=0; Player.herbList().forEach(hid=>{const h=DATA.HERBS[hid]; g+=Math.round(h.price*1.3)*P.inv[hid]; c+=P.inv[hid]; delete P.inv[hid];}); P.money+=g; Sound.sfx("money"); Quests.notify("sell",{count:c}); Quests.notify("gold",{}); toast(`약초 전부 +${g}냥`,"gold"); NPC._yakchoSell(); UI.refreshHUD(); }
+    });
+  },
+  _yakchoBuy(){
+    let rows=`<p class="note">요리·재료</p>`;
+    rows += NPC._buyRow(`양념장 (보유 ${Player.count("season")})`, "🥢", 5, "b", "season");
+    rows += NPC._buyRow(`도토리 (보유 ${Player.count("dotori")})`, "🌰", 6, "b", "dotori");
+    UI.openMenu("약초상 — 판매", rows, (act,id)=>{ if(act==="b"){ NPC._buy(id, id==="season"?5:6); NPC._yakchoBuy(); UI.refreshHUD(); } });
+  },
+
+  /* ---------------- 훈장(서당): 요리 수련 / 전투 수련 ---------------- */
+  hunjang(){
+    UI.startDialogue("훈장 📜", ["배움에는 끝이 없는 법. 무엇을 닦겠느냐?"],
+      { choices: Quests.npcChoices("hunjang").concat([
+          { label:`요리 수련 (음식값 영구 +5%) — 150냥`, value:"cook" },
+          { label:`무예 수련 (공격력 +3) — 150냥`, value:"atk" },
+          { label:`글 배우기 (정 +1)`, value:"talk" },
+          { label:"나간다", value:"bye" }]),
+        onChoice(v){
+          if (Quests.handleChoice(v)) return;
+          if (v==="cook"){ if(Player.spendMoney(150)){ P.cookTrain=(P.cookTrain||0)+0.05; Sound.sfx("levelup"); toast("요리 솜씨가 늘었다! 음식값 +5%","gold"); } else Sound.sfx("error"); }
+          else if (v==="atk"){ if(Player.spendMoney(150)){ P.weaponLv+=1; Sound.sfx("levelup"); toast("무예가 늘었다! 공격력 상승","gold"); } else Sound.sfx("error"); }
+          else if (v==="talk"){ Player.addAffection("hunjang",1); Player.gainExp(4); toast("배움을 얻었다. 정 +1","good"); }
+          UI.refreshHUD();
+        }});
+  },
+
+  /* ---------------- 보부상: 장날 떠돌이 진귀템/레시피 ---------------- */
+  bobu(){
+    if (!Time.isMarketDay()){ UI.startDialogue("보부상 🎒", ["나는 장날(5·10일)에만 들른다네. 그때 보세!"]); return; }
+    // 날짜 기반 결정적 진열
+    const recipeIds = Object.values(DATA.RECIPES).filter(r=>!r.unlock).map(r=>r.id);
+    const offer = recipeIds[(G.time.day) % recipeIds.length];
+    UI.startDialogue("보부상 🎒", ["허허, 팔도를 돌며 진귀한 걸 모아왔지!"],
+      { choices: Quests.npcChoices("bobu").concat([
+          { label:"진귀한 물건 보기", value:"shop" },
+          { label:`비전 요리책 '${DATA.RECIPES[offer].name}' — 200냥`, value:"book" },
+          { label:"나간다", value:"bye" }]),
+        onChoice(v){
+          if (Quests.handleChoice(v)) return;
+          if (v==="book"){ const r=DATA.RECIPES[offer]; if(Player.hasRecipe(offer)){ toast("이미 아는 요리다","bad"); return; } if(Player.spendMoney(200)){ Player.learnRecipe(offer); Sound.sfx("levelup"); toast(`📜 '${r.name}' 비법 습득!`,"gold"); } else Sound.sfx("error"); }
+          else if (v==="shop") NPC._bobuShop();
+          UI.refreshHUD();
+        }});
+  },
+  _bobuShop(){
+    let rows=`<p class="note">진귀한 물건 (장날 한정)</p>`;
+    rows += NPC._buyRow("누룩 (동동주 재료)", "🟡", 12, "b", "nuruk");
+    rows += NPC._buyRow("귀한 양념 꾸러미 ×5", "🥢", 20, "b5", "season");
+    rows += NPC._buyRow("노리개", "🧿", 110, "acc", "norigae");
+    UI.openMenu("보부상 봇짐 🎒", rows, (act,id)=>{
+      if(act==="b") NPC._buy(id,12);
+      else if(act==="b5"){ if(Player.spendMoney(20)){ Player.add("season",5); Sound.sfx("confirm"); toast("양념장 ×5","good"); } else Sound.sfx("error"); }
+      else if(act==="acc"){ if(P.accessory==="norigae"){toast("이미 착용중","bad");return;} if(Player.spendMoney(110)){ P.accessory="norigae"; Sound.sfx("confirm"); toast("노리개 착용!","good"); } else Sound.sfx("error"); }
+      NPC._bobuShop(); UI.refreshHUD();
+    });
+  },
+
+  /* ---------------- 농부: 식재료(쌀/파/녹두) 저가 + 메밀밭 비옥화 ---------------- */
+  nongbu(){
+    UI.startDialogue("농부 🧑‍🌾", ["우리 밭에서 난 거라 싱싱하다네. 메밀 농사 비결도 있지."],
+      { choices: Quests.npcChoices("nongbu").concat([ {label:"채소·곡물 사기", value:"shop"}, {label:`메밀밭 비옥화 (수확량 +2) — 180냥`, value:"fertile"}, {label:"나간다", value:"bye"} ]),
+        onChoice(v){
+          if (Quests.handleChoice(v)) return;
+          if (v==="shop") NPC._nongbuShop();
+          else if (v==="fertile"){ if(DATA.BUCKWHEAT.yield>=9){ toast("이미 충분히 비옥하다","bad"); return; } if(Player.spendMoney(180)){ DATA.BUCKWHEAT.yield+=2; Sound.sfx("levelup"); toast(`메밀 수확량 ${DATA.BUCKWHEAT.yield}로 증가!`,"gold"); } else Sound.sfx("error"); }
+        }});
+  },
+  _nongbuShop(){
+    let rows=`<p class="note">채소·곡물 (장터보다 저렴)</p>`;
+    [["rice",6],["pa",4],["bean",7]].forEach(([id,pr])=>{ const g=DATA.INGREDIENTS[id];
+      rows += NPC._buyRow(`${g.name} (보유 ${Player.count(id)})`, g.icon, pr, "b:"+pr, id); });
+    rows += NPC._buyRow("메밀 종자", "🌰", DATA.BUCKWHEAT.seedPrice, "seed", "seed");
+    UI.openMenu("농부 — 채소전", rows, (act,id)=>{
+      if(act==="seed"){ NPC._buy("seed", DATA.BUCKWHEAT.seedPrice); }
+      else if(act.startsWith("b:")){ NPC._buy(id, +act.slice(2)); }
+      NPC._nongbuShop(); UI.refreshHUD();
+    });
+  },
+
+  /* ---------------- 방앗간: 가공(국수/두부) + 누룩 + 방앗간 요리 학습 ---------------- */
+  banga(){
+    UI.startDialogue("방앗간지기 🌾", ["메밀을 빻아 국수를 뽑고, 콩으로 두부도 만든다네."],
+      { choices: Quests.npcChoices("banga").concat([
+          { label:`메밀가루→국수사리 (가루2 → 국수3) `, value:"noodle" },
+          { label:`두부 사기 — 10냥`, value:"tofu" },
+          { label:`누룩 사기 — 12냥`, value:"nuruk" },
+          { label:"방앗간 요리 배우기", value:"learn" },
+          { label:"나간다", value:"bye" }]),
+        onChoice(v){
+          if (Quests.handleChoice(v)) return;
+          if (v==="noodle"){ if(Player.count("flour")>=2){ Player.remove("flour",2); Player.add("noodle",3); Sound.sfx("confirm"); toast("국수사리 ×3","good"); } else { Sound.sfx("error"); toast("메밀가루가 부족하다(2 필요)","bad"); } }
+          else if (v==="tofu"){ NPC._buy("tofu",10); }
+          else if (v==="nuruk"){ NPC._buy("nuruk",12); }
+          else if (v==="learn"){ NPC.recipeShop("banga"); }
+          UI.refreshHUD();
+        }});
+  },
+
+  /* ---------------- 푸줏간: 고기/생선 + 고기요리 학습 ---------------- */
+  pujut(){
+    UI.startDialogue("푸줏간 주인 🔪", ["갓 잡은 고기와 조기일세. 국밥이며 산적이며 다 여기서 시작이지."],
+      { choices: Quests.npcChoices("pujut").concat([
+          { label:`돼지고기 — 18냥`, value:"pork" },
+          { label:`조기(생선) — 14냥`, value:"fish" },
+          { label:"고기 요리 배우기", value:"learn" },
+          { label:"나간다", value:"bye" }]),
+        onChoice(v){
+          if (Quests.handleChoice(v)) return;
+          if (v==="pork"){ NPC._buy("pork",18); }
+          else if (v==="fish"){ NPC._buy("fish",14); }
+          else if (v==="learn"){ NPC.recipeShop("pujut"); }
+          UI.refreshHUD();
+        }});
   },
 };

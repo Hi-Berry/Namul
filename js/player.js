@@ -22,8 +22,15 @@ const P = {
 
   magic: [],            // 보유 마법 id (당산나무에서 해금)
   shrinePoints: 0,      // 당산나무 누적 정기
-  affection: { mudang:0, daejang:0, chonjang:0, jumo:0, uisang:0, geonchuk:0 },
+  affection: { mudang:0, daejang:0, chonjang:0, jumo:0, uisang:0, geonchuk:0, uiwon:0, yakcho:0, hunjang:0, bobu:0, nongbu:0, banga:0, pujut:0 },
   pet: null,            // {id,name,icon} — 퀘스트 보상
+
+  // 진행/성장
+  cookXp: 0,            // 요리 숙련 경험치
+  fame: 0,              // 마을 명성
+  recipes: ["jeon","jumeokbap"],  // 해금한 레시피
+  cookTrain: 0,         // 서당 요리 수련(추가 보수 배율)
+  farmPlots: 6,         // 메밀밭 칸 수(농부에게 확장)
 
   // 인벤토리: { itemId: count }  (약초 / 메밀가루 등)
   inv: {},
@@ -38,10 +45,16 @@ const Player = {
     P.weapon = "natt"; P.weaponLv = 0; P.homiTier = 1;
     P.costume = "plain"; P.accessory = "none";
     P.magic = []; P.shrinePoints = 0;
-    P.affection = { mudang:0, daejang:0, chonjang:0, jumo:0, uisang:0, geonchuk:0 };
+    P.affection = { mudang:0, daejang:0, chonjang:0, jumo:0, uisang:0, geonchuk:0, uiwon:0, yakcho:0, hunjang:0, bobu:0, nongbu:0, banga:0, pujut:0 };
     P.pet = null;
+    P.cookXp = 0; P.fame = 0; P.recipes = ["jeon","jumeokbap"]; P.cookTrain = 0; P.farmPlots = 6;
     P.inv = {};
   },
+
+  /* ---- 레시피 ---- */
+  hasRecipe(id){ return P.recipes.includes(id); },
+  learnRecipe(id){ if(!P.recipes.includes(id)){ P.recipes.push(id); return true; } return false; },
+  cookLv(){ return DATA.cookLevel(P.cookXp); },
 
   /* ---- 장비 파생 스탯 ---- */
   costumeData(){ return DATA.COSTUMES[P.costume] || DATA.COSTUMES.plain; },
