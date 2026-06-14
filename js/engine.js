@@ -176,6 +176,139 @@ function bindInput(){
     const s = G.scenes[G.scene];
     if (s && s.click) s.click(x, y);
   });
+
+  MobileInput.init();
 }
 
 function keyPressed(k){ return !!G.justKeys[k]; }
+
+/* ---------- 모바일 입력 ---------- */
+const MobileInput = {
+  stick: null, base: null, zone: null,
+  active: false,
+  origin: { x: 0, y: 0 },
+  maxDist: 40,
+  currentKeys: [],
+
+  init() {
+    const isTouch = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
+    if (!isTouch) return;
+
+    const controls = document.getElementById('mobile-controls');
+    if (!controls) return;
+    controls.classList.remove('hidden');
+
+    this.zone = document.getElementById('joystick-zone');
+    this.base = document.getElementById('joystick-base');
+    this.stick = document.getElementById('joystick-stick');
+
+    if (this.zone) {
+      this.zone.addEventListener('touchstart', (e) => this.handleTouchStart(e), { passive: false });
+      this.zone.addEventListener('touchmove', (e) => this.handleTouchMove(e), { passive: false });
+      this.zone.addEventListener('touchend', (e) => this.handleTouchEnd(e), { passive: false });
+      this.zone.addEventListener('touchcancel', (e) => this.handleTouchEnd(e), { passive: false });
+    }
+
+    const bindBtn = (id, key) => {
+      const btn = document.getElementById(id);
+      if (!btn) return;
+      btn.addEventListener('touchstart', (e) => {
+        e.preventDefault();
+        btn.classList.add('active');
+        this.dispatchKey(key, 'keydown');
+      }, { passive: false });
+      const release = (e) => {
+        e.preventDefault();
+        btn.classList.remove('active');
+        this.dispatchKey(key, 'keyup');
+      };
+      btn.addEventListener('touchend', release, { passive: false });
+      btn.addEventListener('touchcancel', release, { passive: false });
+    };
+
+    bindBtn('m-btn-space', ' ');
+    bindBtn('m-btn-i', 'i');
+    bindBtn('m-btn-esc', 'Escape');
+  },
+
+  handleTouchStart(e) {
+    e.preventDefault();
+    this.active = true;
+    this.zone.classList.add('active');
+
+    // 조이스틱 중심점 계산
+    const rect = this.base.getBoundingClientRect();
+    this.origin = {
+      x: rect.left + rect.width / 2,
+      y: rect.top + rect.height / 2
+    };
+
+    this.updateStick(e.changedTouches[0]);
+  },
+
+  handleTouchMove(e) {
+    if (!this.active) return;
+    e.preventDefault();
+    this.updateStick(e.changedTouches[0]);
+  },
+
+  handleTouchEnd(e) {
+    if (!this.active) return;
+    e.preventDefault();
+    this.active = false;
+    this.zone.classList.remove('active');
+    this.stick.style.transform = 'translate(-50%, -50%)';
+    this.releaseKeys();
+  },
+
+  updateStick(touch) {
+    const dx = touch.clientX - this.origin.x;
+    const dy = touch.clientY - this.origin.y;
+    const dist = Math.sqrt(dx * dx + dy * dy);
+
+    let nx = dx, ny = dy;
+    if (dist > this.maxDist) {
+      nx = (dx / dist) * this.maxDist;
+      ny = (dy / dist) * this.maxDist;
+    }
+
+    // 기본 translate(-50%, -50%) 에 더해서 이동
+    this.stick.style.transform = `translate(calc(-50% + ${nx}px), calc(-50% + ${ny}px))`;
+
+    this.updateKeys(dx, dy, dist);
+  },
+
+  updateKeys(dx, dy, dist) {
+    const keysToPress = [];
+    const threshold = 15; // 최소 움직임
+
+    if (dist > threshold) {
+      const angle = Math.atan2(dy, dx) * 180 / Math.PI;
+      // 방향 판별 (8방향 지원)
+      if (angle > -67.5 && angle < 67.5) keysToPress.push('ArrowRight');
+      if (angle > 112.5 || angle < -112.5) keysToPress.push('ArrowLeft');
+      if (angle > 22.5 && angle < 157.5) keysToPress.push('ArrowDown');
+      if (angle < -22.5 && angle > -157.5) keysToPress.push('ArrowUp');
+    }
+
+    // 변경된 키 감지
+    this.currentKeys.forEach(k => {
+      if (!keysToPress.includes(k)) this.dispatchKey(k, 'keyup');
+    });
+    keysToPress.forEach(k => {
+      if (!this.currentKeys.includes(k)) this.dispatchKey(k, 'keydown');
+    });
+
+    this.currentKeys = keysToPress;
+  },
+
+  releaseKeys() {
+    this.currentKeys.forEach(k => this.dispatchKey(k, 'keyup'));
+    this.currentKeys = [];
+  },
+
+  dispatchKey(key, type) {
+    const event = new KeyboardEvent(type, { key: key, bubbles: true });
+    window.dispatchEvent(event);
+  }
+};
