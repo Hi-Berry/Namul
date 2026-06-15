@@ -308,7 +308,21 @@ const MobileInput = {
   },
 
   dispatchKey(key, type) {
-    const event = new KeyboardEvent(type, { key: key, bubbles: true });
-    window.dispatchEvent(event);
+    const k = key.length === 1 ? key.toLowerCase() : key;
+    if (type === 'keydown') {
+      if (!G.keys[k]) G.justKeys[k] = true;
+      G.keys[k] = true;
+
+      // UI나 씬의 key 핸들러를 수동으로 트리거 (실제 KeyboardEvent처럼 동작하도록)
+      const mockEvent = { key: key, preventDefault: () => {} };
+      if (UI.handleKey(mockEvent)) {
+        G.justKeys[k] = false;
+        return;
+      }
+      const s = G.scenes[G.scene];
+      if (s && s.key) s.key(mockEvent);
+    } else if (type === 'keyup') {
+      G.keys[k] = false;
+    }
   }
 };
