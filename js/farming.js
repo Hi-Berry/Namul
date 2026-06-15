@@ -76,7 +76,8 @@ const Farming = {
     const cost = Farming.staminaFor(node.tier);
     if (!Player.hasStamina(cost)){ toast(`기력이 부족하다 (${cost} 필요)`,"bad"); return false; }
     Player.spendStamina(cost);
-    const herbs = DATA.herbsBySeason(Time.season());
+    // 노드 등급(node.tier) 이하의 약초 티어만 획득 가능하도록 필터링
+    const herbs = DATA.herbsBySeason(Time.season()).filter(h => h.tier <= node.tier);
     // 노드 등급이 높을수록 상위 약초 가중치 ↑, 호미 등급도 가산
     const boost = clamp((node.tier-1)*0.4 + (P.homiTier-1)*0.3, 0, 1);
     const n = node.tier===1 ? randInt(1,2) : node.tier===2 ? randInt(2,3) : randInt(2,3);

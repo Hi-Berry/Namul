@@ -475,7 +475,7 @@ const World = {
     let best=null, bestD=R;
     // 오브젝트 — 사각형과의 최단거리(큰 건물도 문 앞에서 인식)
     for(const o of Maps[z].objects){
-      if (!o.action) continue;
+      if (!o.action && o.type !== "plot") continue;
       if (o.marketOnly && !Time.isMarketDay()) continue;  // 장날 게스트는 장날에만 상호작용
       const ox=o.tx*TILE, oy=o.ty*TILE, ow=(o.w||1)*TILE, oh=(o.h||1)*TILE;
       const dx=Math.max(ox-P.x, 0, P.x-(ox+ow));

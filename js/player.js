@@ -7,7 +7,7 @@ const P = {
   speed: 130, // px/s
 
   // 스탯
-  hp: 50, maxHp: 50,
+  hp: 100, maxHp: 100,
   mp: 20, maxMp: 20,
   stamina: 100,
   money: 0,
@@ -42,7 +42,7 @@ const P = {
 
 const Player = {
   init(){
-    P.hp = 50; P.maxHp = 50; P.mp = 20; P.maxMp = 20;
+    P.hp = 100; P.maxHp = 100; P.mp = 20; P.maxMp = 20;
     P.stamina = DATA.CONST.MAX_STAMINA;
     P.money = DATA.CONST.START_MONEY;
     P.level = 1; P.exp = 0;
