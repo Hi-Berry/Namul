@@ -311,6 +311,7 @@
       <li class="nav-item" onclick="switchSection('tavern-recipes')"><span>🍲</span>주막 & 요리 타이쿤</li>
       <li class="nav-item" onclick="switchSection('npcs')"><span>🧑‍🌾</span>마을 인물 & 시설</li>
       <li class="nav-item" onclick="switchSection('quests')"><span>📜</span>전체 의뢰 목록</li>
+      <li class="nav-item" onclick="switchSection('opening-cutscene')"><span>🎬</span>오프닝 컷씬</li>
       <li class="nav-item" onclick="switchSection('main-menu-ui')"><span>📋</span>메인 메뉴 (통합 UI)</li>
       <li class="nav-item" onclick="switchSection('todo')"><span>🛠️</span>개발 To-Do 리스트</li>
     </ul>
@@ -844,16 +845,16 @@
         </thead>
         <tbody>
           <tr>
-            <td><strong>마을 신고식</strong></td>
-            <td>촌장 👴</td>
-            <td>시작 시</td>
-            <td>무당·대장장이·주모와 모두 1회씩 대화 나누기</td>
-            <td>💰 120냥, ⭐ 경험치 10, 🌰메밀 씨앗 ×2</td>
+            <td><strong>산 입구로 이동하여 냉이 채집하기</strong></td>
+            <td>시스템 ⚙️</td>
+            <td>게임 최초 시작 (컷씬 완료)</td>
+            <td>산 입구로 이동하여 냉이 3개 채집하기</td>
+            <td>💰 80냥, ⭐ 경험치 10, 🌰메밀 씨앗 ×2</td>
           </tr>
           <tr>
             <td><strong>텃밭의 꿈</strong></td>
             <td>촌장 👴</td>
-            <td>신고식 완료</td>
+            <td>냉이 채집 완료</td>
             <td>산에 진입하여 나물 6개 채집하기</td>
             <td>💰 90냥, ⭐ 경험치 12, 🥢양념장 ×3</td>
           </tr>
@@ -992,6 +993,76 @@
       </table>
     </section>
 
+    <!-- 오프닝 컷씬 -->
+    <section id="opening-cutscene" class="section-content">
+      <h2><span>🎬</span>게임 오프닝 컷씬 시스템 명세</h2>
+      <p class="lead">게임 최초 시작 시 플레이어에게 세계관과 주인공 '달래'의 가출 배경을 전달하는 인트로 연출 시스템입니다.</p>
+
+      <div class="alert">
+        <strong>💡 기본 동작 및 UI 규칙:</strong><br>
+        • <strong>화면 연출</strong>: 이미지가 화면 전체로 표기되며, 대사는 이미지 하단에 오버레이되는 전용 대화 박스(Dialogue Box) 형태로 출력됩니다.<br>
+        • <strong>건너뛰기 기능</strong>: 화면 우측 상단에 상시 노출되는 <strong>[Skip] (건너뛰기)</strong> 버튼이 존재합니다. 이 버튼을 클릭하면 현재 컷씬 재생을 즉시 종료하고 게임 월드로 전환됩니다.<br>
+        • <strong>종료 후 전환</strong>: 컷씬 전체 연출이 끝나거나 건너뛰기 완료 시, 화면이 부드럽게 밝아지며 플레이어가 달래를 직접 조작할 수 있는 <strong>주막 앞 마당 필드</strong>로 전환됩니다. 동시에 첫 메인 퀘스트 <code>[산 입구로 이동하여 냉이 채집하기]</code>가 자동으로 수락되며 화면 상단에 퀘스트 수락 알림이 출력됩니다.
+      </div>
+
+      <h3>오프닝 컷씬 시나리오 흐름</h3>
+      
+      <div class="card-grid">
+        <!-- 1막 -->
+        <div class="card" style="border-top: 4px solid var(--accent-gold);">
+          <h4>🌅 [1막] 무당집을 가출하는 달래</h4>
+          <p style="font-size: 0.85rem; color: var(--accent-gold); margin-bottom: 8px;">🖼️ 리소스 매칭: <code>assets/cut1.webp</code></p>
+          <p style="font-size: 0.9rem; color: var(--text-muted); margin-bottom: 12px;">
+            <strong>화면 연출:</strong> 야반삼경(깊은 밤), 달래가 낡은 봇짐을 메고 무당집 담벼락을 몰래 넘어 탈출하는 모습.
+          </p>
+          <ul class="check-list" style="font-size: 0.85rem; margin-top: 8px;">
+            <li><strong>대사 1:</strong> "내 이름은 달래. 올해로 열다섯 살이다! 오늘부로 그 지긋지긋한 무당집이랑은 절교다!"</li>
+            <li><strong>대사 2:</strong> "우리 양엄마는 신기라곤 눈 씻고 찾아봐도 없는 가짜 무당인데, 내가 '엄마, 저기 사람 서 있어' 하고 알려줄 때만 겨우 점을 쳤다."</li>
+          </ul>
+        </div>
+
+        <!-- 1-1막 -->
+        <div class="card" style="border-top: 4px solid var(--accent-gold);">
+          <h4>🌅 [1-1막] 서러운 구박</h4>
+          <p style="font-size: 0.85rem; color: var(--accent-gold); margin-bottom: 8px;">🖼️ 리소스 매칭: <code>assets/cut1_1.webp</code></p>
+          <p style="font-size: 0.9rem; color: var(--text-muted); margin-bottom: 12px;">
+            <strong>화면 연출:</strong> 가짜 무당인 양엄마에게 구박당하던 기억을 떠올리며 서글프면서도 치사해하는 달래의 표정.
+          </p>
+          <ul class="check-list" style="font-size: 0.85rem; margin-top: 8px;">
+            <li><strong>대사 1:</strong> "그래놓고 정작 나한테는 복덩이는커녕 식충이라며 맨날 밥도 굶기고 구박만 하니, 내가 치사해서 나온다 나와!"</li>
+          </ul>
+        </div>
+
+        <!-- 2막 -->
+        <div class="card" style="border-top: 4px solid var(--accent-blue);">
+          <h4>💤 [2막] 버려진 주막에서의 기묘한 꿈</h4>
+          <p style="font-size: 0.85rem; color: var(--accent-blue); margin-bottom: 8px;">🖼️ 리소스 매칭: <code>assets/cut2.webp</code></p>
+          <p style="font-size: 0.9rem; color: var(--text-muted); margin-bottom: 12px;">
+            <strong>화면 연출:</strong> 가출 후 숲을 헤매다 발견한 버려진 낡은 주막. 달래가 흙바닥에 대충 누워 잠이 들고, 꿈속에서 화려하고 고귀한 옷을 입은 인물이나 신비로운 이펙트가 흐릿하게 지나가는 모습.
+          </p>
+          <ul class="check-list" style="font-size: 0.85rem; margin-top: 8px;">
+            <li><strong>대사 1:</strong> "당장 갈 곳은 없지만, 다행히 산자락 밑에 아무도 안 사는 버려진 주막을 발견했다."</li>
+            <li><strong>대사 2:</strong> "대충 먼지만 털고 잠들었는데... 꿈속에서 또 이상한 걸 보았다."</li>
+            <li><strong>대사 3:</strong> "가끔 꿈에 나타나는, 눈이 부실 정도로 고귀하고 화려한 옷을 입은 사람들의 모습... 내 출생에 무슨 비밀이라도 있는 걸까? 에이, 생각 말자. 당장 내일 먹고살 걱정이나 해야지!"</li>
+          </ul>
+        </div>
+
+        <!-- 3막 -->
+        <div class="card" style="border-top: 4px solid var(--accent-green);">
+          <h4>🌱 [3막] 나물 채집으로 생존 다짐</h4>
+          <p style="font-size: 0.85rem; color: var(--accent-green); margin-bottom: 8px;">🖼️ 리소스 매칭: <code>assets/cut3.webp</code></p>
+          <p style="font-size: 0.9rem; color: var(--text-muted); margin-bottom: 12px;">
+            <strong>화면 연출:</strong> 다음 날 아침, 햇살이 내리쬐는 주막 마당. 달래가 특유의 낙천적인 표정으로 덜렁거리다 호미를 발등에 떨어뜨릴 뻔하지만, 이내 활짝 웃으며 산을 바라보는 모습.
+          </p>
+          <ul class="check-list" style="font-size: 0.85rem; margin-top: 8px;">
+            <li><strong>대사 1:</strong> "가출은 했는데 가진 거라곤 이 호미 한 자루랑 그동안 산에서 익힌 나물 지식뿐이네."</li>
+            <li><strong>대사 2:</strong> "그래도 남들보다 눈썰미 하나는 타고났으니 어떻게든 굶어 죽진 않겠지!"</li>
+            <li><strong>대사 3:</strong> "이 버려진 주막을 멋지게 고쳐서 맛있는 나물 요리도 팔고, 보란 듯이 떵떵거리며 잘 살아주겠어!"</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
     <!-- 메인 메뉴 (통합 UI) 시스템 -->
     <section id="main-menu-ui" class="section-content">
       <h2><span>📋</span>메인 메뉴 (통합 UI) 시스템 명세</h2>
@@ -1078,6 +1149,8 @@
         <div class="card" style="border-left: 4px solid var(--accent-red);">
           <h4 style="color: var(--accent-red);">🛠️ 앞으로 구현할 목록 (To-Do)</h4>
           <ul class="check-list">
+            <li>게임 오프닝 컷씬 시스템 구현 (전체 화면 이미지 뷰어, 하단 대화 상자, Skip 기능)</li>
+            <li>첫 메인 퀘스트 [산 입구로 이동하여 냉이 채집하기] 자동 수락 및 오프닝 완료 연동 처리</li>
             <li>장날 신규 게스트 NPC 4종 배치 및 렌더링 코드 반영</li>
             <li>타이쿤 손님 풀에 게스트 4종 추가</li>
             <li>게스트 전용 대화 인터랙션 분기 및 정 나누기 함수 작성</li>
