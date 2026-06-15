@@ -144,6 +144,9 @@ const Trading = {
         ctx.fillStyle="#cbb892"; ctx.font="12px 'Malgun Gothic'"; ctx.textAlign="left"; ctx.fillText("접시:", G.W/2-150, 292);
         ctx.font="26px serif"; T.plate.forEach((id,i)=> ctx.fillText(DATA.INGREDIENTS[id].icon, G.W/2-110+i*40, 300)); ctx.textAlign="center";
       }
+      // 요리하는 달래 (#6 cooking 애니메이션)
+      World.drawDallae(ctx, 70, 250, { dir:"right", action:"cook", scale:1.25 });
+      ctx.fillStyle="#cbb892"; ctx.font="11px 'Malgun Gothic'"; ctx.textAlign="center"; ctx.fillText("달래", 70, 292);
       if (T.msgT>0){ ctx.font="bold 16px 'Malgun Gothic'"; ctx.fillStyle=T.msgKind==="gold"?"#ffe89a":T.msgKind==="bad"?"#f5b0a8":"#fff"; ctx.fillText(T.msg, G.W/2, 334); }
 
       T.btns=[]; const ings=T.ingredientsInMenu();

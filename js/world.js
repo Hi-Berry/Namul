@@ -258,7 +258,8 @@ const World = {
   },
 
   _drawPlayer(ctx){
-    World.drawDallae(ctx, P.x, P.y, { dir:P.dir, moving:P.moving, blink:P._blink>0, hold:"basket", scale:0.76 });
+    const action = World.hoe ? "gather" : null;   // 호미질 중엔 채집 애니메이션
+    World.drawDallae(ctx, P.x, P.y, { dir:P.dir, moving:P.moving, action, blink:P._blink>0, hold: action?"none":"basket", scale:0.76 });
   },
 
   // 달래 렌더 — 기획서 스프라이트 시트 우선, 미로드 시 벡터 폴백
@@ -269,7 +270,7 @@ const World = {
       // 그림자
       const sc = o.scale || 1;
       ctx.fillStyle="rgba(0,0,0,0.26)"; ctx.beginPath(); ctx.ellipse(x, y+15, 12*sc, 5*sc, 0,0,Math.PI*2); ctx.fill();
-      const nm = o.frame || Sprites.frameFor(dir, o.moving, P.animT);
+      const nm = o.frame || (o.action ? Sprites.frameForAction(o.action, dir, o.moving, P.animT) : Sprites.frameFor(dir, o.moving, P.animT));
       const targetH = 54 * sc;
       const footY = y + 19*sc;
       if (Sprites.drawFrame(ctx, nm, x, footY, targetH, !!o.flip)) return;
