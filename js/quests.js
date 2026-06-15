@@ -6,6 +6,14 @@ const Quests = {
   active:[], done:[], progress:{}, _talked:{},
 
   defs:{
+    /* ---------- 오프닝 직후 자동 수락 튜토리얼 ---------- */
+    q_naengi: {
+      giver:"chonjang", story:true, auto:true, title:"첫 나물 채집",
+      desc:"산 입구(마을 오른쪽 너머)로 가서 나물을 3번 캐 오기. 봄나물이면 무엇이든 좋다(냉이가 으뜸!).",
+      goal:{ type:"gather", count:3 },
+      ready:["산 나물 향이 코끝에 도는구나! 이 솜씨면 버려진 주막도 일으키겠어."],
+      reward:{ money:60, exp:8, item:{id:"season",n:2} },
+    },
     /* ---------- 메인 스토리 ---------- */
     q_intro: {
       giver:"chonjang", story:true, title:"마을 신고식",
@@ -332,7 +340,18 @@ const Quests = {
       // 상태 기반(gold/fame/cooklv/recipes)은 reached()가 직접 판정
       if (this.reached(id) && !this._announced.has(id)){ this._announced.add(id); completedNow.push(id); }
     });
-    completedNow.forEach(id=>{ Sound.sfx("quest"); toast(`📜 의뢰 조건 달성! '${this.defs[id].title}' — ${DATA.NPCS[this.defs[id].giver].name}에게 보고하자`,"gold"); });
+    completedNow.forEach(id=>{
+      const q=this.defs[id];
+      if (q.auto){   // 자동 완료 퀘스트(튜토리얼 등) — 보고 없이 즉시 정산
+        this.active=this.active.filter(x=>x!==id); this.done.push(id);
+        const r=q.reward||{};
+        if (r.money){ P.money+=r.money; } if (r.exp){ Player.gainExp(r.exp); }
+        if (r.item){ Player.add(r.item.id, r.item.n); }
+        Sound.sfx("fanfare"); toast(`✅ '${q.title}' 완료! 보상을 받았다`,"gold"); UI.refreshHUD();
+      } else {
+        Sound.sfx("quest"); toast(`📜 의뢰 조건 달성! '${q.title}' — ${DATA.NPCS[q.giver].name}에게 보고하자`,"gold");
+      }
+    });
   },
 
   /* 화면 추적기용 진행 요약 (활성 퀘스트) */

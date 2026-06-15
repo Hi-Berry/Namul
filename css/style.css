@@ -391,3 +391,33 @@ body.touch-ui #game-shell {
 }
 #gm-panel button:hover { background: #5a4326; border-color: #e7c66b; }
 #gm-panel .gm-foot { margin-top: 8px; color: #8a7656; font-size: 10px; text-align: center; }
+
+/* ===== 오프닝 컷씬 (#15) ===== */
+#cutscene {
+  position: fixed; inset: 0; z-index: 10000;
+  background: #000; display: flex; align-items: center; justify-content: center;
+  cursor: pointer; transition: opacity 0.4s ease;
+}
+#cutscene.fade-out { opacity: 0; }
+#cutscene #cs-img {
+  max-width: 100%; max-height: 100%; object-fit: contain;
+  image-rendering: pixelated;
+}
+#cutscene #cs-skip {
+  position: absolute; top: 14px; right: 14px; z-index: 2;
+  background: rgba(20,14,8,0.8); color: #f3e9d2; border: 1px solid #b5852a;
+  border-radius: 6px; padding: 6px 12px; font-size: 13px; cursor: pointer;
+  font-family: 'Malgun Gothic', sans-serif;
+}
+#cutscene #cs-skip:hover { background: #5a4326; border-color: #e7c66b; }
+#cutscene #cs-box {
+  position: absolute; left: 0; right: 0; bottom: 0;
+  background: linear-gradient(transparent, rgba(10,7,4,0.92) 30%);
+  padding: 40px 24px 22px; color: #f3e9d2;
+  font-family: 'Malgun Gothic', sans-serif;
+}
+#cutscene #cs-text {
+  max-width: 760px; margin: 0 auto; font-size: 16px; line-height: 1.7;
+  text-shadow: 0 2px 6px #000;
+}
+#cutscene #cs-cont { max-width: 760px; margin: 8px auto 0; text-align: right; color: #e7c66b; font-size: 12px; }
