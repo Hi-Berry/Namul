@@ -24,11 +24,13 @@ const P = {
   shrinePoints: 0,      // 당산나무 누적 정기
   affection: { mudang:0, daejang:0, chonjang:0, jumo:0, uisang:0, geonchuk:0, uiwon:0, yakcho:0, hunjang:0, bobu:0, nongbu:0, banga:0, pujut:0 },
   pet: null,            // {id,name,icon} — 퀘스트 보상
+  buff: null,           // 보양식 버프 {id,name,icon,kind,power} — 다음 취침까지 유지
+  cauldronDay: 0,       // 가마솥 보양식을 끓인 날(일일 1회 제한)
 
   // 진행/성장
   cookXp: 0,            // 요리 숙련 경험치
   fame: 0,              // 마을 명성
-  recipes: ["jeon","jumeokbap"],  // 해금한 레시피
+  recipes: ["jeon","pajeon","bindaetteok"],  // 해금한 레시피
   cookTrain: 0,         // 서당 요리 수련(추가 보수 배율)
   farmPlots: 6,         // 메밀밭 칸 수(농부에게 확장)
 
@@ -47,7 +49,8 @@ const Player = {
     P.magic = []; P.shrinePoints = 0;
     P.affection = { mudang:0, daejang:0, chonjang:0, jumo:0, uisang:0, geonchuk:0, uiwon:0, yakcho:0, hunjang:0, bobu:0, nongbu:0, banga:0, pujut:0 };
     P.pet = null;
-    P.cookXp = 0; P.fame = 0; P.recipes = ["jeon","jumeokbap"]; P.cookTrain = 0; P.farmPlots = 6;
+    P.cookXp = 0; P.fame = 0; P.recipes = DATA.START_RECIPES.slice(); P.cookTrain = 0; P.farmPlots = 6;
+    P.buff = null; P.cauldronDay = 0;
     P.inv = {};
   },
 
@@ -56,12 +59,22 @@ const Player = {
   learnRecipe(id){ if(!P.recipes.includes(id)){ P.recipes.push(id); return true; } return false; },
   cookLv(){ return DATA.cookLevel(P.cookXp); },
 
+  /* ---- 보양식 버프 ---- */
+  buffFactor(kind){ return (P.buff && P.buff.kind===kind) ? P.buff.power : 0; },
+  // 가마솥 보양식 섭취: 하루 동안 한 가지 효과 유지(새로 먹으면 교체)
+  eatBuffFood(food){
+    P.buff = { id:food.id, name:food.name, icon:food.icon, kind:food.kind, power:food.power };
+    P.cauldronDay = G.time.day;
+  },
+  buffUsedToday(){ return P.cauldronDay === G.time.day; },
+
   /* ---- 장비 파생 스탯 ---- */
   costumeData(){ return DATA.COSTUMES[P.costume] || DATA.COSTUMES.plain; },
   accessoryData(){ return DATA.ACCESSORIES[P.accessory] || DATA.ACCESSORIES.none; },
-  staminaMult(){ return Player.costumeData().staminaMult; },
-  speedMult(){ return Player.costumeData().speedMult; },
-  dropBonus(){ return Player.accessoryData().dropBonus; },
+  // 보양식(기력효율↑)은 소모 계수를 낮춘다
+  staminaMult(){ return Player.costumeData().staminaMult * (1 - Player.buffFactor("stamina")); },
+  speedMult(){ return Player.costumeData().speedMult * (1 + Player.buffFactor("speed")); },
+  dropBonus(){ return Player.accessoryData().dropBonus + Player.buffFactor("drop"); },
   mpCap(){ return P.maxMp + Player.accessoryData().mpBonus; },
   // 부산물(드롭) 목록
   dropList(){ return Object.keys(P.inv).filter(id => DATA.DROPS[id]); },
@@ -94,6 +107,8 @@ const Player = {
   weaponData(){
     const w = Object.assign({}, DATA.WEAPONS[P.weapon]);
     w.atk += P.weaponLv * DATA.WEAPON_UPGRADE.atkBonus + (P.level-1)*2;
+    // 보양식(공격력↑) 적용
+    w.atk = Math.round(w.atk * (1 + Player.buffFactor("atk")));
     return w;
   },
 
@@ -121,9 +136,11 @@ const Player = {
 
   /* ---- 새 날 ---- */
   onNewDay(){
-    P.stamina = DATA.CONST.MAX_STAMINA;  // 취침 시 기력 회복
+    // 취침 시 체력·신력·기력 모두 최대치로 완전 회복
+    P.stamina = DATA.CONST.MAX_STAMINA;
     P.mp = Player.mpCap();
-    P.hp = clamp(P.hp + 10, 0, P.maxHp);
+    P.hp = P.maxHp;
+    P.buff = null;  // 보양식 효과는 하루 동안만 유지 → 새 날에 해제
     // 펫이 밤새 약초를 물어온다
     if (P.pet && chance(0.8)){
       const h = choice(DATA.herbsBySeason(Time.season()).filter(x=>x.tier<=2));

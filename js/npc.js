@@ -150,6 +150,7 @@ const NPC = {
     else choices.push({ label:"(장사는 장날 5·10일 오후에)", value:"noop" });
     choices.push({ label:"📜 새 요리 배우기", value:"learn" });
     choices.push({ label:`나물죽 끓이기 (나물 ${DATA.CONST.PORRIDGE_HERBS}개 → 체력 +${DATA.CONST.PORRIDGE_HEAL})`, value:"porridge" });
+    choices.push({ label:"🥘 가마솥 보양식 (하루 1회 · 종일 버프)", value:"cauldron" });
     choices.push({ label:"정담 나누기 (정 +1)", value:"talk" });
     choices.push({ label:"나간다", value:"bye" });
     UI.startDialogue("주모 🍶", pages, {
@@ -167,8 +168,54 @@ const NPC = {
           for (const id of herbs){ while(n>0 && P.inv[id]>0){ Player.remove(id,1); n--; } if(n<=0)break; }
           Player.heal(DATA.CONST.PORRIDGE_HEAL);
           toast(`🍲 나물죽을 먹었다. 체력 +${DATA.CONST.PORRIDGE_HEAL}`,"good");
+        } else if (v==="cauldron"){ NPC._cauldronMenu();
         } else if (v==="talk"){ Player.addAffection("jumo",1); toast("주모와 정담을 나눴다. 정 +1","good"); }
       }
+    });
+  },
+
+  /* 가마솥 보양식: 재료를 넣어 하루 동안 유지되는 버프를 얻는다(일일 1회) */
+  _needCounts(steps){ const m={}; steps.forEach(s=> m[s]=(m[s]||0)+1); return m; },
+  _canCook(steps){
+    const need=NPC._needCounts(steps);
+    for (const id in need){
+      const have = id==="namul" ? Player.herbTotal() : Player.count(id);
+      if (have < need[id]) return false;
+    }
+    return true;
+  },
+  _consumeSteps(steps){
+    const need=NPC._needCounts(steps);
+    for (const id in need){
+      let n=need[id];
+      if (id==="namul"){ for (const h of Player.herbList()){ while(n>0 && P.inv[h]>0){ Player.remove(h,1); n--; } if(n<=0)break; } }
+      else Player.remove(id, n);
+    }
+  },
+  _cauldronMenu(){
+    const used = Player.buffUsedToday();
+    let rows = `<p class="note">가마솥에 재료를 넣어 <b>하루 동안 유지되는 보양 효과</b>를 얻는다. 하루 한 번만 끓일 수 있다.`;
+    rows += P.buff ? ` 현재 효과: <b>${P.buff.icon} ${P.buff.name}</b> (${DATA.BUFF_TAG[P.buff.kind]})</p>` : ` (현재 효과 없음)</p>`;
+    if (used) rows += `<p class="note" style="color:#e7a">오늘은 이미 가마솥을 썼다. 내일 다시 끓일 수 있다.</p>`;
+    Object.values(DATA.BUFF_FOODS).forEach(f=>{
+      const recipe = f.steps.map(s=> (DATA.INGREDIENTS[s]||{icon:"?",name:s}).icon).join(" ");
+      const can = !used && NPC._canCook(f.steps);
+      const btn = `<button data-act="cook" data-id="${f.id}" ${can?"":"disabled"}>끓이기</button>`;
+      rows += `<div class="shop-row"><div class="item-ic" style="background:#3a2410">${f.icon}</div>
+        <div class="grow"><div class="item-name">${f.name} <span class="item-sub">${recipe}</span></div>
+        <div class="item-sub">${f.desc}</div></div>${btn}</div>`;
+    });
+    UI.openMenu("가마솥 보양식 🥘", rows, (act,id)=>{
+      if (act!=="cook") return;
+      if (Player.buffUsedToday()){ Sound.sfx("error"); toast("오늘은 이미 가마솥을 썼다","bad"); return; }
+      const f=DATA.BUFF_FOODS[id];
+      if (!NPC._canCook(f.steps)){ Sound.sfx("error"); toast("재료가 부족하다","bad"); return; }
+      NPC._consumeSteps(f.steps);
+      Player.eatBuffFood(f);
+      Sound.sfx("confirm");
+      toast(`${f.icon} ${f.name}을(를) 먹었다! ${DATA.BUFF_TAG[f.kind]} (하루 유지)`,"gold");
+      UI.refreshHUD();
+      NPC._cauldronMenu();
     });
   },
 
