@@ -143,9 +143,15 @@ function loop(ts){
 }
 
 /* ---------- 입력 바인딩 ---------- */
+function keyId(key){
+  if (key.length === 1) return key.toLowerCase();
+  if (key.startsWith("Arrow")) return key.toLowerCase();
+  return key;
+}
+
 function bindInput(){
   window.addEventListener("keydown", (e) => {
-    const k = e.key.length === 1 ? e.key.toLowerCase() : e.key;
+    const k = keyId(e.key);
     if (!G.keys[k]) G.justKeys[k] = true;
     G.keys[k] = true;
     // 대화/메뉴/씬별 키 핸들러
@@ -157,8 +163,7 @@ function bindInput(){
     if (["ArrowUp","ArrowDown","ArrowLeft","ArrowRight"," "].includes(e.key)) e.preventDefault();
   });
   window.addEventListener("keyup", (e) => {
-    const k = e.key.length === 1 ? e.key.toLowerCase() : e.key;
-    G.keys[k] = false;
+    G.keys[keyId(e.key)] = false;
   });
 
   const rect = () => G.canvas.getBoundingClientRect();
@@ -285,10 +290,10 @@ const MobileInput = {
     if (dist > threshold) {
       const angle = Math.atan2(dy, dx) * 180 / Math.PI;
       // 방향 판별 (8방향 지원)
-      if (angle > -67.5 && angle < 67.5) keysToPress.push('ArrowRight');
-      if (angle > 112.5 || angle < -112.5) keysToPress.push('ArrowLeft');
-      if (angle > 22.5 && angle < 157.5) keysToPress.push('ArrowDown');
-      if (angle < -22.5 && angle > -157.5) keysToPress.push('ArrowUp');
+      if (angle > -67.5 && angle < 67.5) keysToPress.push('arrowright');
+      if (angle > 112.5 || angle < -112.5) keysToPress.push('arrowleft');
+      if (angle > 22.5 && angle < 157.5) keysToPress.push('arrowdown');
+      if (angle < -22.5 && angle > -157.5) keysToPress.push('arrowup');
     }
 
     // 변경된 키 감지
@@ -308,7 +313,7 @@ const MobileInput = {
   },
 
   dispatchKey(key, type) {
-    const k = key.length === 1 ? key.toLowerCase() : key;
+    const k = keyId(key);
     if (type === 'keydown') {
       if (!G.keys[k]) G.justKeys[k] = true;
       G.keys[k] = true;
