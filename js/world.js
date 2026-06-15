@@ -538,10 +538,25 @@ const World = {
         "안쪽으로 갈수록 약초 등급도, 요괴도 강해진다. 요괴는 멀리서도 너를 감지해 쫓아온다!",
         "패하면 약초 절반과 시간을 잃으니 조심. 요괴 부산물(공물)은 <b>당나무 제단</b>에 바쳐 신통력을 얻어라."]); break;
       case "shrine": Shrine.open(); break;
-      case "altar": UI.startDialogue("⛩️ 산정 제단",[
-        "산 정상의 오래된 제단. 차가운 바람이 분다.",
-        "달래는 까닭 모를 익숙함을 느낀다… 마치 누군가 자신을 부르는 듯한.",
-        "(후반 스토리에서 풀릴 비밀이 잠들어 있다.)"]); break;
+      case "altar":
+        if (Quests.isActive("q_truth") && !G.flags.altarSeen){
+          G.flags.altarSeen = true;
+          Sound.sfx("fanfare");
+          UI.startDialogue("⛩️ 산정 제단 — 환영", [
+            "제단에 손을 얹자, 차가운 바람이 휘몰아치며 눈앞이 하얘진다…",
+            "환영 속 — 고귀한 무당과 임금의 모습이 스친다. 「달래야… 너는 영(靈)을 보는 아이.」",
+            "버려졌던 핏덩이, 달래꽃 머리핀에 깃든 <b>신내림의 운명</b>이 비로소 깨어난다.",
+            "(가슴 깊은 곳에서 신력이 차오른다. 무당에게 돌아가 이야기를 듣자.)"
+          ], { onEnd(){ Quests.notify("altar",{}); } });
+        } else if (G.flags.altarSeen){
+          UI.startDialogue("⛩️ 산정 제단", ["고요한 제단. 달래는 자신의 신력이 한층 깊어진 것을 느낀다."]);
+        } else {
+          UI.startDialogue("⛩️ 산정 제단",[
+            "산 정상의 오래된 제단. 차가운 바람이 분다.",
+            "달래는 까닭 모를 익숙함을 느낀다… 마치 누군가 자신을 부르는 듯한.",
+            "(두억시니를 물리치고 무당의 의뢰를 받으면, 잠든 비밀이 깨어날지도.)"]);
+        }
+        break;
       default:
         if (o.type==="plot"){
           const p=Farming.plotState(o.plot);
