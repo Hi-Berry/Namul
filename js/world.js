@@ -98,7 +98,7 @@ const World = {
       if (G.keys["arrowright"]||G.keys["d"]) dx+=1;
       if (G.keys["arrowup"]||G.keys["w"]) dy-=1;
       if (G.keys["arrowdown"]||G.keys["s"]) dy+=1;
-      const blocked = UI.dialogueOpen||UI.menuOpen;
+      const blocked = UI.dialogueOpen||UI.menuOpen||(window.MainMenu&&MainMenu.open);
       if (blocked){ dx=0; dy=0; }
       P.moving = (dx||dy);
       // 호미질 중 이동하면 중단

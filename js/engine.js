@@ -123,7 +123,7 @@ function loop(ts){
   _last = ts;
 
   // 시간 진행: 정지/대화/메뉴 아닐 때 + 월드 씬에서만 실시간 흐름
-  if (!G.paused && G.scene === "world" && !UI.dialogueOpen && !UI.menuOpen){
+  if (!G.paused && G.scene === "world" && !UI.dialogueOpen && !UI.menuOpen && !(window.MainMenu&&MainMenu.open)){
     G._msAcc += dt * 1000;
     const step = G.MS_PER_MIN / (G.gmTimeMult||1);
     while (G._msAcc >= step){ G._msAcc -= step; Time.advance(1); }

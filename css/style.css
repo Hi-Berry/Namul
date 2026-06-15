@@ -421,3 +421,43 @@ body.touch-ui #game-shell {
   text-shadow: 0 2px 6px #000;
 }
 #cutscene #cs-cont { max-width: 760px; margin: 8px auto 0; text-align: right; color: #e7c66b; font-size: 12px; }
+
+/* ===== 메인 메뉴 통합 UI (#14) ===== */
+#mainmenu {
+  position: fixed; inset: 0; z-index: 9000;
+  background: rgba(8,5,3,0.78); display: flex; align-items: center; justify-content: center;
+  font-family: 'Malgun Gothic', sans-serif;
+}
+#mainmenu .mm-wrap {
+  position: relative; width: min(94%, 860px); height: min(92%, 600px);
+  background: #1c140b; border: 3px solid #6b5736; border-radius: 10px;
+  display: flex; overflow: hidden; color: #f3e9d2;
+}
+#mainmenu .mm-close { position: absolute; top: 8px; right: 10px; z-index: 2;
+  background: #3a2c1a; color: #f3e9d2; border: 1px solid #6b5736; border-radius: 5px; padding: 5px 10px; font-size: 12px; cursor: pointer; }
+#mainmenu .mm-close:hover { background: #6b5736; }
+#mainmenu .mm-left { width: 320px; flex-shrink: 0; padding: 14px; overflow-y: auto; border-right: 2px solid #50412a; }
+#mainmenu .mm-right { flex: 1; padding: 14px 14px 14px 14px; overflow-y: auto; }
+#mainmenu .mm-name { font-size: 17px; font-weight: bold; color: #e7c66b; margin-bottom: 6px; }
+#mainmenu .mm-sec { font-size: 11px; color: #9c8a68; margin: 12px 0 5px; border-bottom: 1px solid #3a2e22; padding-bottom: 3px; }
+#mainmenu .mm-row { display: flex; justify-content: space-between; gap: 8px; font-size: 12.5px; padding: 3px 0; align-items: center; }
+#mainmenu .mm-row span { color: #cbb892; } #mainmenu .mm-row b { color: #f3e9d2; text-align: right; }
+#mainmenu .mm-filters { display: flex; gap: 4px; margin-bottom: 6px; }
+#mainmenu .mm-filters button, #mainmenu .mm-tabs button {
+  flex: 1; background: #2a2016; color: #cbb892; border: 1px solid #50412a; border-radius: 4px; padding: 5px 2px; font-size: 11px; cursor: pointer; }
+#mainmenu .mm-filters button.on, #mainmenu .mm-tabs button.on { background: #6b5736; color: #fff; border-color: #e7c66b; }
+#mainmenu .mm-grid { display: grid; grid-template-columns: repeat(6, 1fr); gap: 4px; }
+#mainmenu .mm-cell { position: relative; aspect-ratio: 1; background: #241a0e; border: 1px solid #3a2e22; border-radius: 4px;
+  display: flex; align-items: center; justify-content: center; font-size: 18px; cursor: pointer; }
+#mainmenu .mm-cell.empty { background: #1a130a; cursor: default; }
+#mainmenu .mm-cell.sel { border-color: #e7c66b; box-shadow: 0 0 0 1px #e7c66b inset; }
+#mainmenu .mm-cell .mm-qty { position: absolute; right: 2px; bottom: 0; font-size: 10px; color: #ffe89a; text-shadow: 0 1px 2px #000; }
+#mainmenu .mm-detail { margin-top: 8px; background: #241a0e; border: 1px solid #50412a; border-radius: 5px; padding: 8px 10px; font-size: 12px; color: #9c8a68; min-height: 48px; }
+#mainmenu .mm-d-name { color: #f3e9d2; font-size: 13.5px; } #mainmenu .mm-d-grade { color: #e7c66b; }
+#mainmenu .mm-d-id { color: #6f5d44; font-size: 10px; margin: 2px 0; } #mainmenu .mm-d-desc { color: #cbb892; }
+#mainmenu .mm-tabs { display: flex; gap: 4px; margin-bottom: 10px; }
+#mainmenu .mm-tabbody { font-size: 13px; }
+#mainmenu .mm-p { font-size: 12.5px; color: #cbb892; margin: 4px 0 8px; }
+#mainmenu .mm-tabbody .mm-row button { background: #3a2c1a; color: #f3e9d2; border: 1px solid #6b5736; border-radius: 4px; padding: 4px 10px; font-size: 12px; cursor: pointer; }
+#mainmenu .mm-tabbody .mm-row button:hover { background: #6b5736; }
+@media (max-width: 680px){ #mainmenu .mm-wrap{ flex-direction: column; } #mainmenu .mm-left{ width: 100%; border-right: none; border-bottom: 2px solid #50412a; max-height: 48%; } }

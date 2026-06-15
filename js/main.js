@@ -93,6 +93,7 @@ window.addEventListener("load", ()=>{
   Quests.init();
   bindInput();
   GM.init();
+  MainMenu.init();
   Game.showTitle();
 
   // 브라우저 자동재생 정책: 첫 입력 시 오디오 시작
