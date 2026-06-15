@@ -23,6 +23,7 @@ html, body {
   border: 4px solid #3a2c1a;
   border-radius: 6px;
   overflow: hidden;
+  container-type: inline-size;
 }
 @supports not (aspect-ratio: 4/3) {
   #game-wrap { height: 600px; max-height: 75vw; }
@@ -183,7 +184,7 @@ canvas#game {
 #mobile-controls {
   position: absolute;
   bottom: 0; left: 0; right: 0;
-  height: 200px;
+  height: 25cqw;
   pointer-events: none;
   z-index: 100;
 }
@@ -193,8 +194,8 @@ canvas#game {
 
 #joystick-zone {
   position: absolute;
-  left: 20px; bottom: 20px;
-  width: 150px; height: 150px;
+  left: 2.5cqw; bottom: 2.5cqw;
+  width: 18.75cqw; height: 18.75cqw;
   pointer-events: auto;
   touch-action: none;
   opacity: 0.7;
@@ -203,19 +204,19 @@ canvas#game {
   position: absolute;
   left: 50%; top: 50%;
   transform: translate(-50%, -50%);
-  width: 120px; height: 120px;
+  width: 15cqw; height: 15cqw;
   border-radius: 50%;
   background: rgba(40, 30, 20, 0.6);
-  border: 2px solid #6b5736;
+  border: clamp(1px, 0.25cqw, 2px) solid #6b5736;
 }
 #joystick-stick {
   position: absolute;
   left: 50%; top: 50%;
   transform: translate(-50%, -50%);
-  width: 50px; height: 50px;
+  width: 6.25cqw; height: 6.25cqw;
   border-radius: 50%;
   background: rgba(231, 198, 107, 0.8);
-  border: 2px solid #f3e9d2;
+  border: clamp(1px, 0.25cqw, 2px) solid #f3e9d2;
   box-shadow: 0 0 10px rgba(0,0,0,0.5);
   transition: transform 0.1s ease-out;
 }
@@ -225,19 +226,19 @@ canvas#game {
 
 #action-buttons {
   position: absolute;
-  right: 20px; bottom: 20px;
-  width: 160px; height: 160px;
+  right: 2.5cqw; bottom: 2.5cqw;
+  width: 20cqw; height: 20cqw;
   pointer-events: auto;
 }
 .m-btn {
   position: absolute;
-  width: 60px; height: 60px;
+  width: 7.5cqw; height: 7.5cqw;
   border-radius: 50%;
   background: rgba(58, 44, 26, 0.8);
-  border: 2px solid #6b5736;
+  border: clamp(1px, 0.25cqw, 2px) solid #6b5736;
   color: #f3e9d2;
   font-family: inherit;
-  font-size: 13px;
+  font-size: 1.625cqw;
   font-weight: bold;
   touch-action: none;
   user-select: none;
@@ -253,6 +254,6 @@ canvas#game {
   transform: scale(0.95);
   opacity: 1;
 }
-#m-btn-space { right: 0; bottom: 0; width: 70px; height: 70px; font-size: 14px; }
-#m-btn-i { right: 80px; bottom: 10px; }
-#m-btn-esc { right: 20px; bottom: 80px; }
+#m-btn-space { right: 0; bottom: 0; width: 8.75cqw; height: 8.75cqw; font-size: 1.75cqw; }
+#m-btn-i { right: 10cqw; bottom: 1.25cqw; }
+#m-btn-esc { right: 2.5cqw; bottom: 10cqw; }
