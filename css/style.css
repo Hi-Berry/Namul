@@ -5,6 +5,7 @@
 html, body {
   width: 100%;
   height: 100%;
+  min-height: 100dvh;
   background: #1a1410;
   color: #f3e9d2;
   font-family: 'Malgun Gothic', 'Galmuri', monospace, sans-serif;
@@ -14,20 +15,30 @@ html, body {
   justify-content: center;
 }
 
+#game-shell {
+  --game-size: min(100%, 800px, calc(100dvh * 4 / 3));
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  min-height: 100%;
+}
+
 #game-wrap {
   position: relative;
-  width: 100%;
-  max-width: 800px;
+  width: var(--game-size);
   aspect-ratio: 4/3;
   image-rendering: pixelated;
   box-shadow: 0 0 40px rgba(0,0,0,0.8);
   border: 4px solid #3a2c1a;
   border-radius: 6px;
   overflow: hidden;
-  container-type: inline-size;
+  container-type: size;
+  flex-shrink: 0;
 }
 @supports not (aspect-ratio: 4/3) {
-  #game-wrap { height: 600px; max-height: 75vw; }
+  #game-wrap { height: 600px; max-height: min(75vw, 100vh); }
 }
 
 canvas#game {
@@ -182,64 +193,164 @@ canvas#game {
 .fullscreen p.tip { margin-top: 24px; color: #8a7656; font-size: 12px; max-width: 520px; line-height: 1.7; }
 
 /* ===== Mobile Controls ===== */
+/* 세로: 게임 아래 도크 / 가로: 게임 위 오버레이 */
 #mobile-controls {
-  position: absolute;
-  bottom: 0; left: 0; right: 0;
-  height: 25cqw;
   pointer-events: none;
   z-index: 100;
+  flex-shrink: 0;
 }
 #mobile-controls:not(.hidden) {
   display: flex !important;
 }
 
-#joystick-zone {
-  position: absolute;
-  left: 2.5cqw; bottom: 2.5cqw;
-  width: 18.75cqw; height: 18.75cqw;
-  pointer-events: auto;
-  touch-action: none;
-  opacity: 0.7;
+/* --- 세로 모드: 게임 하단을 가리지 않고 아래 여백에 배치 --- */
+@media (orientation: portrait) {
+  #mobile-controls:not(.hidden) {
+    position: relative;
+    width: var(--game-size);
+    height: 88px;
+    margin-top: 10px;
+    padding: 0 8px max(8px, env(safe-area-inset-bottom));
+    justify-content: space-between;
+    align-items: center;
+    box-sizing: border-box;
+  }
+  #joystick-zone {
+    position: relative;
+    left: auto; bottom: auto;
+    width: 72px; height: 72px;
+    pointer-events: auto;
+    touch-action: none;
+    opacity: 0.85;
+    flex-shrink: 0;
+  }
+  #joystick-base {
+    width: 64px; height: 64px;
+    border: 2px solid #6b5736;
+  }
+  #joystick-stick {
+    width: 28px; height: 28px;
+    border: 2px solid #f3e9d2;
+  }
+  #action-buttons {
+    position: relative;
+    right: auto; bottom: auto;
+    width: 118px; height: 80px;
+    pointer-events: auto;
+    flex-shrink: 0;
+  }
+  .m-btn {
+    position: absolute;
+    width: 44px; height: 44px;
+    font-size: 11px;
+    border: 2px solid #6b5736;
+  }
+  #m-btn-space { right: 0; bottom: 0; width: 50px; height: 50px; }
+  #m-btn-i { right: 58px; bottom: 4px; }
+  #m-btn-esc { right: 10px; bottom: 58px; }
 }
+
+/* --- 가로 모드: 화면 높이에 맞춘 게임 위 오버레이 --- */
+@media (orientation: landscape) {
+  #game-shell {
+    width: var(--game-size);
+    aspect-ratio: 4/3;
+    position: relative;
+    display: block;
+  }
+  #game-wrap {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    aspect-ratio: auto;
+  }
+  #mobile-controls:not(.hidden) {
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    height: 30cqh;
+  }
+  #joystick-zone {
+    position: absolute;
+    left: 3cqh; bottom: 3cqh;
+    width: 22cqh; height: 22cqh;
+    pointer-events: auto;
+    touch-action: none;
+    opacity: 0.7;
+  }
+  #joystick-base {
+    position: absolute;
+    left: 50%; top: 50%;
+    transform: translate(-50%, -50%);
+    width: 18cqh; height: 18cqh;
+    border-radius: 50%;
+    background: rgba(40, 30, 20, 0.6);
+    border: clamp(1px, 0.4cqh, 2px) solid #6b5736;
+  }
+  #joystick-stick {
+    position: absolute;
+    left: 50%; top: 50%;
+    transform: translate(-50%, -50%);
+    width: 7.5cqh; height: 7.5cqh;
+    border-radius: 50%;
+    background: rgba(231, 198, 107, 0.8);
+    border: clamp(1px, 0.4cqh, 2px) solid #f3e9d2;
+    box-shadow: 0 0 10px rgba(0,0,0,0.5);
+    transition: transform 0.1s ease-out;
+  }
+  #action-buttons {
+    position: absolute;
+    right: 3cqh; bottom: 3cqh;
+    width: 24cqh; height: 24cqh;
+    pointer-events: auto;
+  }
+  .m-btn {
+    position: absolute;
+    width: 9cqh; height: 9cqh;
+    border-radius: 50%;
+    background: rgba(58, 44, 26, 0.8);
+    border: clamp(1px, 0.4cqh, 2px) solid #6b5736;
+    color: #f3e9d2;
+    font-family: inherit;
+    font-size: clamp(9px, 2.4cqh, 14px);
+    font-weight: bold;
+    touch-action: none;
+    user-select: none;
+    -webkit-user-select: none;
+    opacity: 0.8;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  #m-btn-space { right: 0; bottom: 0; width: 10.5cqh; height: 10.5cqh; }
+  #m-btn-i { right: 12cqh; bottom: 1.5cqh; }
+  #m-btn-esc { right: 3cqh; bottom: 12cqh; }
+}
+
 #joystick-base {
   position: absolute;
   left: 50%; top: 50%;
   transform: translate(-50%, -50%);
-  width: 15cqw; height: 15cqw;
   border-radius: 50%;
   background: rgba(40, 30, 20, 0.6);
-  border: clamp(1px, 0.25cqw, 2px) solid #6b5736;
 }
 #joystick-stick {
   position: absolute;
   left: 50%; top: 50%;
   transform: translate(-50%, -50%);
-  width: 6.25cqw; height: 6.25cqw;
   border-radius: 50%;
   background: rgba(231, 198, 107, 0.8);
-  border: clamp(1px, 0.25cqw, 2px) solid #f3e9d2;
   box-shadow: 0 0 10px rgba(0,0,0,0.5);
   transition: transform 0.1s ease-out;
 }
 #joystick-zone.active #joystick-stick {
   transition: none;
 }
-
-#action-buttons {
-  position: absolute;
-  right: 2.5cqw; bottom: 2.5cqw;
-  width: 20cqw; height: 20cqw;
-  pointer-events: auto;
-}
 .m-btn {
-  position: absolute;
-  width: 7.5cqw; height: 7.5cqw;
   border-radius: 50%;
   background: rgba(58, 44, 26, 0.8);
-  border: clamp(1px, 0.25cqw, 2px) solid #6b5736;
   color: #f3e9d2;
   font-family: inherit;
-  font-size: 1.625cqw;
   font-weight: bold;
   touch-action: none;
   user-select: none;
@@ -255,6 +366,3 @@ canvas#game {
   transform: scale(0.95);
   opacity: 1;
 }
-#m-btn-space { right: 0; bottom: 0; width: 8.75cqw; height: 8.75cqw; font-size: 1.75cqw; }
-#m-btn-i { right: 10cqw; bottom: 1.25cqw; }
-#m-btn-esc { right: 2.5cqw; bottom: 10cqw; }
