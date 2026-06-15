@@ -76,6 +76,7 @@ canvas#game {
 .hud-right { text-align: right; min-width: 90px; }
 #hud-money { color: #f1c40f; font-weight: bold; }
 #hud-zone { font-size: 11px; color: #cbb892; }
+#hud-buff { font-size: 11px; color: #ffe89a; font-weight: bold; margin-top: 2px; }
 
 /* ===== Hint bar ===== */
 #hint {

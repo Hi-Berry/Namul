@@ -26,6 +26,11 @@ const UI = {
     document.getElementById("hud-zone").textContent =
       (G.scene==="world" ? Maps[World.zone].name : G.scene==="trade" ? "주막 장사" : "전투") +
       ` · Lv.${P.level}`;
+    const bf = document.getElementById("hud-buff");
+    if (bf){
+      if (P.buff){ bf.classList.remove("hidden"); bf.textContent = `${P.buff.icon} ${DATA.BUFF_TAG[P.buff.kind]}`; bf.title = `${P.buff.name} — 오늘 하루 유지`; }
+      else { bf.classList.add("hidden"); bf.textContent=""; }
+    }
   },
 
   setHint(html){ document.getElementById("hint").innerHTML = html || ""; },

@@ -18,6 +18,7 @@ const Save = {
         homiTier: P.homiTier, pet: P.pet,
         costume: P.costume, accessory: P.accessory, shrinePoints: P.shrinePoints,
         cookXp: P.cookXp, fame: P.fame, recipes: P.recipes, cookTrain: P.cookTrain, farmPlots: P.farmPlots,
+        buff: P.buff, cauldronDay: P.cauldronDay,
       },
       farm: Farming.save(),
       quests: Quests.save(),

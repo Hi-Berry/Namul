@@ -118,7 +118,7 @@ DATA.DROPS = {
  */
 DATA.MONSTERS = {
   dokkaebi_m:{ id:"dokkaebi_m", name:"도깨비",   icon:"👹", hp:24,  atk:7,  acc:0.7,  exp:8,  gold:14, zone:"mtn1", detect:3,  speed:0.7, gimmick:"mischief",
-               commonDrops:["dok_club","dok_hide"], tribute:"dokkaebi_fire", tributeRate:0.18, desc:"장난꾸러기. 가끔 기력을 훔친다." },
+               commonDrops:["dok_club","dok_hide"], tribute:"dokkaebi_fire", tributeRate:0.30, desc:"장난꾸러기. 가끔 기력을 훔친다." },
   mulgwisin: { id:"mulgwisin",  name:"물귀신",   icon:"👻", hp:36,  atk:9,  acc:0.9,  exp:14, gold:26, zone:"mtn2", detect:5,  speed:1.0, gimmick:"agiDown",
                commonDrops:["wet_cloth","sea_mustard"], tribute:"cold_mist", tributeRate:0.18, desc:"피격 시 민첩을 떨군다. 마법이 유효." },
   gumiho:    { id:"gumiho",     name:"구미호",   icon:"🦊", hp:40,  atk:12, acc:0.95, exp:22, gold:45, zone:"mtn3", detect:8,  speed:1.5, aggro:true, gimmick:"evasion",
@@ -239,6 +239,28 @@ DATA.RECIPES = {
   dongdongju:{ id:"dongdongju",name:"동동주",   icon:"🍶", steps:["rice","nuruk"],           price:84, learn:260,   by:"주모", drink:true },
   injeolmi:  { id:"injeolmi",  name:"인절미",   icon:"🍡", steps:["rice","bean"],            price:38, learn:120,   by:"방앗간" },
 };
+
+/* 시작 시 기본 해금 레시피 (메밀전·파전·빈대떡 3종) */
+DATA.START_RECIPES = ["jeon","pajeon","bindaetteok"];
+
+/* ---- 보양식(버프 요리) — 가마솥에서 끓여 하루 동안 효과 ----
+ * 나물죽(즉시 회복)과 달리, 먹으면 다음 취침까지 유지되는 '버프'를 준다.
+ * steps: 필요한 재료(주막 요리와 동일 규칙, namul=보유 약초 아무거나).
+ * kind: 효과 종류 / power: 효과 세기 / 한 번에 한 가지 보양 효과만 유지(새로 먹으면 교체).
+ * 기획자 편집: 보양식 추가/효과/재료는 여기서.
+ */
+DATA.BUFF_FOODS = {
+  bibimbap:  { id:"bibimbap",  name:"산나물 비빔밥", icon:"🥗", steps:["namul","namul","season"], kind:"stamina", power:0.15,
+               desc:"온종일 든든해 기력 소모 -15% (하루 유지)." },
+  sujebi:    { id:"sujebi",    name:"메밀 수제비",   icon:"🥣", steps:["flour","namul","season"],  kind:"speed",   power:0.12,
+               desc:"발걸음이 가벼워져 이동 속도 +12% (하루 유지)." },
+  yaksik:    { id:"yaksik",    name:"약초 보양밥",   icon:"🍵", steps:["rice","namul","namul"],     kind:"drop",    power:0.15,
+               desc:"기운이 맑아 요괴 부산물 드롭 +15% (하루 유지)." },
+  boyangguk: { id:"boyangguk", name:"돼지 보양국",   icon:"🍲", steps:["pork","namul","season"],    kind:"atk",     power:0.20,
+               desc:"힘이 솟아 전투 공격력 +20% (하루 유지)." },
+};
+/* 버프 종류별 HUD 짧은 표기 */
+DATA.BUFF_TAG = { stamina:"기력효율↑", speed:"이동↑", drop:"드롭↑", atk:"공격력↑" };
 
 /* ---- 비용/상수 ---- */
 DATA.CONST = {
