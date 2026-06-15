@@ -311,6 +311,7 @@
       <li class="nav-item" onclick="switchSection('tavern-recipes')"><span>🍲</span>주막 & 요리 타이쿤</li>
       <li class="nav-item" onclick="switchSection('npcs')"><span>🧑‍🌾</span>마을 인물 & 시설</li>
       <li class="nav-item" onclick="switchSection('quests')"><span>📜</span>전체 의뢰 목록</li>
+      <li class="nav-item" onclick="switchSection('main-menu-ui')"><span>📋</span>메인 메뉴 (통합 UI)</li>
       <li class="nav-item" onclick="switchSection('todo')"><span>🛠️</span>개발 To-Do 리스트</li>
     </ul>
   </aside>
@@ -980,6 +981,83 @@
       </table>
     </section>
 
+    <!-- 메인 메뉴 (통합 UI) 시스템 -->
+    <section id="main-menu-ui" class="section-content">
+      <h2><span>📋</span>메인 메뉴 (통합 UI) 시스템 명세</h2>
+      <p class="lead">게임 중 TAB 또는 ESC 키를 입력하여 활성화되는 일시정지 및 통합 관리 메뉴 UI 시스템 명세입니다.</p>
+
+      <div class="alert">
+        <strong>💡 일시정지 시스템:</strong><br>
+        메인 메뉴가 활성화되면 게임의 흐름(시간 및 요괴의 이동 등)이 즉시 일시정지(<code>Time.timeScale = 0</code>) 상태가 되며, UI 창을 닫으면 다시 정상 재개(<code>Time.timeScale = 1</code>)됩니다.
+      </div>
+
+      <h3>화면 분할 구조</h3>
+      <div class="card-grid">
+        <div class="card" style="border-top: 4px solid var(--accent-gold);">
+          <h4>📦 좌측 고정 영역: 캐릭터 & 봇짐</h4>
+          <p style="font-size: 0.9rem; color: var(--text-muted); margin-bottom: 12px;">
+            플레이어의 현재 상세 정보와 보유 아이템을 상시 모니터링하는 패널입니다.
+          </p>
+          <ul class="check-list" style="font-size: 0.85rem;">
+            <li><strong>장비 슬롯 (4개)</strong>: 머리 / 의상 / 신발 / 채집도구 장착 및 해제 기능.</li>
+            <li><strong>실시간 스탯 버프</strong>: 장비 보너스가 즉시 캐릭터 스탯에 합산되어 UI에 표기됩니다.</li>
+            <li><strong>표시 스탯 4종</strong>:
+              <br>- <strong>최대 기력</strong>: 활동 가능한 행동력 최대치.
+              <br>- <strong>이동 속도</strong>: 월드 맵 및 산악 구역의 달리기 계수.
+              <br>- <strong>채집 숙련도</strong>: 나물 채집 시 고등급 나물이 나올 확률 보정.
+              <br>- <strong>말재주</strong>: 주막 손님의 팁 발생 확률 및 흥정 성공률 보정.
+            </li>
+            <li><strong>봇짐 (인벤토리)</strong>:
+              <br>- Grid 격자 슬롯 방식 (기본 24칸으로 시작, 확장 가능).
+              <br>- 카테고리 필터 (전체 / 나물 및 식재료 / 의상 및 장비 / 잡화).
+              <br>- 팝업 툴팁 (마우스 오버 시 아이템 ID, 이름, 등급[하/중/상], 설명, 보유 수량 렌더링).
+            </li>
+          </ul>
+        </div>
+
+        <div class="card" style="border-top: 4px solid var(--accent-blue);">
+          <h4>📂 우측 가변 영역: 5개 관리 탭</h4>
+          <p style="font-size: 0.9rem; color: var(--text-muted); margin-bottom: 12px;">
+            유저가 상단 또는 측면의 탭 버튼을 클릭함에 따라 가변적으로 전환 노출되는 패널입니다.
+          </p>
+          <ul class="check-list" style="font-size: 0.85rem;">
+            <li><strong>탭 1. 지도 (전체 맵)</strong>: 현재 해금된 구역 매핑, 플레이어 현재 위치 표시, 노드 선택 시 정보 창(출현 요괴 및 드롭 나물 아이템 ID 목록) 출력.</li>
+            <li><strong>탭 2. 인맥 (NPC 호감도)</strong>: 주요 NPC 호감도 경험치/레벨 추적, 호감도 수준별 락(Lock) 해제 및 힌트 대사 해금 플래그 연동, 주막 상시 버프 획득 여부 관리.</li>
+            <li><strong>탭 3. 할 일 (퀘스트)</strong>: 진행 및 완료 상태의 퀘스트 리스트. 스토리 전용 '메인 의뢰'와 보상 수급용 '마을 의뢰' 카테고리 분리, 진행 수치 및 완료 보상 표시.</li>
+            <li><strong>탭 4. 설정</strong>: 마스터/BGM/SFX 볼륨 조절 슬라이더(0~100), 해상도 드롭다운, 전체/창모드 토글 버튼, 타이틀로 가기 및 게임 종료 기능.</li>
+          </ul>
+        </div>
+      </div>
+
+      <h3>개발용 데이터 연동 및 흐름</h3>
+      <table>
+        <thead>
+          <tr>
+            <th>데이터 범주</th>
+            <th>연동 방식 및 소스 객체</th>
+            <th>저장 및 갱신 시점</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>인벤토리 (봇짐)</strong></td>
+            <td>글로벌 <code>InventoryList</code> 객체의 데이터를 읽어와 UI 슬롯 그리드에 실시간 데이터 바인딩</td>
+            <td>아이템 추가, 삭제 및 봇짐 정렬 이벤트 발생 시 즉시 갱신</td>
+          </tr>
+          <tr>
+            <td><strong>지도 / 인맥 / 할 일</strong></td>
+            <td>세이브 파일에서 플레이어 데이터 플래그 및 진척도 플래그, 퀘스트 구조체 값을 읽어와 렌더링</td>
+            <td>호감도 변동, 퀘스트 진행 및 완료, 신규 구역 해금 시점</td>
+          </tr>
+          <tr>
+            <td><strong>오디오 / 화면 세팅</strong></td>
+            <td>설정 슬라이더 및 드롭다운 컨트롤러 조작 시 로컬 환경설정 데이터(PlayerPrefs 등)에 파일 쓰기</td>
+            <td>유저가 볼륨바나 디스플레이 모드를 수정한 즉시 적용 및 로컬 저장</td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+
     <!-- 8. 개발 To-Do 리스트 -->
     <section id="todo" class="section-content">
       <h2><span>🛠️</span>개발 및 수정 To-Do 리스트</h2>
@@ -999,6 +1077,7 @@
             <li>산 채집 구역 보강 (맵 크기 1.5배 확대(30×22), 물/바위 지형 다양화, 요괴 등장 수 1.5배 상향, 밟으면 HP 5 깎이는 가시풀 장애물 배치)</li>
             <li>주막 타이쿤 시간 페이즈(낮/저녁/밤) 분할 및 상시 마감 정산 기능 구현 (소모 기력 낮=20, 저녁=45, 밤=70 차등화, 정산 팝업 구현)</li>
             <li>요리 레시피 개편 (범용 3종 + 시그니처 4종) 및 투입 나물 등급(Tier 1~3)에 따른 판매가/명성 차등 보상 시스템 구현</li>
+            <li>메인 메뉴 (통합 UI) 시스템 구현 (TAB/ESC 일시정지, 장비/스탯 연동, 봇짐 24칸 그리드/필터/툴팁, 지도/인맥/퀘스트/설정 5개 탭 화면 분할 구조 구현)</li>
             <li>나물죽 이외 가마솥 버프형 신규 요리 기능 확장</li>
             <li>달래 출생의 비밀 메인 스토리 추가 전개용 이벤트 구현</li>
             <li>다람쥐 이외 펫(족제비, 토끼 등) 및 야간 수집 버프 구현</li>
