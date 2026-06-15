@@ -181,7 +181,7 @@ canvas#game {
 
 /* ===== Mobile Controls ===== */
 #mobile-controls {
-  position: fixed;
+  position: absolute;
   bottom: 0; left: 0; right: 0;
   height: 200px;
   pointer-events: none;
