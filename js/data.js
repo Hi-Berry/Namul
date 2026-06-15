@@ -320,6 +320,15 @@ DATA.BUFF_FOODS = {
 /* 버프 종류별 HUD 짧은 표기 */
 DATA.BUFF_TAG = { stamina:"기력효율↑", speed:"이동↑", drop:"드롭↑", atk:"공격력↑" };
 
+/* ---- 펫 (#5) — 밤마다 종류별 수집 보너스 ----
+ * bonus: herb(약초)·drop(요괴 부산물)·gold(냥). 퀘스트/이벤트로 획득.
+ */
+DATA.PETS = {
+  squirrel: { id:"squirrel", name:"도토리",   icon:"🐿️", bonus:"herb", desc:"밤마다 약초를 물어온다." },
+  fox_pup:  { id:"fox_pup",  name:"백호 새끼", icon:"🦊", bonus:"drop", desc:"밤마다 요괴 부산물을 주워온다." },
+  cat:      { id:"cat",      name:"삵",       icon:"🐱", bonus:"gold", desc:"밤마다 약간의 냥을 물어온다." },
+};
+
 /* ---- 비용/상수 ---- */
 DATA.CONST = {
   START_MONEY: 100,

@@ -59,7 +59,7 @@ const Quests = {
       start:["귀한 산삼 한 뿌리가 필요하구나. 봄철 산속 깊은 곳(🌟 명품 표식)에 돋는다네.",
              "구해 오면… 후훗, 귀여운 선물을 주마."],
       ready:["오오, 이렇게 영험한 산삼이라니! 자, 이 아이를 데려가렴."],
-      reward:{ money:200, exp:20, pet:{ id:"squirrel", name:"도토리", icon:"🐿️" } },
+      reward:{ money:200, exp:20, pet:{ id:"squirrel", name:"도토리", icon:"🐿️", bonus:"herb" } },
     },
     q_boss: {
       giver:"chonjang", story:true, prereq:"q_pet", title:"두억시니 토벌",
@@ -69,6 +69,16 @@ const Quests = {
              "태산 같은 놈이라 '태산 압사' 같은 강한 신통력이 필요할 게야. 부디 물리쳐주게!"],
       ready:["두억시니를 잡았다고?! 자네는 이 마을의 은인일세!!"],
       reward:{ money:400, exp:60, item:{id:"season",n:10} },
+    },
+    q_truth: {
+      giver:"mudang", story:true, prereq:"q_boss", title:"달래의 비밀",
+      desc:"산 정상(4구역) 제단을 다시 찾아가 잠든 비밀을 마주하기.",
+      goal:{ type:"altar" },
+      start:["두억시니를 잡던 날… 네 몸에서 신기(神氣)가 뻗치는 걸 똑똑히 보았다.",
+             "이젠 때가 됐구나. 산 정상의 제단으로 가거라. 네 출생의 비밀이 그곳에서 깨어날 게야."],
+      ready:["…보았느냐, 그 환영을. 너는 고귀한 무당과 임금 사이에서 난 아이.",
+             "버려졌어도 네 안엔 신내림의 운명이 흐른다. 이제 그 힘을 온전히 쓰거라."],
+      reward:{ money:300, exp:40, maxMp:20, pet:{ id:"fox_pup", name:"백호 새끼", icon:"🦊", bonus:"drop" } },
     },
 
     /* ---------- 사이드(유쾌) ---------- */
@@ -237,7 +247,7 @@ const Quests = {
     return this.active.filter(id=> this.defs[id].giver===npcId && this.reached(id));
   },
 
-  goalCount(g){ return g.type==="talkAll" ? g.who.length : g.count; },
+  goalCount(g){ return g.type==="talkAll" ? g.who.length : g.type==="altar" ? 1 : g.count; },
 
   reached(id){
     const q=this.defs[id], g=q.goal;
@@ -246,6 +256,7 @@ const Quests = {
     if (g.type==="fame") return P.fame >= g.count;
     if (g.type==="cooklv") return Player.cookLv() >= g.count;
     if (g.type==="recipes") return P.recipes.length >= g.count;
+    if (g.type==="altar") return !!G.flags.altarSeen;
     return (this.progress[id]||0) >= this.goalCount(g);
   },
 
@@ -295,6 +306,7 @@ const Quests = {
     if (r.item){ Player.add(r.item.id, r.item.n); const def=DATA.INGREDIENTS[r.item.id]||DATA.GOODS[r.item.id]||DATA.DROPS[r.item.id]||DATA.HERBS[r.item.id]; lines.push(`📦 ${def?def.name:r.item.id} ×${r.item.n}`); }
     if (r.aff){ Player.addAffection(r.aff.npc, r.aff.n); lines.push(`♥ 정 +${r.aff.n}`); }
     if (r.weaponUpgrade){ P.weaponLv+=r.weaponUpgrade; lines.push(`⚒️ 무기 강화 +${r.weaponUpgrade}`); }
+    if (r.maxMp){ P.maxMp+=r.maxMp; P.mp=Player.mpCap(); lines.push(`🔮 최대 신력 +${r.maxMp}`); }
     if (r.magic && Player.learnMagic(r.magic)){ lines.push(`✨ 신통력 '${DATA.MAGIC[r.magic].name}'`); }
     if (r.pet){ P.pet = Object.assign({}, r.pet); World.initPet(); lines.push(`🐾 ${r.pet.name}(${r.pet.icon})이(가) 따라다닌다!`); }
     Sound.sfx(q.story?"fanfare":"quest");
@@ -329,6 +341,7 @@ const Quests = {
       const q=this.defs[id], g=q.goal, total=this.goalCount(g);
       const cur = g.type==="deliver"?Player.count(g.item) : g.type==="gold"?P.money
                : g.type==="fame"?P.fame : g.type==="cooklv"?Player.cookLv() : g.type==="recipes"?P.recipes.length
+               : g.type==="altar"?(G.flags.altarSeen?1:0)
                : (this.progress[id]||0);
       return { title:q.title, cur:Math.min(cur,total), total, done:this.reached(id), giver:DATA.NPCS[q.giver].name };
     });
@@ -344,6 +357,7 @@ const Quests = {
         const q=this.defs[id], g=q.goal;
         let cur = g.type==="deliver"?Player.count(g.item) : g.type==="gold"?P.money
                 : g.type==="fame"?P.fame : g.type==="cooklv"?Player.cookLv() : g.type==="recipes"?P.recipes.length
+                : g.type==="altar"?(G.flags.altarSeen?1:0)
                 : (this.progress[id]||0);
         const total = this.goalCount(g);
         const done=this.reached(id);

@@ -154,11 +154,21 @@ const Player = {
     P.mp = Player.mpCap();
     P.hp = P.maxHp;
     P.buff = null;  // 보양식 효과는 하루 동안만 유지 → 새 날에 해제
-    // 펫이 밤새 약초를 물어온다
-    if (P.pet && chance(0.8)){
-      const h = choice(DATA.herbsBySeason(Time.season()).filter(x=>x.tier<=2));
-      Player.add(h.id,1);
-      setTimeout(()=>toast(`${P.pet.icon} ${P.pet.name}이(가) ${h.icon}${h.name}을(를) 물어왔다!`,"good"), 400);
+    // 펫이 밤새 종류별 수집을 해온다 (#5)
+    if (P.pet){
+      const bonus = P.pet.bonus || "herb";
+      if (bonus==="herb" && chance(0.85)){
+        const h = choice(DATA.herbsBySeason(Time.season()).filter(x=>x.tier<=2));
+        Player.add(h.id,1);
+        setTimeout(()=>toast(`${P.pet.icon} ${P.pet.name}이(가) ${h.icon}${h.name}을(를) 물어왔다!`,"good"), 400);
+      } else if (bonus==="drop" && chance(0.7)){
+        const d = choice(Object.values(DATA.DROPS).filter(x=>x.common));
+        Player.add(d.id,1);
+        setTimeout(()=>toast(`${P.pet.icon} ${P.pet.name}이(가) ${d.icon}${d.name}을(를) 주워왔다!`,"good"), 400);
+      } else if (bonus==="gold" && chance(0.8)){
+        const g = randInt(20,50); P.money += g;
+        setTimeout(()=>toast(`${P.pet.icon} ${P.pet.name}이(가) ${g}냥을 물어왔다!`,"gold"), 400);
+      }
     }
   },
 };
