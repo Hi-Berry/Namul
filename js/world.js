@@ -8,6 +8,7 @@ const World = {
   symbols:[],   // 산 몬스터 심볼
   near:null,    // 현재 상호작용 가능한 대상
   hoe:null,     // 진행 중인 호미질 {kind,target,need,hits}
+  cam:{x:0,y:0},// 카메라(확장 맵에서 플레이어 추적)
   HALF:12,
   pet:{ x:0, y:0, animT:0, blinkT:0 },
   particles:[],
@@ -56,21 +57,23 @@ const World = {
   // 산 한 구역의 채집 노드/몬스터 생성
   _spawnZone(z){
     const meta = DATA.zoneMeta(z); const grid = Maps[z].grid;
+    const cols=Maps.colsOf(z), rows=Maps.rowsOf(z);
     const walk=[];
-    for(let y=1;y<ROWS-1;y++) for(let x=1;x<COLS-1;x++){
+    for(let y=1;y<rows-1;y++) for(let x=1;x<cols-1;x++){
       if(!Maps.isSolidTile(z,x,y) && grid[y][x]===".") walk.push([x,y]);
     }
     const pick=()=>{ const i=randInt(0,walk.length-1); return walk.splice(i,1)[0]; };
     const nodes=[], symbols=[];
     if (meta.tier>0){
-      const nNodes=randInt(6,8);
+      const nNodes=randInt(9,12);   // 맵 1.5배 확장에 맞춰 채집 노드 증가
       for(let i=0;i<nNodes && walk.length;i++){
         const t=pick(); let tier=meta.tier; if(chance(0.3)) tier=clamp(tier+choice([-1,1]),1,3);
         nodes.push({ x:t[0]*TILE+TILE/2, y:t[1]*TILE+TILE/2, tier });
       }
     }
+    // 요괴 스폰 1.5배 상향
     const [lo,hi]=meta.count;
-    const nSym=randInt(lo,hi);
+    const nSym=Math.round(randInt(lo,hi)*1.5);
     for(let i=0;i<nSym && walk.length;i++){
       const t=pick();
       let mid=choice(meta.monsters);
@@ -111,6 +114,17 @@ const World = {
         P.animT += dt*8;
         World._stepT -= dt;
         if (World._stepT<=0){ Sound.sfx("step"); World._stepT = Player.isSlow()?0.5:0.32; }
+      }
+      // 가시풀 함정: 새 가시 타일에 들어서면 HP -5
+      if (DATA.isMtn(z) && !blocked){
+        const ptx=Math.floor(P.x/TILE), pty=Math.floor(P.y/TILE);
+        if (Maps.isThornTile(z,ptx,pty)){
+          if (World._thornTile !== ptx+","+pty){
+            World._thornTile = ptx+","+pty;
+            P.hp = Math.max(1, P.hp-5); Sound.sfx("hit");
+            toast("🌵 가시풀에 찔렸다! 체력 -5","bad");
+          }
+        } else World._thornTile = null;
       }
       // 깜빡임 / 펫 / 파티클
       World._blinkT -= dt; if (World._blinkT<=0){ P._blink=0.12; World._blinkT = 2+Math.random()*3; }
@@ -172,6 +186,10 @@ const World = {
     render(ctx){
       const z=World.zone;
       const isMtn = DATA.isMtn(z);
+      World._updateCamera();
+      const cam = World.cam;
+      ctx.save();
+      ctx.translate(-Math.round(cam.x), -Math.round(cam.y));   // 카메라 추적
       Maps.drawTiles(ctx,z);
       // 채집 노드
       if (isMtn){
@@ -195,26 +213,28 @@ const World = {
       World._drawPet(ctx);
       World._drawPlayer(ctx);
       World._drawParticles(ctx);
+      ctx.restore();   // 카메라 해제 → 이하 화면 고정 UI
 
-      // 구역 분위기 (틴트 / 안개)
+      // 구역 분위기 (틴트 / 안개) — 화면 전체
       const meta = DATA.zoneMeta(z);
       if (meta){
         if (meta.tint){ ctx.fillStyle=meta.tint; ctx.fillRect(0,0,G.W,G.H); }
         if (meta.fog){ World._drawFog(ctx); }
       }
 
-      // 상호작용 하이라이트 & 힌트
+      // 상호작용 하이라이트 (카메라 보정)
       if (World.near && !World.hoe){
         const t=World.near;
         ctx.save();
         ctx.fillStyle="#fff7c0"; ctx.font="bold 16px 'Malgun Gothic'"; ctx.textAlign="center";
         ctx.shadowColor="#000"; ctx.shadowBlur=4;
-        ctx.fillText("▼", t.hx, t.hy-12);   // 고정 위치(떨림 제거)
+        ctx.fillText("▼", t.hx-cam.x, t.hy-12-cam.y);
         ctx.restore();
       }
-      // 호미질 진행 표시
+      // 호미질 진행 표시 (카메라 보정)
       if (World.hoe){
-        const h=World.hoe, tx=(h.target.x!=null?h.target.x:P.x), ty=(h.target.y!=null?h.target.y:P.y);
+        const h=World.hoe;
+        const tx=(h.target.x!=null?h.target.x:P.x)-cam.x, ty=(h.target.y!=null?h.target.y:P.y)-cam.y;
         const bw=54, bx=tx-bw/2, by=ty-30;
         ctx.save(); ctx.textAlign="center";
         ctx.fillStyle="#000a"; ctx.fillRect(bx-2,by-14,bw+4,22);
@@ -554,6 +574,15 @@ const World = {
     }
   },
   _cancelHoe(){ if(!World.hoe) return; World.hoe=null; toast("호미질을 멈췄다",""); },
+
+  // 카메라: 플레이어 중심, 맵 경계로 클램프(맵이 화면보다 작으면 중앙 고정)
+  _updateCamera(){
+    const z=World.zone;
+    const mapW=Maps.colsOf(z)*TILE, mapH=Maps.rowsOf(z)*TILE;
+    let cx=P.x-G.W/2, cy=P.y-G.H/2;
+    World.cam.x = mapW<=G.W ? (mapW-G.W)/2 : clamp(cx,0,mapW-G.W);
+    World.cam.y = mapH<=G.H ? (mapH-G.H)/2 : clamp(cy,0,mapH-G.H);
+  },
 
   _sleepMenu(){
     const forced = false;
