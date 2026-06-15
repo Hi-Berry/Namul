@@ -30,7 +30,7 @@ const P = {
   // 진행/성장
   cookXp: 0,            // 요리 숙련 경험치
   fame: 0,              // 마을 명성
-  recipes: ["jeon","pajeon","bindaetteok"],  // 해금한 레시피
+  recipes: ["jeon","jangtteok","bindaetteok"],  // 해금한 레시피
   cookTrain: 0,         // 서당 요리 수련(추가 보수 배율)
   farmPlots: 6,         // 메밀밭 칸 수(농부에게 확장)
 
@@ -58,6 +58,19 @@ const Player = {
   hasRecipe(id){ return P.recipes.includes(id); },
   learnRecipe(id){ if(!P.recipes.includes(id)){ P.recipes.push(id); return true; } return false; },
   cookLv(){ return DATA.cookLevel(P.cookXp); },
+  // 명성 마일스톤(#8): 달성한 임계치의 레시피를 무료 자동 해금
+  checkFameUnlocks(){
+    DATA.FAME_UNLOCKS.forEach(m=>{
+      if (P.fame >= m.fame){
+        m.recipes.forEach(id=>{
+          if (Player.learnRecipe(id)){
+            toast(`📜 명성 ${m.fame} 달성! '${DATA.RECIPES[id].name}' 비법 전수!`, "gold");
+            Quests.notify("recipe", { id });
+          }
+        });
+      }
+    });
+  },
 
   /* ---- 보양식 버프 ---- */
   buffFactor(kind){ return (P.buff && P.buff.kind===kind) ? P.buff.power : 0; },
