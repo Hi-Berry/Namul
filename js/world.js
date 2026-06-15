@@ -7,6 +7,7 @@ const World = {
   nodes:[],     // 산 채집 노드
   symbols:[],   // 산 몬스터 심볼
   near:null,    // 현재 상호작용 가능한 대상
+  hoe:null,     // 진행 중인 호미질 {kind,target,need,hits}
   HALF:12,
   pet:{ x:0, y:0, animT:0, blinkT:0 },
   particles:[],
@@ -97,6 +98,8 @@ const World = {
       const blocked = UI.dialogueOpen||UI.menuOpen;
       if (blocked){ dx=0; dy=0; }
       P.moving = (dx||dy);
+      // 호미질 중 이동하면 중단
+      if (World.hoe && (P.moving || blocked)) World._cancelHoe();
       if (P.moving){
         if (dx&&dy){ dx*=0.707; dy*=0.707; }
         if (Math.abs(dx)>Math.abs(dy)) P.dir = dx<0?"left":"right";
@@ -160,7 +163,7 @@ const World = {
       // 키: 상호작용 / 인벤토리 / 의뢰 / 음소거
       if (keyPressed("m")) Sound.toggleMute();
       if (!blocked){
-        if (keyPressed(" ") || keyPressed("e")) World._interact();
+        if (keyPressed(" ") || keyPressed("e")){ if (World.hoe) World._hoeHit(); else World._interact(); }
         if (keyPressed("i")){ Sound.sfx("blip"); World.openInventory(); }
         if (keyPressed("j")){ Sound.sfx("blip"); Quests.log(); }
       }
@@ -201,12 +204,23 @@ const World = {
       }
 
       // 상호작용 하이라이트 & 힌트
-      if (World.near){
+      if (World.near && !World.hoe){
         const t=World.near;
         ctx.save();
         ctx.fillStyle="#fff7c0"; ctx.font="bold 16px 'Malgun Gothic'"; ctx.textAlign="center";
         ctx.shadowColor="#000"; ctx.shadowBlur=4;
         ctx.fillText("▼", t.hx, t.hy-12);   // 고정 위치(떨림 제거)
+        ctx.restore();
+      }
+      // 호미질 진행 표시
+      if (World.hoe){
+        const h=World.hoe, tx=(h.target.x!=null?h.target.x:P.x), ty=(h.target.y!=null?h.target.y:P.y);
+        const bw=54, bx=tx-bw/2, by=ty-30;
+        ctx.save(); ctx.textAlign="center";
+        ctx.fillStyle="#000a"; ctx.fillRect(bx-2,by-14,bw+4,22);
+        ctx.fillStyle="#3a2c1a"; ctx.fillRect(bx,by,bw,7);
+        ctx.fillStyle="#e7c66b"; ctx.fillRect(bx,by,bw*clamp(h.hits/h.need,0,1),7);
+        ctx.fillStyle="#fff7c0"; ctx.font="bold 11px 'Malgun Gothic'"; ctx.fillText(`⛏️ ${h.hits}/${h.need}`, tx, by-3);
         ctx.restore();
       }
       World._drawQuestTracker(ctx);
@@ -452,8 +466,12 @@ const World = {
     if (DATA.isMtn(z)){
       for(const nd of World.nodes){
         const d=Math.hypot(nd.x-P.x, nd.y-P.y);
-        if (d<bestD){ bestD=d; best={ kind:"node", nd, hx:nd.x, hy:nd.y,
-          hint:`🌿 채집 (등급${nd.tier} · 기력 ${Farming.staminaFor(nd.tier)})` }; }
+        if (d<bestD){ bestD=d;
+          const need=Farming.hoeHitsFor(nd.tier);
+          const hint = need===null
+            ? `🌿 명품 약초 — 호미 부족 (대장간에서 벼리기)`
+            : `🌿 호미질 ${need}회 채집 (등급${nd.tier}·기력${Farming.staminaFor(nd.tier)})`;
+          best={ kind:"node", nd, hx:nd.x, hy:nd.y, hint }; }
       }
     }
     return best;
@@ -469,14 +487,18 @@ const World = {
     if (o.action==="shrine") return "🌳 당나무 제단 (신통력 해금)";
     if (o.action==="altar") return "⛩️ 산정 제단 살펴보기";
     if (o.type==="plot"){ const p=Farming.plotState(o.plot);
-      return p.state==="empty"?"🌰 메밀 심기":p.state==="ready"?"🌾 메밀 수확":"🌱 자라는 중"; }
+      return p.state==="empty"?"🌰 메밀 심기":p.state==="ready"?`🌾 메밀 수확 (호미질 ${Farming.harvestHits()}회)`:"🌱 자라는 중"; }
     return "조사";
   },
 
   _interact(){
     const t=World.near; if(!t) return;
     if (t.kind==="node"){
-      if (Farming.gather(t.nd)){ const i=World.nodes.indexOf(t.nd); if(i>=0)World.nodes.splice(i,1); }
+      const need = Farming.hoeHitsFor(t.nd.tier);
+      if (need===null){ Sound.sfx("error"); toast("이 명품 약초는 기본 호미로 캘 수 없다. 대장간에서 호미를 벼리자!","bad"); return; }
+      const cost = Farming.staminaFor(t.nd.tier);
+      if (!Player.hasStamina(cost)){ toast(`기력이 부족하다 (${cost} 필요)`,"bad"); return; }
+      World._startHoe("gather", t.nd, need);
       return;
     }
     const o=t.o;
@@ -500,9 +522,38 @@ const World = {
         "달래는 까닭 모를 익숙함을 느낀다… 마치 누군가 자신을 부르는 듯한.",
         "(후반 스토리에서 풀릴 비밀이 잠들어 있다.)"]); break;
       default:
-        if (o.type==="plot") Farming.interactPlot(o.plot);
+        if (o.type==="plot"){
+          const p=Farming.plotState(o.plot);
+          if (p.state==="ready"){
+            if (!Player.hasStamina(DATA.BUCKWHEAT.harvestStamina)){ toast("기력이 부족하다","bad"); return; }
+            World._startHoe("harvest", o, Farming.harvestHits());
+          } else {
+            Farming.interactPlot(o.plot);  // 빈 밭=심기 / 성장중=안내
+          }
+        }
     }
   },
+
+  /* ---- 호미질(다단계 입력) #9/#10 ---- */
+  _startHoe(kind, target, need){
+    World.hoe = { kind, target, need, hits:0 };
+    World._hoeHit();   // 시작 입력이 곧 첫 호미질
+  },
+  _hoeHit(){
+    const h=World.hoe; if(!h) return;
+    h.hits++;
+    Sound.sfx("gather");
+    if (h.hits >= h.need) World._finishHoe();
+  },
+  _finishHoe(){
+    const h=World.hoe; World.hoe=null;
+    if (h.kind==="gather"){
+      if (Farming.gather(h.target)){ const i=World.nodes.indexOf(h.target); if(i>=0)World.nodes.splice(i,1); }
+    } else if (h.kind==="harvest"){
+      Farming.interactPlot(h.target.plot);
+    }
+  },
+  _cancelHoe(){ if(!World.hoe) return; World.hoe=null; toast("호미질을 멈췄다",""); },
 
   _sleepMenu(){
     const forced = false;

@@ -60,6 +60,18 @@ const Farming = {
    */
   staminaFor(tier){ return tier===1?6 : tier===2?12 : 18; },
 
+  /* #9 채집 호미질 횟수: 호미 등급에 따라 필요한 스페이스 입력 수.
+   * 기본 호미(1): 1단계 3회 / 2단계 6회 / 3단계 불가(null)
+   * 업그레이드 호미(2+): 1단계 2회 / 2단계 5회 / 3단계 8회 */
+  hoeHitsFor(tier){
+    const up = P.homiTier >= 2;
+    if (tier===1) return up ? 2 : 3;
+    if (tier===2) return up ? 5 : 6;
+    return up ? 8 : null;
+  },
+  /* #10 메밀 수확 호미질: 기본 2회 / 업그레이드 1회 */
+  harvestHits(){ return P.homiTier >= 2 ? 1 : 2; },
+
   gather(node){
     const cost = Farming.staminaFor(node.tier);
     if (!Player.hasStamina(cost)){ toast(`기력이 부족하다 (${cost} 필요)`,"bad"); return false; }
