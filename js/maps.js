@@ -81,6 +81,11 @@ const Maps = {
       { type:"person", tx:5, ty:7, npc:"geonchuk", action:"npc" },
       { type:"person", tx:14,ty:7, npc:"nongbu",   action:"npc" },
       { type:"person", tx:11,ty:5, npc:"bobu",     action:"npc" },
+      // 장날 게스트 NPC (#1) — 장날에만 출현
+      { type:"person", tx:3,  ty:4, npc:"hong",   action:"npc", marketOnly:true },
+      { type:"person", tx:16, ty:4, npc:"sori",   action:"npc", marketOnly:true },
+      { type:"person", tx:7,  ty:9, npc:"daegam", action:"npc", marketOnly:true },
+      { type:"person", tx:12, ty:9, npc:"namu",   action:"npc", marketOnly:true },
     ],
     exits: [
       { tx:0,  ty:7, to:"house", sx:18, sy:7 },
@@ -232,6 +237,7 @@ const Maps = {
 
   drawObjects(ctx, zone){
     for (const o of Maps[zone].objects){
+      if (o.marketOnly && !Time.isMarketDay()) continue;  // 장날에만 출현
       const px = o.tx*TILE, py=o.ty*TILE, ow=(o.w||1)*TILE, oh=(o.h||1)*TILE;
       if (o.type === "house"){
         ctx.fillStyle = "#c9a86a"; ctx.fillRect(px, py+oh*0.45, ow, oh*0.55);   // 벽

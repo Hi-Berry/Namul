@@ -130,6 +130,88 @@ const Quests = {
       ready:["국밥 솜씨가 일품이라고 사또께서 칭찬이 자자하네!"],
       reward:{ money:260, exp:20, item:{id:"pork",n:3} },
     },
+
+    /* ---------- 장날 게스트 퀘스트 (#2, prereq 순차) ---------- */
+    s_uijeok_jeon: {
+      giver:"hong", title:"의적의 요기거리",
+      desc:"주막에서 메밀 나물전 5개 대접하기.",
+      goal:{ type:"serve", count:5, dish:"jeon" },
+      start:["이 몸은 의적 홍길동! 굶주린 식솔들에게 따뜻한 전 한 장이 절실하오.","메밀 나물전 다섯이면 의기가 솟겠소!"],
+      ready:["과연 인심도 솜씨도 의적단의 벗이오!"],
+      reward:{ money:140, exp:14, item:{id:"bean",n:5} },
+    },
+    s_uijeok_bean: {
+      giver:"hong", prereq:"s_uijeok_jeon", title:"의적의 비상식량",
+      desc:"녹두 10개를 의적단에 납품하기.",
+      goal:{ type:"deliver", item:"bean", count:10 },
+      start:["산채로 숨어드는 식솔들 비상식량으로 녹두가 으뜸이오.","녹두 열 되만 모아주시오. 값은 후히 치르리다."],
+      ready:["이 녹두로 한겨울은 든든하겠소. 고맙소!"],
+      reward:{ money:180, exp:16, item:{id:"season",n:5} },
+    },
+    s_uijeok_sanjeok: {
+      giver:"hong", prereq:"s_uijeok_bean", title:"의적단의 고기 파티",
+      desc:"주막에서 산적 4꼬치 대접하기.",
+      goal:{ type:"serve", count:4, dish:"sanjeok" },
+      start:["오늘은 거사 전야! 식솔들에게 고기 한 점 먹이고 싶소.","산적 네 꼬치면 사기충천이오!"],
+      ready:["하하, 이 맛이오! 의적단의 은인으로 기억하리다.","(붉은 뿔 조각을 답례로 건넨다)"],
+      reward:{ money:240, exp:22, item:{id:"red_horn",n:2} },
+    },
+    s_daegam_ju: {
+      giver:"daegam", title:"양반 대감의 주연",
+      desc:"주막에서 동동주 3사발 대접하기.",
+      goal:{ type:"serve", count:3, dish:"dongdongju" },
+      start:["험험, 이 고을 제일의 미식가가 바로 날세.","제대로 빚은 동동주 석 잔을 맛보여 주게나."],
+      ready:["크으— 이 풍류! 자네 솜씨를 인정하네."],
+      reward:{ money:220, exp:18, item:{id:"nuruk",n:4} },
+    },
+    s_daegam_noodle: {
+      giver:"daegam", prereq:"s_daegam_ju", title:"대감댁 잔치국수",
+      desc:"주막에서 칼국수 4그릇 대접하기.",
+      goal:{ type:"serve", count:4, dish:"kalguksu" },
+      start:["대감댁 잔치에 손이 모자라다네. 잔치국수 솜씨 좀 빌리세.","칼국수 네 그릇을 부탁하네."],
+      ready:["손님들이 면발을 칭찬하더군. 역시 자넬세!"],
+      reward:{ money:260, exp:20, item:{id:"noodle",n:4} },
+    },
+    s_daegam_jogi: {
+      giver:"daegam", prereq:"s_daegam_noodle", title:"대감댁 귀빈 대접",
+      desc:"주막에서 조기구이 3마리 대접하기.",
+      goal:{ type:"serve", count:3, dish:"jogi" },
+      start:["귀한 손님이 오시네. 노릇하게 구운 조기 세 마리면 체면이 서지.","상등품으로 부탁하네!"],
+      ready:["귀빈께서 흡족해하셨네! 이 산삼은 자네 몫일세."],
+      reward:{ money:320, exp:24, item:{id:"sansam",n:1} },
+    },
+    s_sorikkun_muk: {
+      giver:"sori", title:"소리꾼의 목풀기",
+      desc:"주막에서 도토리묵 3접시 대접하기.",
+      goal:{ type:"serve", count:3, dish:"dotorimuk" },
+      start:["얼쑤! 한 가락 뽑기 전에 목을 축여야지.","쫄깃한 도토리묵 세 접시면 득음이 따로 없네!"],
+      ready:["좋다— 목이 트였네! 자네 덕에 명창 소리 듣겠어."],
+      reward:{ money:150, exp:14, item:{id:"dotori",n:5} },
+    },
+    s_sorikkun_pajeon: {
+      giver:"sori", prereq:"s_sorikkun_muk", title:"소리꾼의 장터 잔치",
+      desc:"주막에서 파전 4장 대접하기.",
+      goal:{ type:"serve", count:4, dish:"pajeon" },
+      start:["장터 한마당 신명나게 놀아보세! 비 오는 날엔 역시 파전이지.","바삭한 파전 넉 장이면 흥이 오르겠네."],
+      ready:["지화자! 온 장터가 들썩였네그려!"],
+      reward:{ money:200, exp:18, item:{id:"pa",n:6} },
+    },
+    s_namukkun_snack: {
+      giver:"namu", title:"나무꾼의 든든한 새참",
+      desc:"주막에서 주먹밥 4덩이 대접하기.",
+      goal:{ type:"serve", count:4, dish:"jumeokbap" },
+      start:["벌목 일이 고되서 말이오. 든든한 새참이 필요하오.","주먹밥 네 덩이면 한나절은 거뜬하지!"],
+      ready:["크, 손에 쥐고 먹기 딱이오. 힘이 솟는구려!"],
+      reward:{ money:130, exp:12, item:{id:"rice",n:6} },
+    },
+    s_namukkun_flour: {
+      giver:"namu", prereq:"s_namukkun_snack", title:"나무꾼의 메밀가루",
+      desc:"메밀가루 12개를 나무꾼에게 납품하기.",
+      goal:{ type:"deliver", item:"flour", count:12 },
+      start:["산막 식구들 메밀국수라도 해 먹이려는데 가루가 모자라오.","메밀가루 열두 줌만 구해주시오!"],
+      ready:["이만하면 겨우내 든든하오. 큰 신세를 졌소!"],
+      reward:{ money:220, exp:18, item:{id:"deulgireum",n:3} },
+    },
   },
 
   /* ---- 초기화/저장 ---- */
@@ -210,7 +292,7 @@ const Quests = {
     const r=q.reward; let lines=[];
     if (r.money){ P.money+=r.money; lines.push(`💰 ${r.money}냥`); }
     if (r.exp){ Player.gainExp(r.exp); lines.push(`⭐ 경험치 ${r.exp}`); }
-    if (r.item){ Player.add(r.item.id, r.item.n); const def=DATA.GOODS[r.item.id]||DATA.DROPS[r.item.id]||DATA.HERBS[r.item.id]; lines.push(`📦 ${def?def.name:r.item.id} ×${r.item.n}`); }
+    if (r.item){ Player.add(r.item.id, r.item.n); const def=DATA.INGREDIENTS[r.item.id]||DATA.GOODS[r.item.id]||DATA.DROPS[r.item.id]||DATA.HERBS[r.item.id]; lines.push(`📦 ${def?def.name:r.item.id} ×${r.item.n}`); }
     if (r.aff){ Player.addAffection(r.aff.npc, r.aff.n); lines.push(`♥ 정 +${r.aff.n}`); }
     if (r.weaponUpgrade){ P.weaponLv+=r.weaponUpgrade; lines.push(`⚒️ 무기 강화 +${r.weaponUpgrade}`); }
     if (r.magic && Player.learnMagic(r.magic)){ lines.push(`✨ 신통력 '${DATA.MAGIC[r.magic].name}'`); }

@@ -19,6 +19,18 @@ const NPC = {
     if (npcId === "nongbu")   return NPC.nongbu();
     if (npcId === "banga")    return NPC.banga();
     if (npcId === "pujut")    return NPC.pujut();
+    if (npcId === "hong")     return NPC._guest("hong", ["허허, 이 몸이 의적 홍길동이오! 탐관오리 곳간을 털어 백성과 나누지.","마침 식솔들이 출출하다 하니, 자네 솜씨 좀 빌립시다."]);
+    if (npcId === "sori")     return NPC._guest("sori", ["얼쑤~ 팔도를 떠도는 소리꾼이오! 한 가락 뽑기 전에 요기가 필요하네.","장터에 흥을 돋울 음식 한 상 부탁하오."]);
+    if (npcId === "daegam")   return NPC._guest("daegam", ["험험, 이 고을 제일가는 미식가 양반 대감일세.","고급 음식과 술이라면 값은 후히 쳐주겠네."]);
+    if (npcId === "namu")     return NPC._guest("namu", ["벌목하느라 삭신이 쑤시는 나무꾼이오.","든든한 새참거리와 일상 재료가 늘 아쉽다오."]);
+  },
+
+  /* 장날 게스트 NPC 공통 — 의뢰 수행 (장날에만 마을에 출현) */
+  _guest(id, lines){
+    UI.startDialogue(DATA.NPCS[id].icon+" "+DATA.NPCS[id].name, lines, {
+      choices: Quests.npcChoices(id).concat([{ label:"나간다", value:"bye" }]),
+      onChoice(v){ Quests.handleChoice(v); }
+    });
   },
 
   // 재료/물품 구매 공통 행
