@@ -301,7 +301,7 @@ const NPC = {
       <button data-act="season" ${P.money<DATA.GOODS.season.price?"disabled":""}>${DATA.GOODS.season.price}냥</button></div>`;
     // 일반 식재료 (쌀·파·녹두·누룩)
     rows += `<p class="note" style="margin-top:8px">요리 재료</p>`;
-    ["rice","pa","bean","nuruk"].forEach(id=>{ const g=DATA.INGREDIENTS[id];
+    ["rice","pa","bean","nuruk","wheat_flour","gochujang","chogochujang","doenjang","anchovy_soup"].forEach(id=>{ const g=DATA.INGREDIENTS[id];
       rows += NPC._buyRow(`${g.name} <span class="item-sub">(보유 ${Player.count(id)})</span>`, g.icon, g.buy, "buying", id, g.src);
     });
     rows += `<hr style="border-color:#50412a;margin:12px 0"><p class="note">약초·나물 팔기 (전 종류)</p>`;
@@ -356,6 +356,43 @@ const NPC = {
     });
   },
 
+  /* 방앗간/푸줏간: 재료를 납품(의뢰)하면 요리 비법을 전수 (#8 — 골드구매 폐지) */
+  _recipeBarter(by){
+    const byName = ({banga:"방앗간",pujut:"푸줏간"})[by];
+    const list = Object.values(DATA.RECIPES).filter(r=>!r.unlock && r.by===byName && r.barter);
+    let rows = `<p class="note">${DATA.NPCS[by].name}의 의뢰 — 재료를 납품하면 요리 비법을 전수받는다.</p>`;
+    if (!list.length) rows += `<p class="note">지금 전수할 요리가 없다.</p>`;
+    list.forEach(r=>{
+      const has=Player.hasRecipe(r.id), b=r.barter, ing=DATA.INGREDIENTS[b.id];
+      const steps=r.steps.map(s=>DATA.INGREDIENTS[s].icon).join(" → ");
+      const can = !has && Player.count(b.id)>=b.n;
+      const btn = has?`<button disabled>전수됨</button>`
+        :`<button data-act="barter" data-id="${r.id}" ${can?"":"disabled"}>${ing.icon}${ing.name} ×${b.n} 납품</button>`;
+      rows += `<div class="shop-row"><div class="item-ic" style="background:#33240f">${r.icon}</div>
+        <div class="grow"><div class="item-name">${r.name} <span class="item-sub">(음식값 ${r.price})</span></div>
+        <div class="item-sub">${steps} · 필요 납품 ${ing.icon}${ing.name} ×${b.n} (보유 ${Player.count(b.id)})</div></div>${btn}</div>`;
+    });
+    UI.openMenu(`${DATA.NPCS[by].icon} 요리 의뢰`, rows, (act,id)=>{
+      if (act!=="barter") return;
+      const r=DATA.RECIPES[id], b=r.barter;
+      if (Player.count(b.id) >= b.n){
+        Player.remove(b.id, b.n); Player.learnRecipe(id);
+        Sound.sfx("levelup"); toast(`📜 의뢰 완수! '${r.name}' 비법을 전수받았다!`,"gold");
+        Quests.notify("recipe",{id}); NPC._recipeBarter(by); UI.refreshHUD();
+      } else { Sound.sfx("error"); toast("납품할 재료가 부족하다","bad"); }
+    });
+  },
+
+  /* 방앗간 가공 재료(밀가루·들기름·육수 등) 구매 — 시그니처 요리 재료 */
+  _bangaGoods(){
+    let rows=`<p class="note">방앗간 가공 재료 (시그니처 요리에 필요)</p>`;
+    ["wheat_flour","deulgireum","hot_water","rice_water","deulgae_flour","dough"].forEach(id=>{
+      const g=DATA.INGREDIENTS[id];
+      rows += NPC._buyRow(`${g.name} (보유 ${Player.count(id)})`, g.icon, g.buy, "b", id, g.src);
+    });
+    UI.openMenu("방앗간 — 가공 재료", rows, (act,id)=>{ if(act==="b"){ NPC._buy(id, DATA.INGREDIENTS[id].buy); NPC._bangaGoods(); UI.refreshHUD(); } });
+  },
+
   /* ---------------- 의원: 치료/최대치 증강 ---------------- */
   uiwon(){
     UI.startDialogue("의원 💉", ["어디 편찮으신가? 침 한 대면 거뜬하지."],
@@ -395,10 +432,14 @@ const NPC = {
     });
   },
   _yakchoBuy(){
-    let rows=`<p class="note">요리·재료</p>`;
+    let rows=`<p class="note">요리·양념 재료</p>`;
     rows += NPC._buyRow(`양념장 (보유 ${Player.count("season")})`, "🥢", 5, "b", "season");
     rows += NPC._buyRow(`도토리 (보유 ${Player.count("dotori")})`, "🌰", 6, "b", "dotori");
-    UI.openMenu("약초상 — 판매", rows, (act,id)=>{ if(act==="b"){ NPC._buy(id, id==="season"?5:6); NPC._yakchoBuy(); UI.refreshHUD(); } });
+    ["gochujang","dallae_season","chogochujang","doenjang"].forEach(id=>{ const g=DATA.INGREDIENTS[id];
+      rows += NPC._buyRow(`${g.name} (보유 ${Player.count(id)})`, g.icon, g.buy, "b", id, g.src); });
+    UI.openMenu("약초상 — 판매", rows, (act,id)=>{
+      if(act==="b"){ const pr = id==="season"?5 : id==="dotori"?6 : DATA.INGREDIENTS[id].buy; NPC._buy(id, pr); NPC._yakchoBuy(); UI.refreshHUD(); }
+    });
   },
 
   /* ---------------- 훈장(서당): 요리 수련 / 전투 수련 ---------------- */
@@ -478,14 +519,16 @@ const NPC = {
           { label:`메밀가루→국수사리 (가루2 → 국수3) `, value:"noodle" },
           { label:`두부 사기 — 10냥`, value:"tofu" },
           { label:`누룩 사기 — 12냥`, value:"nuruk" },
-          { label:"방앗간 요리 배우기", value:"learn" },
+          { label:"가공 재료 사기 (밀가루·들기름·육수…)", value:"goods" },
+          { label:"방앗간 요리 의뢰 (재료 납품 → 전수)", value:"learn" },
           { label:"나간다", value:"bye" }]),
         onChoice(v){
           if (Quests.handleChoice(v)) return;
           if (v==="noodle"){ if(Player.count("flour")>=2){ Player.remove("flour",2); Player.add("noodle",3); Sound.sfx("confirm"); toast("국수사리 ×3","good"); } else { Sound.sfx("error"); toast("메밀가루가 부족하다(2 필요)","bad"); } }
           else if (v==="tofu"){ NPC._buy("tofu",10); }
           else if (v==="nuruk"){ NPC._buy("nuruk",12); }
-          else if (v==="learn"){ NPC.recipeShop("banga"); }
+          else if (v==="goods"){ NPC._bangaGoods(); }
+          else if (v==="learn"){ NPC._recipeBarter("banga"); }
           UI.refreshHUD();
         }});
   },
@@ -496,13 +539,15 @@ const NPC = {
       { choices: Quests.npcChoices("pujut").concat([
           { label:`돼지고기 — 18냥`, value:"pork" },
           { label:`조기(생선) — 14냥`, value:"fish" },
-          { label:"고기 요리 배우기", value:"learn" },
+          { label:`멸치 육수 — 7냥`, value:"anchovy" },
+          { label:"고기 요리 의뢰 (재료 납품 → 전수)", value:"learn" },
           { label:"나간다", value:"bye" }]),
         onChoice(v){
           if (Quests.handleChoice(v)) return;
           if (v==="pork"){ NPC._buy("pork",18); }
           else if (v==="fish"){ NPC._buy("fish",14); }
-          else if (v==="learn"){ NPC.recipeShop("pujut"); }
+          else if (v==="anchovy"){ NPC._buy("anchovy_soup",7); }
+          else if (v==="learn"){ NPC._recipeBarter("pujut"); }
           UI.refreshHUD();
         }});
   },

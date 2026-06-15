@@ -18,7 +18,9 @@ DATA.HERBS = {
   // 봄
   ssuk:     { id:"ssuk",     name:"쑥",       tier:1, season:"봄",   icon:"🌿", price:8,  heal:6  },
   dallae:   { id:"dallae",   name:"달래",     tier:1, season:"봄",   icon:"🧅", price:9,  heal:5  },
+  gondre:   { id:"gondre",   name:"곤드레",   tier:2, season:"봄",   icon:"🥬", price:24, heal:14 },
   doraji:   { id:"doraji",   name:"도라지",   tier:2, season:"봄",   icon:"🌱", price:22, heal:14 },
+  dureup:   { id:"dureup",   name:"두릅",     tier:3, season:"봄",   icon:"🌿", price:95, heal:30 },
   sansam:   { id:"sansam",   name:"산삼",     tier:3, season:"봄",   icon:"🪷", price:120,heal:40 },
   // 여름
   gosari:   { id:"gosari",   name:"고사리",   tier:1, season:"여름", icon:"🌾", price:8,  heal:6  },
@@ -32,6 +34,7 @@ DATA.HERBS = {
   hwanggi:  { id:"hwanggi",  name:"황기",     tier:3, season:"가을", icon:"🪵", price:115,heal:38 },
   // 겨울
   museong:  { id:"museong",  name:"무청",     tier:1, season:"겨울", icon:"🥬", price:7,  heal:5  },
+  naengi:   { id:"naengi",   name:"냉이",     tier:1, season:"겨울", icon:"🌿", price:9,  heal:6  },
   gomchi:   { id:"gomchi",   name:"곰취",     tier:1, season:"겨울", icon:"🍃", price:9,  heal:6  },
   gugija:   { id:"gugija",   name:"구기자",   tier:2, season:"겨울", icon:"🔴", price:26, heal:15 },
   bokryeong:{ id:"bokryeong",name:"복령",     tier:3, season:"겨울", icon:"⚪", price:118,heal:36 },
@@ -216,6 +219,23 @@ DATA.INGREDIENTS = {
   nuruk:   { id:"nuruk",   name:"누룩",     icon:"🟡", buy:12, src:"주모/방앗간" },
   dotori:  { id:"dotori",  name:"도토리",   icon:"🌰", buy:0,  src:"가을 산 채집" },
   namul:   { id:"namul",   name:"나물",     icon:"🌿", buy:0,  src:"산 채집(아무 나물)" },
+  // 레시피 개편: 양념·육수류(구매) — 시그니처/장떡 재료
+  wheat_flour:  { id:"wheat_flour",  name:"밀가루",     icon:"🌾", buy:6,  src:"방앗간/장터" },
+  gochujang:    { id:"gochujang",    name:"고추장 육수", icon:"🌶️", buy:7,  src:"장터/약초방" },
+  deulgireum:   { id:"deulgireum",   name:"들기름",     icon:"🍯", buy:9,  src:"방앗간" },
+  dallae_season:{ id:"dallae_season",name:"달래 양념장", icon:"🥢", buy:8,  src:"약초방" },
+  hot_water:    { id:"hot_water",    name:"데친 물",    icon:"♨️", buy:2,  src:"방앗간/주막" },
+  chogochujang: { id:"chogochujang", name:"초고추장",   icon:"🥗", buy:8,  src:"장터/약초방" },
+  rice_water:   { id:"rice_water",   name:"쌀뜨물 육수", icon:"🥛", buy:3,  src:"방앗간" },
+  deulgae_flour:{ id:"deulgae_flour",name:"들깨가루",   icon:"🥜", buy:9,  src:"방앗간" },
+  anchovy_soup: { id:"anchovy_soup", name:"멸치 육수",  icon:"🍲", buy:7,  src:"푸줏간/장터" },
+  doenjang:     { id:"doenjang",     name:"된장",       icon:"🟫", buy:7,  src:"장터/약초방" },
+  dough:        { id:"dough",        name:"반죽",       icon:"🥟", buy:5,  src:"방앗간" },
+  // 시그니처 전용 나물(산 채집) — 트레이드 화면 표시용 매핑
+  gondre:  { id:"gondre",  name:"곤드레",   icon:"🥬", buy:0,  src:"봄 산 채집" },
+  dureup:  { id:"dureup",  name:"두릅",     icon:"🌿", buy:0,  src:"봄 산 채집(귀함)" },
+  gosari:  { id:"gosari",  name:"고사리",   icon:"🌾", buy:0,  src:"여름 산 채집" },
+  naengi:  { id:"naengi",  name:"냉이",     icon:"🌿", buy:0,  src:"겨울 산 채집" },
 };
 // 어떤 재고가 있는지 셀 때 'namul'은 보유 약초 전체를 의미
 DATA.isIngredient = function(id){ return !!DATA.INGREDIENTS[id]; };
@@ -226,22 +246,50 @@ DATA.isIngredient = function(id){ return !!DATA.INGREDIENTS[id]; };
  * 기획자 편집: 음식 추가/순서/가격/해금은 여기서.
  */
 DATA.RECIPES = {
-  jeon:      { id:"jeon",      name:"메밀전",   icon:"🫓", steps:["flour","namul","season"], price:30, unlock:true,  by:"기본" },
-  jumeokbap: { id:"jumeokbap", name:"주먹밥",   icon:"🍙", steps:["rice","namul","season"],  price:28, unlock:true,  by:"기본" },
-  pajeon:    { id:"pajeon",    name:"파전",     icon:"🥞", steps:["flour","pa","season"],    price:42, learn:80,    by:"주모" },
-  dotorimuk: { id:"dotorimuk", name:"도토리묵", icon:"🟫", steps:["dotori","namul","season"],price:46, learn:100,   by:"주모" },
-  bindaetteok:{id:"bindaetteok",name:"빈대떡",  icon:"🟡", steps:["bean","pa","season"],     price:58, learn:140,   by:"주모" },
-  kalguksu:  { id:"kalguksu",  name:"칼국수",   icon:"🍜", steps:["noodle","namul","season"],price:54, learn:160,   by:"방앗간" },
-  jumeok2:   { id:"jumeok2",   name:"두부조림", icon:"⬜", steps:["tofu","pa","season"],     price:52, learn:150,   by:"방앗간" },
-  gukbap:    { id:"gukbap",    name:"국밥",     icon:"🍲", steps:["rice","pork","season"],   price:72, learn:220,   by:"주모", meat:true },
-  sanjeok:   { id:"sanjeok",   name:"산적",     icon:"🍢", steps:["pork","pa","season"],     price:68, learn:200,   by:"푸줏간", meat:true },
-  jogi:      { id:"jogi",      name:"조기구이", icon:"🐟", steps:["fish","season"],          price:62, learn:180,   by:"푸줏간" },
-  dongdongju:{ id:"dongdongju",name:"동동주",   icon:"🍶", steps:["rice","nuruk"],           price:84, learn:260,   by:"주모", drink:true },
-  injeolmi:  { id:"injeolmi",  name:"인절미",   icon:"🍡", steps:["rice","bean"],            price:38, learn:120,   by:"방앗간" },
+  // ── 범용 3종 (게임 시작 시 기본 해금) ──
+  jeon:        { id:"jeon",        name:"메밀 나물전", icon:"🫓", steps:["flour","namul","season"],         price:32, unlock:true, by:"기본" },
+  jangtteok:   { id:"jangtteok",   name:"장떡",        icon:"🟤", steps:["wheat_flour","gochujang","namul"], price:40, unlock:true, by:"기본" },
+  bindaetteok: { id:"bindaetteok", name:"녹두 빈대떡", icon:"🟡", steps:["bean","namul","pork"],            price:58, unlock:true, by:"기본", meat:true },
+
+  // ── 주모 유료 학습(냥) ── (명성 500에서 무료 자동 해금되기도 함)
+  jumeokbap:   { id:"jumeokbap",   name:"주먹밥",     icon:"🍙", steps:["rice","namul","season"],   price:30, learn:60,  by:"주모" },
+  pajeon:      { id:"pajeon",      name:"파전",       icon:"🥞", steps:["flour","pa","season"],     price:42, learn:80,  by:"주모" },
+  dotorimuk:   { id:"dotorimuk",   name:"도토리묵",   icon:"🟫", steps:["dotori","namul","season"], price:46, learn:100, by:"주모" },
+
+  // ── 명성 마일스톤 자동 해금(무료) ──
+  kalguksu:    { id:"kalguksu",    name:"칼국수",     icon:"🍜", steps:["noodle","namul","season"], price:54, by:"명성" },
+  dongdongju:  { id:"dongdongju",  name:"동동주",     icon:"🍶", steps:["rice","nuruk"],            price:84, by:"명성", drink:true },
+
+  // ── 시그니처 4종 (고수익, 명성 마일스톤 해금) ──
+  gondre_rice:   { id:"gondre_rice",   name:"곤드레 가마솥밥", icon:"🍚", steps:["rice","gondre","deulgireum","dallae_season"], price:120, by:"명성" },
+  dureup_sukhoe: { id:"dureup_sukhoe", name:"두릅 숙회",       icon:"🥗", steps:["hot_water","dureup","chogochujang"],          price:104, by:"명성", drink:true },
+  gosari_tang:   { id:"gosari_tang",   name:"고사리 들깨탕",   icon:"🍲", steps:["rice_water","gosari","deulgae_flour"],         price:90,  by:"명성" },
+  naengi_sujebi: { id:"naengi_sujebi", name:"냉이 된장 수제비", icon:"🥣", steps:["anchovy_soup","doenjang","naengi","dough"],   price:74,  by:"명성" },
+
+  // ── 방앗간/푸줏간: 의뢰(재료 납품) 보상으로 전수 ──
+  jumeok2:   { id:"jumeok2",   name:"두부조림", icon:"⬜", steps:["tofu","pa","season"],   price:52, by:"방앗간", barter:{id:"flour", n:6} },
+  injeolmi:  { id:"injeolmi",  name:"인절미",   icon:"🍡", steps:["rice","bean"],          price:40, by:"방앗간", barter:{id:"rice",  n:8} },
+  gukbap:    { id:"gukbap",    name:"국밥",     icon:"🍲", steps:["rice","pork","season"], price:74, by:"푸줏간", meat:true, barter:{id:"pork", n:4} },
+  sanjeok:   { id:"sanjeok",   name:"산적",     icon:"🍢", steps:["pork","pa","season"],   price:70, by:"푸줏간", meat:true, barter:{id:"pork", n:5} },
+  jogi:      { id:"jogi",      name:"조기구이", icon:"🐟", steps:["fish","season"],        price:64, by:"푸줏간", barter:{id:"fish", n:4} },
 };
 
-/* 시작 시 기본 해금 레시피 (메밀전·파전·빈대떡 3종) */
-DATA.START_RECIPES = ["jeon","pajeon","bindaetteok"];
+/* 명성 마일스톤 자동 해금 (#8): 통과 시 레시피 3종씩 무료 전수, 총 9종 */
+DATA.FAME_UNLOCKS = [
+  { fame:500,  recipes:["jumeokbap","pajeon","dotorimuk"] },
+  { fame:1000, recipes:["kalguksu","gondre_rice","gosari_tang"] },
+  { fame:1500, recipes:["dongdongju","dureup_sukhoe","naengi_sujebi"] },
+];
+
+/* 나물 등급(Tier)별 보상 보정 (#13): 접시에 담긴 최고 등급 기준 */
+DATA.TIER_REWARD = {
+  1: { mult:1.00, fame:10 },
+  2: { mult:1.30, fame:15 },
+  3: { mult:1.75, fame:25 },
+};
+
+/* 시작 시 기본 해금 레시피 (범용 3종: 메밀 나물전·장떡·녹두 빈대떡) */
+DATA.START_RECIPES = ["jeon","jangtteok","bindaetteok"];
 
 /* ---- 보양식(버프 요리) — 가마솥에서 끓여 하루 동안 효과 ----
  * 나물죽(즉시 회복)과 달리, 먹으면 다음 취침까지 유지되는 '버프'를 준다.
