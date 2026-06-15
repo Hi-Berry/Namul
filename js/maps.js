@@ -1,11 +1,16 @@
 /* =========================================================================
  * 맵 — 집 / 마을 / 산 (타일 지형 + 상호작용 오브젝트)
- *  타일: . 풀  , 흙길  T 나무(고체)  W 물(고체)  R 바위(고체)  ~ 모래
+ *  타일: . 풀  , 흙길  T 나무(고체)  W 물(고체)  R 바위(고체)  x 가시풀(밟으면 HP-5)
+ *  맵 크기는 기본 20×15, 산 구역은 cols/rows로 확장(카메라가 플레이어를 따라감).
  * ======================================================================= */
 const TILE = 40, COLS = 20, ROWS = 15;
 
 const Maps = {
   zones: {},
+
+  // 맵별 타일 크기(미지정 시 기본 20×15)
+  colsOf(zone){ return Maps[zone].cols || COLS; },
+  rowsOf(zone){ return Maps[zone].rows || ROWS; },
 
   /* 집(홈) — 취침/저장/인벤토리, 메밀밭 */
   house: {
@@ -79,112 +84,41 @@ const Maps = {
     ],
     exits: [
       { tx:0,  ty:7, to:"house", sx:18, sy:7 },
-      { tx:19, ty:7, to:"mtn1", sx:1, sy:7 },
+      { tx:19, ty:7, to:"mtn1", sx:1, sy:10 },
     ],
     spawn: { tx:10, ty:9 },
   },
 
-  /* ===== 산 — 4개 구역(Zone) ===== */
-  /* Zone 1: 산 입구 (도깨비 / 당나무 제단) */
+  /* ===== 산 — 4개 구역(Zone) : 30×22 확장 맵 (그리드는 _genMtnGrid로 생성) =====
+   * 좌우 통로(row 10)로 구역이 연결되고, 카메라가 플레이어를 따라간다. */
   mtn1: {
-    name: "산 입구", danger: true,
-    grid: [
-      "TTTTTTTTTTTTTTTTTTTT",
-      "T...R..........R...T",
-      "T..................T",
-      "T....TT......RR....T",
-      ",,,,,,,......,,,,,,,",  // 좌(마을) ↔ 우(중턱)
-      "T....,........,....T",
-      "T....,........,....T",
-      "T..................T",
-      "T...RR........TT...T",
-      "T..................T",
-      "T.......TT.........T",
-      "T..R...........R...T",
-      "T..................T",
-      "T..................T",
-      "TTTTTTTTTTTTTTTTTTTT",
-    ],
+    name: "산 입구", danger: true, cols:30, rows:22,
     objects: [
-      { type:"sign", tx:3, ty:5, solid:true, label:"산 입구 표석", action:"sign_mtn" },
-      { type:"shrine", tx:9, ty:2, w:2, h:2, solid:true, label:"당나무 제단", action:"shrine" },
+      { type:"sign", tx:3, ty:8, solid:true, label:"산 입구 표석", action:"sign_mtn" },
+      { type:"shrine", tx:16, ty:3, w:2, h:2, solid:true, label:"당나무 제단", action:"shrine" },
     ],
-    exits: [ { tx:0, ty:4, to:"village", sx:18, sy:7 }, { tx:19, ty:4, to:"mtn2", sx:1, sy:7 } ],
-    spawn: { tx:2, ty:4 },
+    exits: [ { tx:0, ty:10, to:"village", sx:18, sy:7 }, { tx:29, ty:10, to:"mtn2", sx:1, sy:10 } ],
+    spawn: { tx:2, ty:10 },
   },
-  /* Zone 2: 산 중턱 (물귀신 / 어두운 틴트) */
   mtn2: {
-    name: "산 중턱", danger: true,
-    grid: [
-      "TTTTTTTTTTTTTTTTTTTT",
-      "T..R....TT.........T",
-      "T..................T",
-      "T....RR.......TT...T",
-      ",,,,,,,......,,,,,,,",
-      "T.....,.......,....T",
-      "T.....,.......,....T",
-      "T..TT.........RR...T",
-      "T..................T",
-      "T......RR..........T",
-      "T..........TT......T",
-      "T..R...........R...T",
-      "T..................T",
-      "T..................T",
-      "TTTTTTTTTTTTTTTTTTTT",
-    ],
-    objects: [ { type:"sign", tx:3, ty:5, solid:true, label:"중턱 이정표", action:"sign_mtn" } ],
-    exits: [ { tx:0, ty:4, to:"mtn1", sx:18, sy:4 }, { tx:19, ty:4, to:"mtn3", sx:1, sy:7 } ],
-    spawn: { tx:2, ty:4 },
+    name: "산 중턱", danger: true, cols:30, rows:22,
+    objects: [ { type:"sign", tx:3, ty:8, solid:true, label:"중턱 이정표", action:"sign_mtn" } ],
+    exits: [ { tx:0, ty:10, to:"mtn1", sx:28, sy:10 }, { tx:29, ty:10, to:"mtn3", sx:1, sy:10 } ],
+    spawn: { tx:2, ty:10 },
   },
-  /* Zone 3: 깊은 숲 (구미호·두억시니 / 안개) */
   mtn3: {
-    name: "깊은 숲", danger: true,
-    grid: [
-      "TTTTTTTTTTTTTTTTTTTT",
-      "TT.TT....TT....TT..T",
-      "T..................T",
-      "T.TT...RR.....TT...T",
-      ",,,,,,,......,,,,,,,",
-      "T....TT.......,....T",
-      "T.............,....T",
-      "T..RR.....TT.......T",
-      "T..................T",
-      "T....TT.....RR.....T",
-      "TT.........TT.....TT",
-      "T..R...........R...T",
-      "T...TT.......TT....T",
-      "T..................T",
-      "TTTTTTTTTTTTTTTTTTTT",
-    ],
-    objects: [ { type:"sign", tx:3, ty:5, solid:true, label:"안개 표석", action:"sign_mtn" } ],
-    exits: [ { tx:0, ty:4, to:"mtn2", sx:18, sy:4 }, { tx:19, ty:4, to:"mtn4", sx:1, sy:7 } ],
-    spawn: { tx:2, ty:4 },
+    name: "깊은 숲", danger: true, cols:30, rows:22,
+    objects: [ { type:"sign", tx:3, ty:8, solid:true, label:"안개 표석", action:"sign_mtn" } ],
+    exits: [ { tx:0, ty:10, to:"mtn2", sx:28, sy:10 }, { tx:29, ty:10, to:"mtn4", sx:1, sy:10 } ],
+    spawn: { tx:2, ty:10 },
   },
-  /* Zone 4: 산 정상 (제단 / 고요·후반 스토리) */
   mtn4: {
-    name: "산 정상", danger: false,
-    grid: [
-      "TTTTTTTTTTTTTTTTTTTT",
-      "T..R............R..T",
-      "T..................T",
-      "T.....RR....RR.....T",
-      ",,,,,,........,,,,,T",
-      "T..................T",
-      "T........RR........T",
-      "T..................T",
-      "T.......R..R.......T",
-      "T..................T",
-      "T..R............R..T",
-      "T..................T",
-      "T.....RR....RR.....T",
-      "T..................T",
-      "TTTTTTTTTTTTTTTTTTTT",
-    ],
+    name: "산 정상", danger: false, cols:30, rows:22,
     objects: [
-      { type:"altar", tx:9, ty:6, w:2, h:2, solid:true, label:"산정 제단", action:"altar" },
+      { type:"altar", tx:16, ty:5, w:2, h:2, solid:true, label:"산정 제단", action:"altar" },
     ],
-    exits: [ { tx:0, ty:4, to:"mtn3", sx:18, sy:4 } ],
-    spawn: { tx:2, ty:4 },
+    exits: [ { tx:0, ty:10, to:"mtn3", sx:28, sy:10 } ],
+    spawn: { tx:2, ty:10 },
   },
 
   /* ---- 건물 내부 (Interior.enter 가 objects/floorColor/exits 채움) ---- */
@@ -215,9 +149,14 @@ const Maps = {
   /* ---- 고체 판정 ---- */
   isSolidTile(zone, tx, ty){
     const z = Maps[zone];
-    if (tx < 0 || ty < 0 || tx >= COLS || ty >= ROWS) return true;
+    if (tx < 0 || ty < 0 || tx >= Maps.colsOf(zone) || ty >= Maps.rowsOf(zone)) return true;
     const c = z.grid[ty][tx];
-    return c === "T" || c === "W" || c === "R" || c === "#";
+    return c === "T" || c === "W" || c === "R" || c === "#";  // x(가시풀)은 통행 가능
+  },
+  // 가시풀(함정) 타일 여부
+  isThornTile(zone, tx, ty){
+    if (tx < 0 || ty < 0 || tx >= Maps.colsOf(zone) || ty >= Maps.rowsOf(zone)) return false;
+    return Maps[zone].grid[ty][tx] === "x";
   },
 
   // 픽셀 좌표가 고체와 충돌하는지 (오브젝트 포함). w,h = 캐릭터 박스
@@ -245,8 +184,9 @@ const Maps = {
     const season = Time.season();
     const grassTop = season === "겨울" ? "#cdd8df" : (season==="가을" ? "#b8a55a" : "#7fae5a");
     const grassBot = season === "겨울" ? "#aebcc6" : (season==="가을" ? "#9c8a3e" : "#5e8e3e");
-    for (let y=0;y<ROWS;y++){
-      for (let x=0;x<COLS;x++){
+    const cols=Maps.colsOf(zone), rows=Maps.rowsOf(zone);
+    for (let y=0;y<rows;y++){
+      for (let x=0;x<cols;x++){
         const c = z.grid[y][x];
         const px = x*TILE, py = y*TILE;
         // 실내(F=마루, #=벽)
@@ -280,6 +220,11 @@ const Maps = {
           ctx.moveTo(px+6,py+TILE-6); ctx.lineTo(px+TILE/2,py+8); ctx.lineTo(px+TILE-6,py+TILE-6);
           ctx.closePath(); ctx.fill();
           ctx.fillStyle = "#a8a8a8"; ctx.fillRect(px+12,py+18,8,6);
+        } else if (c === "x"){ // 가시풀 함정 (밟으면 HP-5)
+          ctx.strokeStyle = "#3a5a2a"; ctx.lineWidth=2;
+          for(let i=0;i<5;i++){ const bx=px+5+i*7, by=py+TILE-5;
+            ctx.beginPath(); ctx.moveTo(bx,by); ctx.lineTo(bx-3,by-12); ctx.moveTo(bx,by); ctx.lineTo(bx+3,by-12); ctx.moveTo(bx,by); ctx.lineTo(bx,by-15); ctx.stroke(); }
+          ctx.fillStyle="#7a3030"; for(let i=0;i<3;i++) ctx.fillRect(px+8+i*9, py+10+((i*5)%8), 3,3);
         }
       }
     }
@@ -381,7 +326,50 @@ const Maps = {
 
   // 장터 좌판은 장날 오전에만 활성
   stallActive(){ return Time.isMarketDay() && Time.isMorning(); },
+
+  /* 산 구역 30×22 그리드 절차 생성 (결정적) — #11 확장/지형/함정
+   * opts: { T,R,W,x } 밀도. row10 가로 통로 + col15 세로 통로로 연결 보장,
+   * 오브젝트 발자국·연결로를 비워 도달 가능하게 만든다. */
+  _genMtnGrid(zone, seed, opts){
+    const cols=30, rows=22, EX=10;       // EX: 좌우 통로 행
+    let s = seed>>>0;
+    const rnd=()=>{ s=(s*1103515245+12345)&0x7fffffff; return s/0x7fffffff; };
+    const g=[];
+    for(let y=0;y<rows;y++){
+      const row=[];
+      for(let x=0;x<cols;x++) row.push((x===0||x===cols-1||y===0||y===rows-1)?"T":".");
+      g.push(row);
+    }
+    // 지형 산포 (내부)
+    const scatter=(ch,d)=>{ for(let y=2;y<rows-2;y++)for(let x=2;x<cols-2;x++){ if(g[y][x]==="." && rnd()<d) g[y][x]=ch; } };
+    scatter("T", opts.T); scatter("R", opts.R); scatter("W", opts.W); if(opts.x) scatter("x", opts.x);
+    // 통로(가로 EX행 전체 + 세로 15열) — 산포 위에 덮어써서 항상 통행
+    for(let x=0;x<cols;x++) g[EX][x]=",";
+    for(let y=1;y<rows-1;y++) g[y][15]=",";
+    // 가지 통로 몇 개(탐색로)
+    [5,9,22,25].forEach(cx=>{ const top=2+Math.floor(rnd()*5), bot=rows-3-Math.floor(rnd()*5); for(let y=Math.min(top,EX);y<=Math.max(bot,EX);y++) g[y][cx]=","; });
+    // 오브젝트 발자국 비우기 + 통로까지 연결
+    (Maps[zone].objects||[]).forEach(o=>{
+      const w=o.w||1, h=o.h||1;
+      for(let ty=o.ty-1; ty<=o.ty+h; ty++) for(let tx=o.tx-1; tx<=o.tx+w; tx++){
+        if(tx>0&&tx<cols-1&&ty>0&&ty<rows-1 && !(tx>=o.tx&&tx<o.tx+w&&ty>=o.ty&&ty<o.ty+h)) g[ty][tx]=".";
+      }
+      // 오브젝트(솔리드)에서 가로 통로(EX)까지 세로 연결로를 비워 도달 가능하게
+      const cx=clamp(o.tx,1,cols-2);
+      const a=Math.min(o.ty+h, EX), b=Math.max(o.ty-1, EX);
+      for(let y=a; y<=b; y++) g[y][cx]=",";
+    });
+    // 스폰/출구 주변 정리
+    g[EX][1]=","; g[EX][2]=","; g[EX][cols-2]=",";
+    return g.map(r=>r.join(""));
+  },
 };
 
 // zones 참조 등록
 Maps.zones = { house: Maps.house, village: Maps.village, mtn1: Maps.mtn1, mtn2: Maps.mtn2, mtn3: Maps.mtn3, mtn4: Maps.mtn4, interior: Maps.interior };
+
+// 산 구역 그리드 생성 (결정적 시드)
+Maps.mtn1.grid = Maps._genMtnGrid("mtn1", 1001, { T:0.12, R:0.06, W:0.03, x:0.05 });
+Maps.mtn2.grid = Maps._genMtnGrid("mtn2", 2002, { T:0.10, R:0.08, W:0.05, x:0.06 });
+Maps.mtn3.grid = Maps._genMtnGrid("mtn3", 3003, { T:0.16, R:0.07, W:0.04, x:0.07 });
+Maps.mtn4.grid = Maps._genMtnGrid("mtn4", 4004, { T:0.10, R:0.06, W:0.02, x:0 });
