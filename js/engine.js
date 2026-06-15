@@ -196,9 +196,11 @@ const MobileInput = {
   currentKeys: [],
 
   init() {
-    const isTouch = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
-    if (!isTouch) return;
+    // 터치스크린 노트북(마우스 병행)은 제외 — 실제 모바일/태블릿만
+    const isMobileUI = window.matchMedia('(hover: none) and (pointer: coarse)').matches;
+    if (!isMobileUI) return;
 
+    document.body.classList.add('touch-ui');
     const controls = document.getElementById('mobile-controls');
     if (!controls) return;
     controls.classList.remove('hidden');
