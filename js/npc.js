@@ -240,7 +240,14 @@ const NPC = {
       });
   },
   _uisangShop(){
-    let rows = `<p class="note">현재 의상: <b>${Player.costumeData().name}</b> (기력소모 ×${Player.staminaMult()}, 이동 ×${Player.speedMult()})</p>`;
+    const ecost = 60*((P.costumeLv||0)+1), emax = (P.costumeLv||0)>=5;
+    let rows = `<p class="note">현재 의상: <b>${Player.costumeData().name}</b> +${P.costumeLv||0} (기력소모 ×${Player.staminaMult().toFixed(2)}, 이동 ×${Player.speedMult().toFixed(2)})</p>`;
+    // 의상 강화 (modify#3)
+    rows += `<div class="shop-row"><div class="item-ic" style="background:#33240f">🧵</div>
+      <div class="grow"><div class="item-name">의상 강화 (+${P.costumeLv||0} → +${(P.costumeLv||0)+1})</div>
+      <div class="item-sub">단계당 기력소모 -3%, 이동 +3% (최대 +5)</div></div>
+      ${emax?`<button disabled>최고</button>`:`<button data-act="enh" ${P.money<ecost?"disabled":""}>${ecost}냥</button>`}</div>`;
+    rows += `<hr style="border-color:#50412a;margin:10px 0"><p class="note">한복 구입</p>`;
     Object.values(DATA.COSTUMES).forEach(c=>{
       const worn = P.costume===c.id;
       const btn = worn ? `<button disabled>착용중</button>`
@@ -251,6 +258,11 @@ const NPC = {
     UI.openMenu("의상점 🧵", rows, (act,id)=>{
       if (act==="buy"){ const c=DATA.COSTUMES[id];
         if (P.money>=c.price){ Player.spendMoney(c.price); P.costume=id; Sound.sfx("confirm"); toast(`${c.name} 착용!`,"good"); NPC._uisangShop(); UI.refreshHUD(); }
+        else Sound.sfx("error");
+      } else if (act==="enh"){
+        if ((P.costumeLv||0)>=5){ Sound.sfx("error"); return; }
+        const c=60*((P.costumeLv||0)+1);
+        if (Player.spendMoney(c)){ P.costumeLv=(P.costumeLv||0)+1; Sound.sfx("levelup"); toast(`의상 강화 +${P.costumeLv}! 몸놀림이 가벼워졌다`,"gold"); NPC._uisangShop(); UI.refreshHUD(); }
         else Sound.sfx("error");
       }
     });
@@ -265,7 +277,14 @@ const NPC = {
       });
   },
   _geonchukShop(){
-    let rows = `<p class="note">현재 장신구: <b>${Player.accessoryData().name}</b> (최대 신력 +${Player.accessoryData().mpBonus}, 드롭 +${Math.round(Player.dropBonus()*100)}%)</p>`;
+    const ncost = 80*((P.accLv||0)+1), nmax=(P.accLv||0)>=5, canEnch = P.accessory!=="none" && !nmax;
+    let rows = `<p class="note">현재 장신구: <b>${Player.accessoryData().name}</b> ⟡${P.accLv||0} (최대 신력 +${Player.accessoryData().mpBonus+(P.accLv||0)*5}, 드롭 +${Math.round(Player.dropBonus()*100)}%)</p>`;
+    // 장신구 인챈트 (modify#3)
+    rows += `<div class="shop-row"><div class="item-ic" style="background:#33240f">🪡</div>
+      <div class="grow"><div class="item-name">장신구 인챈트 (⟡${P.accLv||0} → ⟡${(P.accLv||0)+1})</div>
+      <div class="item-sub">단계당 최대 신력 +5, 드롭 +3% (최대 ⟡5, 장신구 착용 시)</div></div>
+      ${nmax?`<button disabled>최고</button>`:`<button data-act="ench" ${(P.money<ncost||P.accessory==="none")?"disabled":""}>${ncost}냥</button>`}</div>`;
+    rows += `<hr style="border-color:#50412a;margin:10px 0"><p class="note">장신구 구입</p>`;
     Object.values(DATA.ACCESSORIES).forEach(a=>{
       const worn = P.accessory===a.id;
       const btn = worn ? `<button disabled>착용중</button>`
@@ -276,6 +295,11 @@ const NPC = {
     UI.openMenu("방물점 🪡", rows, (act,id)=>{
       if (act==="buy"){ const a=DATA.ACCESSORIES[id];
         if (P.money>=a.price){ Player.spendMoney(a.price); P.accessory=id; P.mp=clamp(P.mp,0,Player.mpCap()); Sound.sfx("confirm"); toast(`${a.name} 착용!`,"good"); NPC._geonchukShop(); UI.refreshHUD(); }
+        else Sound.sfx("error");
+      } else if (act==="ench"){
+        if (P.accessory==="none"||(P.accLv||0)>=5){ Sound.sfx("error"); toast("장신구를 먼저 착용해야 한다","bad"); return; }
+        const c=80*((P.accLv||0)+1);
+        if (Player.spendMoney(c)){ P.accLv=(P.accLv||0)+1; P.mp=clamp(P.mp,0,Player.mpCap()); Sound.sfx("levelup"); toast(`장신구 인챈트 ⟡${P.accLv}! 신력이 깃들었다`,"gold"); NPC._geonchukShop(); UI.refreshHUD(); }
         else Sound.sfx("error");
       }
     });
