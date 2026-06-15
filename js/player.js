@@ -18,7 +18,9 @@ const P = {
   weaponLv: 0,      // 대장간 강화 단계
   homiTier: 1,      // 호미 등급(채집 품질) 1~3
   costume: "plain", // 의상 id
+  costumeLv: 0,     // 의상 강화 단계 (의상점)
   accessory: "none",// 장신구 id
+  accLv: 0,         // 장신구 인챈트 단계 (방물점)
 
   magic: [],            // 보유 마법 id (당산나무에서 해금)
   shrinePoints: 0,      // 당산나무 누적 정기
@@ -45,7 +47,7 @@ const Player = {
     P.money = DATA.CONST.START_MONEY;
     P.level = 1; P.exp = 0;
     P.weapon = "natt"; P.weaponLv = 0; P.homiTier = 1;
-    P.costume = "plain"; P.accessory = "none";
+    P.costume = "plain"; P.costumeLv = 0; P.accessory = "none"; P.accLv = 0;
     P.magic = []; P.shrinePoints = 0;
     P.affection = { mudang:0, daejang:0, chonjang:0, jumo:0, uisang:0, geonchuk:0, uiwon:0, yakcho:0, hunjang:0, bobu:0, nongbu:0, banga:0, pujut:0 };
     P.pet = null;
@@ -84,11 +86,12 @@ const Player = {
   /* ---- 장비 파생 스탯 ---- */
   costumeData(){ return DATA.COSTUMES[P.costume] || DATA.COSTUMES.plain; },
   accessoryData(){ return DATA.ACCESSORIES[P.accessory] || DATA.ACCESSORIES.none; },
-  // 보양식(기력효율↑)은 소모 계수를 낮춘다
-  staminaMult(){ return Player.costumeData().staminaMult * (1 - Player.buffFactor("stamina")); },
-  speedMult(){ return Player.costumeData().speedMult * (1 + Player.buffFactor("speed")); },
-  dropBonus(){ return Player.accessoryData().dropBonus + Player.buffFactor("drop"); },
-  mpCap(){ return P.maxMp + Player.accessoryData().mpBonus; },
+  // 의상 강화(단계당 -3% 소모, +3% 이동) + 보양식(기력효율↑)
+  staminaMult(){ return Player.costumeData().staminaMult * (1 - (P.costumeLv||0)*0.03) * (1 - Player.buffFactor("stamina")); },
+  speedMult(){ return Player.costumeData().speedMult * (1 + (P.costumeLv||0)*0.03) * (1 + Player.buffFactor("speed")); },
+  // 장신구 인챈트(단계당 드롭 +3%, 신력 +5)
+  dropBonus(){ return Player.accessoryData().dropBonus + (P.accLv||0)*0.03 + Player.buffFactor("drop"); },
+  mpCap(){ return P.maxMp + Player.accessoryData().mpBonus + (P.accLv||0)*5; },
   // 부산물(드롭) 목록
   dropList(){ return Object.keys(P.inv).filter(id => DATA.DROPS[id]); },
 

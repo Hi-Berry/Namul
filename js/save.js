@@ -16,7 +16,7 @@ const Save = {
         weapon: P.weapon, weaponLv: P.weaponLv,
         magic: P.magic, inv: P.inv, affection: P.affection,
         homiTier: P.homiTier, pet: P.pet,
-        costume: P.costume, accessory: P.accessory, shrinePoints: P.shrinePoints,
+        costume: P.costume, costumeLv: P.costumeLv, accessory: P.accessory, accLv: P.accLv, shrinePoints: P.shrinePoints,
         cookXp: P.cookXp, fame: P.fame, recipes: P.recipes, cookTrain: P.cookTrain, farmPlots: P.farmPlots,
         buff: P.buff, cauldronDay: P.cauldronDay,
       },
