@@ -11,6 +11,8 @@ const Sprites = {
   // 방향 → idle/walkA/walkB 프레임
   DIR:{ down:["b0_0","b1_0","b2_0"], up:["b0_1","b1_1","b2_1"],
         right:["b0_2","b1_2","b2_2"], left:["b0_3","b1_3","b2_3"] },
+  // 상태별 애니메이션 프레임 세트 (#6) — 채집/요리/공격
+  ACT:{ gather:["b3_2","b3_3"], cook:["b4_2","b4_3"], attack:["b4_0","b4_1"] },
 
   load(){
     this.total = this.NAMES.length;
@@ -39,10 +41,18 @@ const Sprites = {
     return true;
   },
 
-  // 방향/이동에 맞는 프레임명
+  // 방향/이동에 맞는 프레임명 — 걷기 4단계(walkA·idle·walkB·idle)로 부드럽게
   frameFor(dir, moving, animT){
     const set = this.DIR[dir] || this.DIR.down;
     if (!moving) return set[0];
-    return (Math.floor(animT/2)%2===0) ? set[1] : set[2];
+    const ph = Math.floor(animT/1.5)%4;
+    return [set[1], set[0], set[2], set[0]][ph];
+  },
+
+  // 상태 애니메이션 프레임명 (gather/cook/attack은 실시간 타이머로 깜빡)
+  frameForAction(action, dir, moving, animT){
+    const a = this.ACT[action];
+    if (a){ return a[Math.floor(performance.now()/180)%a.length]; }
+    return this.frameFor(dir, moving, animT);
   },
 };
