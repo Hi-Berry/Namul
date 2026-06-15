@@ -317,11 +317,18 @@ const NPC = {
 
   /* ---------------- 장터 좌판 상점 ---------------- */
   market(){
-    if (!Maps.stallActive()){
-      UI.startDialogue("장터", ["좌판은 <b>장날(5·10일) 오전</b>에만 열린다.", `다음 장날까지 기다리자. (오늘은 ${Time.season()} ${Time.dayOfSeason()}일)`]);
+    if (Maps.stallActive()){ NPC._marketShop(); return; }   // 장날 오전: 좌판
+    if (Time.isMarketDay() && !Time.isMorning()){             // 장날 오후: 주막 장사 준비 팝업(#12)
+      UI.startDialogue("장터 🍶", ["장이 한창 무르익었다! 매대를 펴고 주막 장사를 시작할까?"], {
+        choices:[
+          { label:`🍲 장사 시작 (기력 ${Trading.phaseEntryCost[0]} · 낮 페이즈)`, value:"go" },
+          { label:"아직 준비가…", value:"no" },
+        ],
+        onChoice(v){ if (v==="go") Trading.begin(); }
+      });
       return;
     }
-    NPC._marketShop();
+    UI.startDialogue("장터", ["좌판은 <b>장날(5·10일) 오전</b>에 열리고, <b>오후</b>엔 주막 장사를 펼 수 있다.", `다음 장날까지 기다리자. (오늘은 ${Time.season()} ${Time.dayOfSeason()}일)`]);
   },
 
   _marketShop(){

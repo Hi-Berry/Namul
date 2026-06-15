@@ -29,11 +29,25 @@ const Trading = {
     toast("🍲 주막 장사 시작! 낮 손님이 몰려온다","gold");
   },
 
+  // 두루뭉술 주문(유형 B) 카테고리 — 손님이 특정 메뉴 대신 '특성'으로 요구
+  VAGUE:[
+    { label:"전(煎) 종류 하나 부쳐주오", match:r=> ["jeon","jangtteok","bindaetteok","pajeon"].includes(r.id) },
+    { label:"뜨끈한 국물 요리가 당기는구려", match:r=> ["kalguksu","gosari_tang","naengi_sujebi","gukbap"].includes(r.id) },
+    { label:"고기 들어간 든든한 걸로!", match:r=> !!r.meat },
+    { label:"시원한 술 한 사발 주시오", match:r=> !!r.drink },
+    { label:"따끈한 밥 종류 주오", match:r=> ["jumeokbap","gondre_rice","gukbap"].includes(r.id) },
+  ],
+
   _pickDish(c){
     const menu=this.menu(); let pool=menu;
     if (c.veggie) pool=menu.filter(r=>!r.meat);
     if (c.wants && Player.hasRecipe(c.wants)){ const w=DATA.RECIPES[c.wants]; if(!(c.veggie&&w.meat)) return w; }
     if (!pool.length) pool=menu;
+    // 유형 B (20%): 두루뭉술 주문 — 보유 메뉴 중 매칭되는 카테고리만 제시
+    if (!c.wants && chance(0.2)){
+      const cands = Trading.VAGUE.filter(v=> pool.some(r=> v.match(r)));
+      if (cands.length){ const v=choice(cands); return { vague:true, label:v.label, match:v.match, icon:"❓", name:v.label, steps:[] }; }
+    }
     return choice(pool);
   },
 
@@ -46,6 +60,11 @@ const Trading = {
     const processed = this.total - this.queue.length - 1; // 현재 손님 0-base index
     const target = Math.min(2, Math.floor(processed / this.perPhase));
     while (this.phaseIdx < target){
+      // 기력 고사: 다음 페이즈 진입 기력이 부족하면 이전 페이즈까지만 마감(자동 종료)
+      if (!Player.hasStamina(this.phaseEntryCost[this.phaseIdx+1])){
+        toast("기력이 다해 더는 장사를 잇지 못한다… 자동 마감!","bad");
+        this._finish(); return;
+      }
       this.phaseIdx++;
       const before=P.stamina; Player.spendStamina(this.phaseEntryCost[this.phaseIdx]);
       this.spent += before-P.stamina;
@@ -76,10 +95,25 @@ const Trading = {
     return tiers;
   },
 
+  // 접시가 어떤 레시피와 일치하는지 (재료·순서 동일)
+  _matchedRecipe(){
+    if (!this.plate.length) return null;
+    return this.menu().find(r=> r.steps.length===this.plate.length && r.steps.every((s,i)=> this.plate[i]===s)) || null;
+  },
+
   complete(){
     if (!this.dish) return;
-    const want=this.dish.steps;
-    const ok = this.plate.length===want.length && want.every((s,i)=> this.plate[i]===s);
+    let ok, payDish;
+    if (this.dish.vague){
+      // 유형 B: 만든 요리가 카테고리에 맞으면 성공
+      const made = this._matchedRecipe();
+      ok = !!(made && this.dish.match(made));
+      payDish = made || this.dish;
+    } else {
+      const want=this.dish.steps;
+      ok = this.plate.length===want.length && want.every((s,i)=> this.plate[i]===s);
+      payDish = this.dish;
+    }
     const tiers=this._consume();
     if (ok){
       const secs=this.custMax-this.custT, speed=DATA.servePayBonus(secs);
@@ -87,14 +121,17 @@ const Trading = {
       // 나물 등급 보정(#13): 접시 최고 등급 기준 가격 배율 + 명성
       const bestTier = tiers.length ? Math.max(...tiers) : 1;
       const tr = DATA.TIER_REWARD[bestTier] || DATA.TIER_REWARD[1];
-      const pay=Math.round(this.dish.price*speed*(this.cur.payMult||1)*cookB*tr.mult)+(this.cur.tip||0);
+      const pay=Math.round(payDish.price*speed*(this.cur.payMult||1)*cookB*tr.mult)+(this.cur.tip||0);
       this.earnings+=pay; P.money+=pay; this.served++;
       P.cookXp+=DATA.CONST.COOK_XP_PER_SERVE; P.fame+=tr.fame;   // 명성 +10/+15/+25 (#8)
       Player.checkFameUnlocks();
-      Sound.sfx("money"); Quests.notify("serve",{dish:this.dish.id}); Quests.notify("gold",{});
+      Sound.sfx("money"); Quests.notify("serve",{dish:payDish.id}); Quests.notify("gold",{});
       const tierTxt = bestTier>1 ? ` · ${bestTier}등급나물 ×${tr.mult}` : "";
-      this._flash(`${this.dish.icon}${this.dish.name} +${pay}냥! (속도 ×${speed}${tierTxt})`,"gold");
-    } else { Sound.sfx("error"); this._flash(`주문(${this.dish.name})과 다르다! 재료만 날렸다 (0냥)`,"bad"); }
+      this._flash(`${payDish.icon}${payDish.name} +${pay}냥! (속도 ×${speed}${tierTxt})`,"gold");
+    } else {
+      Sound.sfx("error");
+      this._flash(this.dish.vague ? `요청(${this.dish.label})에 안 맞는다! 재료만 날렸다 (0냥)` : `주문(${this.dish.name})과 다르다! 재료만 날렸다 (0냥)`,"bad");
+    }
     this._next();
   },
 
@@ -113,7 +150,9 @@ const Trading = {
     ];
     Player.gainExp(this.served*2);
     Player.addAffection("jumo", full?2:1);
-    G.time.min=Math.max(G.time.min, G.DAY_LEN-30);
+    // 복귀 시각: 낮 마감 16시 / 저녁 20시 / 밤 23시 (#12)
+    const returnHour = [16,20,23][this.phaseIdx] || 23;
+    G.time.min = Math.max(G.time.min, returnHour*60 - G.DAY_START_MIN);
     setScene("world");
     UI.startDialogue("주모 🍶 — 정산", summary, { onEnd(){ toast("밤이 깊었다. 집에서 자자.","gold"); } });
   },
@@ -136,9 +175,14 @@ const Trading = {
       if (T.cur && T.dish){
         ctx.font="50px serif"; ctx.fillText(T.cur.icon, G.W/2, 144);
         ctx.font="14px 'Malgun Gothic'"; ctx.fillStyle="#f3e9d2"; ctx.fillText(T.cur.name, G.W/2, 166);
-        ctx.font="15px 'Malgun Gothic'"; ctx.fillStyle="#ffe89a"; ctx.fillText(`"${T.dish.icon} ${T.dish.name} 주시오"`, G.W/2, 194);
-        ctx.font="20px serif"; const steps=T.dish.steps;
-        steps.forEach((s,i)=> ctx.fillText(DATA.INGREDIENTS[s].icon+(i<steps.length-1?" →":""), G.W/2-(steps.length-1)*26+i*52, 220));
+        ctx.font="15px 'Malgun Gothic'"; ctx.fillStyle="#ffe89a";
+        ctx.fillText(T.dish.vague ? `"${T.dish.label}"` : `"${T.dish.icon} ${T.dish.name} 주시오"`, G.W/2, 194);
+        if (T.dish.vague){
+          ctx.font="12px 'Malgun Gothic'"; ctx.fillStyle="#cbb892"; ctx.fillText("(봇짐 재료로 알맞은 요리를 직접 만들어 내세요)", G.W/2, 220);
+        } else {
+          ctx.font="20px serif"; const steps=T.dish.steps;
+          steps.forEach((s,i)=> ctx.fillText(DATA.INGREDIENTS[s].icon+(i<steps.length-1?" →":""), G.W/2-(steps.length-1)*26+i*52, 220));
+        }
         const bw=300,bx=G.W/2-bw/2,by=234; ctx.fillStyle="#2a2016"; ctx.fillRect(bx,by,bw,11);
         const r=clamp(T.custT/T.custMax,0,1); ctx.fillStyle=r>0.5?"#58d68d":r>0.25?"#e7c66b":"#e74c3c"; ctx.fillRect(bx,by,bw*r,11);
         ctx.fillStyle="#cbb892"; ctx.font="12px 'Malgun Gothic'"; ctx.textAlign="left"; ctx.fillText("접시:", G.W/2-150, 292);
