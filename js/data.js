@@ -158,6 +158,11 @@ DATA.CUSTOMERS = [
   { name:"스님",        icon:"🧎",   patience:22, payMult:1.0, tip:0, veggie:true }, // 고기 안 먹음
   { name:"사또",        icon:"👑",   patience:8,  payMult:2.0, tip:20 },             // 큰손·급함
   { name:"아이",        icon:"🧒",   patience:24, payMult:0.7, tip:1 },
+  // 장날 게스트 손님 (#1)
+  { name:"의적 홍길동", icon:"🥷",   patience:14, payMult:1.3, tip:6 },
+  { name:"소리꾼",      icon:"🎤",   patience:15, payMult:1.2, tip:5 },
+  { name:"양반 대감",   icon:"👴",   patience:10, payMult:1.8, tip:15, wants:"dongdongju" },
+  { name:"나무꾼",      icon:"🪓",   patience:18, payMult:1.0, tip:3 },
 ];
 
 /* 빠른 서빙 보너스 배율 (서빙 소요 초 → 배율) */
@@ -183,6 +188,11 @@ DATA.NPCS = {
   nongbu:    { id:"nongbu",    name:"농부",       icon:"🧑‍🌾", color:"#6b8e23" },
   banga:     { id:"banga",     name:"방앗간지기", icon:"🌾", color:"#9c7a3a" },
   pujut:     { id:"pujut",     name:"푸줏간 주인",icon:"🔪", color:"#a83232" },
+  // 장날 게스트 NPC (#1)
+  hong:      { id:"hong",      name:"의적 홍길동", icon:"🥷", color:"#2c3e50" },
+  sori:      { id:"sori",      name:"소리꾼",     icon:"🎤", color:"#8e44ad" },
+  daegam:    { id:"daegam",    name:"양반 대감",   icon:"👴", color:"#7a5c2e" },
+  namu:      { id:"namu",      name:"나무꾼",     icon:"🪓", color:"#5a6b23" },
 };
 
 /* ---- 마을 건물 (내부 진입 가능) ----
