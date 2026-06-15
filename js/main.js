@@ -43,7 +43,8 @@ const Game = {
       ${hasSave?'<button class="big-btn alt" id="btn-cont">📂 이어하기</button>':''}
       <p class="tip">
         방향키/WASD 이동 · Space/E 상호작용 · I 봇짐 · 마을의 NPC와 대화하세요.<br>
-        하루는 06:00~24:00(실시간 18분), 30일마다 계절이 바뀝니다. 장날은 5·10일!<br>
+        하루는 06:00~24:00(실시간 약 9분), 30일마다 계절이 바뀝니다. 장날은 5·10일!<br>
+        <b>F1</b> 또는 <b>G</b> 키로 테스트용 GM 콘솔을 열 수 있어요.<br>
         산에서 약초를 캐고 요괴와 싸우며, 주막 장사로 큰돈을 벌어보세요.
       </p>
     `);
@@ -93,6 +94,7 @@ window.addEventListener("load", ()=>{
   Farming.init();
   Quests.init();
   bindInput();
+  GM.init();
   Game.showTitle();
 
   // 브라우저 자동재생 정책: 첫 입력 시 오디오 시작

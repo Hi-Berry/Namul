@@ -17,6 +17,7 @@ const G = {
   DAY_LEN: 18 * 60,      // 1080분
   _msAcc: 0,             // 실시간 누적(ms)
   MS_PER_MIN: 500,       // 실시간 0.5초당 게임 1분 (하루 1080분 ≈ 9분 소요)
+  gmTimeMult: 1,         // GM 모드 시간 가속 배율
 
   player: null,          // player.js 에서 생성
   flags: {},             // 진행/퀘스트 플래그
@@ -124,7 +125,8 @@ function loop(ts){
   // 시간 진행: 정지/대화/메뉴 아닐 때 + 월드 씬에서만 실시간 흐름
   if (!G.paused && G.scene === "world" && !UI.dialogueOpen && !UI.menuOpen){
     G._msAcc += dt * 1000;
-    while (G._msAcc >= G.MS_PER_MIN){ G._msAcc -= G.MS_PER_MIN; Time.advance(1); }
+    const step = G.MS_PER_MIN / (G.gmTimeMult||1);
+    while (G._msAcc >= step){ G._msAcc -= step; Time.advance(1); }
   }
 
   const s = G.scenes[G.scene];
