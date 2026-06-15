@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>조선 나물전기 — 제작 히스토리</title>
+<style>
+  :root{
+    --bg:#1a1410; --paper:#f3e9d2; --ink:#2b2016; --line:#cdb98c;
+    --accent:#8b3a2e; --accent2:#2e8b57; --gold:#b8860b; --muted:#6f5d44;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{
+    background:var(--bg);
+    color:var(--ink);
+    font-family:'Malgun Gothic','Apple SD Gothic Neo',sans-serif;
+    line-height:1.75;
+    padding:32px 16px 80px;
+  }
+  .wrap{
+    max-width:860px; margin:0 auto;
+    background:var(--paper);
+    border:4px solid #3a2c1a;
+    border-radius:10px;
+    box-shadow:0 0 50px rgba(0,0,0,.6);
+    padding:40px 36px 48px;
+  }
+  header.top{
+    text-align:center;
+    border-bottom:3px double var(--line);
+    padding-bottom:22px; margin-bottom:8px;
+  }
+  header.top h1{
+    font-size:30px; letter-spacing:1px; color:var(--accent);
+  }
+  header.top .sub{ color:var(--muted); margin-top:8px; font-size:15px; }
+  header.top .crumb{
+    margin-top:14px; font-size:13px; color:var(--muted);
+  }
+  header.top .crumb a{ color:var(--accent2); }
+
+  .intro{
+    background:#fbf5e6; border:1px solid var(--line);
+    border-left:5px solid var(--gold);
+    border-radius:6px; padding:16px 18px; margin:24px 0 8px;
+    font-size:14.5px; color:#4a3a26;
+  }
+
+  /* ── 타임라인 ── */
+  .timeline{ position:relative; margin-top:28px; padding-left:26px; }
+  .timeline::before{
+    content:""; position:absolute; left:7px; top:6px; bottom:6px;
+    width:3px; background:var(--line); border-radius:2px;
+  }
+  .entry{ position:relative; margin-bottom:38px; }
+  .entry::before{
+    content:""; position:absolute; left:-23px; top:7px;
+    width:13px; height:13px; border-radius:50%;
+    background:var(--accent); border:3px solid var(--paper);
+    box-shadow:0 0 0 2px var(--line);
+  }
+  .entry .date{
+    display:inline-block; font-size:14px; font-weight:700;
+    color:#fff; background:var(--accent);
+    padding:3px 12px; border-radius:14px; letter-spacing:.5px;
+  }
+  .entry h2{
+    font-size:20px; margin:10px 0 4px; color:var(--ink);
+  }
+  .entry .tagline{ color:var(--muted); font-size:14px; margin-bottom:14px; }
+
+  .card{
+    background:#fbf5e6; border:1px solid var(--line);
+    border-radius:8px; padding:16px 18px; margin-bottom:14px;
+  }
+  .card h3{
+    font-size:16px; color:var(--accent2); margin-bottom:6px;
+    display:flex; align-items:center; gap:8px;
+  }
+  .card p{ font-size:14.5px; color:#4a3a26; }
+  .card .plain{
+    margin-top:8px; font-size:13.5px; color:#5a4630;
+    background:#fff; border-left:3px solid var(--gold);
+    padding:8px 12px; border-radius:4px;
+  }
+  .card .plain b{ color:var(--accent); }
+
+  ul.feat{ list-style:none; margin-top:6px; }
+  ul.feat li{
+    font-size:14.5px; color:#4a3a26; padding:5px 0 5px 24px;
+    position:relative;
+  }
+  ul.feat li::before{
+    content:"🌿"; position:absolute; left:0; top:4px; font-size:13px;
+  }
+
+  footer.bot{
+    margin-top:40px; padding-top:18px; border-top:1px solid var(--line);
+    text-align:center; font-size:12.5px; color:var(--muted);
+  }
+  .note-howto{
+    margin-top:26px; background:#efe6cf; border:1px dashed var(--muted);
+    border-radius:6px; padding:14px 16px; font-size:13px; color:#5a4630;
+  }
+  .note-howto b{ color:var(--accent); }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="top">
+    <h1>🪺 조선 나물전기 — 제작 히스토리</h1>
+    <div class="sub">기획서에 담긴 내용이 게임에 어떻게 만들어졌는지, 날짜별로 쉽게 풀어 쓴 기록입니다.</div>
+    <div class="crumb">기획 원문 사양 → <a href="docs/design-spec-snapshot.md">design-spec-snapshot.md</a> · 콘텐츠 가이드 → <a href="docs/CONTENT.md">CONTENT.md</a></div>
+  </header>
+
+  <div class="intro">
+    이 페이지는 <b>“[기획]”이라는 제목으로 새 요구사항이 올라올 때마다</b> 자동으로 갱신됩니다.
+    가장 <b>최근 작업이 맨 위</b>에 오도록 정렬되어 있어요. 게임을 잘 모르는 분도 “무엇이, 왜 추가됐는지”를
+    한눈에 이해할 수 있도록 풀어서 설명합니다.
+  </div>
+
+  <div class="timeline">
+  <!-- ▼▼▼ 새 작업 기록은 항상 이 줄 바로 아래에 (최신이 맨 위) 추가합니다 ▼▼▼ -->
+
+    <!-- ───────────────────────── 2026-06-15 ───────────────────────── -->
+    <section class="entry">
+      <span class="date">2026-06-15</span>
+      <h2>📱 모바일·화면 정비 — 휴대폰에서도 편하게</h2>
+      <div class="tagline">PC 키보드뿐 아니라 스마트폰 손가락 터치로도 똑같이 즐길 수 있게 다듬었습니다.</div>
+
+      <div class="card">
+        <h3>🕹️ 모바일 터치 조작 추가</h3>
+        <p>화면 아래쪽에 <b>가상 조이스틱</b>과 <b>버튼(상호작용 · 봇짐 · 취소)</b>을 넣었습니다.
+           터치 기기에서만 자동으로 나타나고, PC에서는 보이지 않습니다.</p>
+        <div class="plain">쉽게 말하면 — <b>키보드가 없는 휴대폰</b>에서도 캐릭터 ‘달래’를 움직이고
+          NPC와 대화하고 봇짐(가방)을 열 수 있게 만든 것입니다.</div>
+      </div>
+
+      <div class="card">
+        <h3>🖥️ 화면 크기·레이아웃 보정</h3>
+        <p>게임 화면이 기기 해상도에 맞춰 비율(4:3)을 유지하도록 조정하고, 조이스틱이
+           게임 화면 폭에 맞춰 같이 커지거나 작아지도록 했습니다. 컨트롤이 게임 위를
+           가리던 문제와 이동이 어색하던 부분도 함께 손봤습니다.</p>
+        <div class="plain">쉽게 말하면 — <b>어떤 폰·태블릿·모니터</b>에서 열어도 화면이 찌그러지거나
+          버튼이 엉뚱한 곳에 놓이지 않도록 한 것입니다.</div>
+      </div>
+    </section>
+
+    <!-- ───────────────────────── 2026-06-14 ───────────────────────── -->
+    <section class="entry">
+      <span class="date">2026-06-14</span>
+      <h2>🌱 기획서 1차 반영 — 게임의 뼈대 완성</h2>
+      <div class="tagline">기획서(rev.2)에 적힌 핵심 내용을 실제로 플레이할 수 있는 게임으로 만들었습니다.</div>
+
+      <div class="card">
+        <h3>👧 주인공 ‘달래’ 등장</h3>
+        <p>15세 소녀 ‘달래’를 픽셀 캐릭터로 그렸습니다. 댕기머리에 <b>달래꽃 머리핀</b>,
+           한복 치마 차림이며, 평소엔 약초 바구니를, 전투 때는 무기를 듭니다.
+           ‘천방지축이지만 영리한’ 성격도 대사에 반영했습니다.</p>
+        <div class="plain">쉽게 말하면 — 기획서 속 <b>주인공의 외모·성격이 게임 화면 안에서 살아 움직이게</b> 된 것입니다.</div>
+      </div>
+
+      <div class="card">
+        <h3>👗 장비 3종 슬롯 (무기 · 의상 · 장신구)</h3>
+        <p>무기(호미·낫 등)뿐 아니라 <b>의상(무명/모시/비단 한복)</b>과 <b>장신구(노리개/부적)</b>를
+           갖춰 입을 수 있습니다. 의상은 기력 효율·이동속도, 장신구는 최대 신력·드롭률을 올려줍니다.
+           마을의 의상점·방물점에서 구입합니다.</p>
+        <div class="plain">쉽게 말하면 — 게임을 진행하며 모은 돈으로 <b>더 좋은 옷과 장신구를 사서
+          캐릭터를 강하게</b> 키울 수 있습니다.</div>
+      </div>
+
+      <div class="card">
+        <h3>⛰️ 산 4개 구역 + 채집·전투</h3>
+        <p>산을 <b>입구 → 중턱 → 깊은 숲 → 정상</b> 네 구역으로 나눴습니다. 위로 갈수록 어두워지고
+           안개가 끼며, 구역마다 나오는 약초 등급과 몬스터가 다릅니다. 정상은 몬스터 없이
+           평화로운 ‘제단’ 공간입니다.</p>
+        <ul class="feat">
+          <li>약초 채집: 등급(흔함·희귀·명품)에 따라 호미질 횟수와 소모 기력이 다름</li>
+          <li>계절(봄·여름·가을·겨울)마다 나오는 약초가 바뀜</li>
+        </ul>
+        <div class="plain">쉽게 말하면 — <b>탐험할수록 더 깊고 위험한 곳</b>이 열리고,
+          귀한 약초와 강한 적이 기다립니다.</div>
+      </div>
+
+      <div class="card">
+        <h3>👹 몬스터 4종 + 똑똑한 추격 AI</h3>
+        <p>도깨비 · 물귀신 · 구미호 · 두억시니(보스급) 네 종류를 만들었습니다. 각자 고유한 ‘특기’가 있어요 —
+           도깨비는 기력을 훔치고, 물귀신은 민첩을 깎고, 구미호는 절반 확률로 공격을 피하며,
+           두억시니는 가끔 ‘태산 찍기’로 치명적인 일격을 날립니다. 들판에서는 일정 거리 안에 들어오면
+           플레이어를 <b>감지해 쫓아옵니다.</b></p>
+        <div class="plain">쉽게 말하면 — 적들이 그냥 서 있지 않고 <b>저마다 다른 방식으로 위협</b>하며,
+          전투에 전략이 필요해집니다.</div>
+      </div>
+
+      <div class="card">
+        <h3>✨ 마법 4종 — 당나무 제단에서 ‘공물’로 해금</h3>
+        <p>도깨비불(화염) · 한기 서림(빙결) · 현혹의 춤(매혹) · 태산 압사(대지) 네 마법을 넣었습니다.
+           몬스터를 잡으면 나오는 <b>공물</b>을 모아 산 정상 당나무 제단에 바치면 마법이 하나씩 열립니다.
+           화상·민첩 저하·기절·공격력 저하 같은 상태이상도 함께 작동합니다.</p>
+        <div class="plain">쉽게 말하면 — <b>꾸준히 사냥해 재료를 모으면 점점 강력한 마법</b>을 쓸 수 있게 되는 성장 요소입니다.</div>
+      </div>
+
+      <div class="card">
+        <h3>🍲 요리 타이쿤 · 농사 · 퀘스트 등 살림 시스템</h3>
+        <p>장날(매월 5·10일) 오후에 주막에서 손님 주문대로 <b>재료를 순서대로 넣어 요리</b>해 돈을 버는
+           핵심 수익 루프, 메밀밭·약초 농사, 촌장·무당 등 12명의 NPC와 대화·상점, 메인/사이드 퀘스트,
+           드롭 아이템(판매용 잡템 + 마법용 공물)까지 한 번에 갖췄습니다.</p>
+        <div class="plain">쉽게 말하면 — <b>장사로 돈 벌고 → 장비·요리를 키우고 → 산에서 모험</b>하는
+          하루 일과의 큰 흐름이 모두 돌아가게 된 것입니다.</div>
+      </div>
+    </section>
+
+  </div><!-- /timeline -->
+
+  <div class="note-howto">
+    📌 <b>이 기록은 어떻게 갱신되나요?</b><br>
+    이 브랜치에 <b>제목이 “[기획]”으로 시작하는 커밋</b>이 올라오면, 작업자(Claude)가
+    <code>docs/</code> 폴더의 기획 문서에서 “구현·수정할 내용”을 읽어 게임에 반영한 뒤,
+    그 결과를 <b>이 페이지 맨 위에 새 날짜 칸으로 추가</b>하고 푸시합니다.
+  </div>
+
+  <footer class="bot">
+    조선 나물전기 제작 히스토리 · 최신 기록이 항상 맨 위에 표시됩니다.
+  </footer>
+
+</div>
+</body>
+</html>
