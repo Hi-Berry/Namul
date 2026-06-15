@@ -369,3 +369,25 @@ body.touch-ui #game-shell {
   transform: scale(0.95);
   opacity: 1;
 }
+
+/* ===== GM 콘솔 (#7) ===== */
+#gm-panel {
+  position: fixed; top: 8px; right: 8px; z-index: 9999;
+  width: 248px; max-height: 92vh; overflow-y: auto;
+  background: rgba(18, 14, 10, 0.96);
+  border: 2px solid #b5852a; border-radius: 8px;
+  padding: 8px 10px; color: #f3e9d2;
+  font-family: 'Malgun Gothic', sans-serif; font-size: 12px;
+  box-shadow: 0 6px 24px rgba(0,0,0,0.6);
+}
+#gm-panel .gm-head { font-weight: bold; color: #e7c66b; border-bottom: 1px solid #50412a; padding-bottom: 5px; margin-bottom: 6px; display: flex; justify-content: space-between; }
+#gm-panel .gm-x { cursor: pointer; color: #e57; }
+#gm-panel .gm-sec { color: #cbb892; margin: 8px 0 4px; font-size: 11px; }
+#gm-panel .gm-row { display: flex; flex-wrap: wrap; gap: 4px; }
+#gm-panel button {
+  flex: 1 1 auto; min-width: 64px;
+  background: #3a2c1a; color: #f3e9d2; border: 1px solid #6b5736;
+  border-radius: 4px; padding: 5px 4px; font-size: 11px; cursor: pointer;
+}
+#gm-panel button:hover { background: #5a4326; border-color: #e7c66b; }
+#gm-panel .gm-foot { margin-top: 8px; color: #8a7656; font-size: 10px; text-align: center; }
