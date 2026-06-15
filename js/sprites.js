@@ -18,7 +18,7 @@ const Sprites = {
       const img = new Image();
       img.onload = ()=>{ this.loaded++; if (this.loaded>=this.total) this.ready=true; };
       img.onerror = ()=>{ this.loaded++; }; // 누락돼도 진행(폴백)
-      img.src = "assets/frames/" + nm + ".png?v=4";  // 이미지 캐시 무력화(재슬라이스 시 +1)
+      img.src = "assets/frames/" + nm + ".png?v=6";  // 이미지 캐시 무력화(재슬라이스 시 +1)
       this.frames[nm] = img;
     });
   },
@@ -29,12 +29,12 @@ const Sprites = {
   drawFrame(ctx, nm, cx, footY, targetH, flip){
     const img = this.frames[nm];
     if (!this.has(nm)) return false;
-    const sc = targetH / img.naturalHeight;
-    const w = img.naturalWidth * sc, h = targetH;
+    const h = Math.round(targetH);
+    const w = Math.round(img.naturalWidth * h / img.naturalHeight);
     ctx.save();
     if (flip){ ctx.translate(cx,0); ctx.scale(-1,1); ctx.translate(-cx,0); }
     ctx.imageSmoothingEnabled = false;
-    ctx.drawImage(img, Math.round(cx - w/2), Math.round(footY - h), Math.round(w), Math.round(h));
+    ctx.drawImage(img, Math.round(cx - w/2), Math.round(footY - h), w, h);
     ctx.restore();
     return true;
   },

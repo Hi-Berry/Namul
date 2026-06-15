@@ -67,6 +67,18 @@ lbl_full, ncomp = ndimage.label(fg, structure=np.ones((3, 3), int))
 
 # 각 스프라이트: 채움 bbox 안에서 '가장 큰 연결요소'를 골라 그 요소 전체를 크롭(낫 포함)
 # 마스크 = 해당 요소만 불투명 → 이웃 스프라이트/섹션 제목 글자(다른 요소)는 자동 배제
+def clean_fringe(rgba):
+    """투명 영역의 RGB 번짐만 제거하고 캐릭터 픽셀은 보존."""
+    out = rgba.copy()
+    R, G, B, A = out[..., 0], out[..., 1], out[..., 2], out[..., 3]
+
+    # alpha=0 인데 RGB만 흰색인 픽셀 → 축소 렌더 시 번짐(halo) 유발
+    ghost = A < 10
+    R[ghost] = 0
+    G[ghost] = 0
+    B[ghost] = 0
+    return out
+
 def cut(r0, r1, c0, c1, name):
     sub = lbl_full[r0:r1, c0:c1]
     vals = sub[sub > 0]
@@ -81,6 +93,7 @@ def cut(r0, r1, c0, c1, name):
     crop = a[y0:y1, x0:x1].astype(np.uint8)
     mask = (lbl_full[y0:y1, x0:x1] == comp)
     rgba = np.dstack([crop, np.where(mask, 255, 0).astype(np.uint8)])
+    rgba = clean_fringe(rgba)
     Image.fromarray(rgba, "RGBA").save(os.path.join(OUT, name + ".png"))
     return (x0, y0, x1 - x0, y1 - y0)
 

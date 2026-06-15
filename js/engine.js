@@ -196,8 +196,12 @@ const MobileInput = {
   currentKeys: [],
 
   init() {
-    // 터치스크린 노트북(마우스 병행)은 제외 — 실제 모바일/태블릿만
-    const isMobileUI = window.matchMedia('(hover: none) and (pointer: coarse)').matches;
+    // 실제 모바일/태블릿은 브라우저마다 pointer/hover 보고가 달라 UA와 화면 크기를 함께 본다.
+    const uaMobile = /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent);
+    const hasTouch = ('ontouchstart' in window) || navigator.maxTouchPoints > 0;
+    const coarsePointer = window.matchMedia('(pointer: coarse)').matches || window.matchMedia('(any-pointer: coarse)').matches;
+    const smallScreen = Math.min(window.innerWidth, window.innerHeight, screen.width, screen.height) <= 900;
+    const isMobileUI = hasTouch && (uaMobile || (coarsePointer && smallScreen));
     if (!isMobileUI) return;
 
     document.body.classList.add('touch-ui');
