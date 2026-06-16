@@ -114,6 +114,9 @@ function setScene(name){
   if (s && s.enter) s.enter();
   Sound.forScene();
   UI.refreshHUD();
+  // 월드가 아니면 임무 추적기 숨김
+  const qt = document.getElementById("quest-tracker");
+  if (qt && name !== "world"){ qt.classList.add("hidden"); qt._h=""; }
 }
 
 /* ---------- 메인 루프 ---------- */

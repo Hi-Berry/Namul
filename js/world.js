@@ -427,31 +427,19 @@ const World = {
     ctx.globalAlpha=1;
   },
 
-  /* 화면 좌상단 임무 추적기 (현재 진행 중 의뢰) */
-  _drawQuestTracker(ctx){
-    const lines = Quests.trackerLines();
-    if (!lines.length) return;
+  /* 화면 좌상단 임무 추적기 — DOM 오버레이(선명) */
+  _drawQuestTracker(){
+    const el = document.getElementById("quest-tracker"); if (!el) return;
+    const lines = (G.scene==="world") ? Quests.trackerLines() : [];
+    if (!lines.length){ if(el._h!==""){ el._h=""; el.classList.add("hidden"); } return; }
     const show = lines.slice(0,4);
-    ctx.save();
-    ctx.font = "12px 'Malgun Gothic'";
-    let w = 150;
-    show.forEach(l=>{ const s=`${l.title}  ${l.cur}/${l.total}`; w=Math.max(w, ctx.measureText(s).width+22); });
-    const x=10, y=72, h=18*show.length+24;
-    ctx.fillStyle="rgba(20,14,8,0.78)"; ctx.fillRect(x,y,w,h);
-    ctx.fillStyle="#6b5736"; ctx.fillRect(x,y,w,18);
-    ctx.fillStyle="#e7c66b"; ctx.textAlign="left"; ctx.font="bold 12px 'Malgun Gothic'";
-    ctx.fillText("📜 의뢰 (J: 일지)", x+8, y+13);
-    show.forEach((l,i)=>{
-      const ly=y+24+i*18;
-      ctx.font="12px 'Malgun Gothic'";
-      ctx.fillStyle = l.done ? "#8fe0a0" : "#f3e9d2";
-      const mark = l.done ? "✓ " : "• ";
-      ctx.fillText(`${mark}${l.title}`, x+8, ly+9);
-      ctx.fillStyle = l.done ? "#8fe0a0" : "#cbb892";
-      ctx.textAlign="right"; ctx.fillText(`${l.cur}/${l.total}`, x+w-8, ly+9); ctx.textAlign="left";
+    let html = `<div class="qt-head">📜 의뢰 <span>J 일지</span></div>`;
+    show.forEach(l=>{
+      html += `<div class="qt-row${l.done?' done':''}"><span class="qt-t">${l.done?'✓':'•'} ${l.title}</span><b>${l.cur}/${l.total}</b></div>`;
     });
-    if (lines.length>4){ ctx.fillStyle="#9c8a68"; ctx.fillText(`…외 ${lines.length-4}건`, x+8, y+h-4); }
-    ctx.restore();
+    if (lines.length>4) html += `<div class="qt-more">…외 ${lines.length-4}건</div>`;
+    if (el._h !== html){ el._h = html; el.innerHTML = html; }
+    el.classList.remove("hidden");
   },
 
   /* 깊은 숲 안개 — 떠다니는 반투명 덩어리로 시야 방해 */

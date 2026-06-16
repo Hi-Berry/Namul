@@ -78,6 +78,11 @@ const Game = {
 window.addEventListener("load", ()=>{
   G.canvas = document.getElementById("game");
   G.ctx = G.canvas.getContext("2d");
+  // 고해상도(레티나) 대응 — 캔버스 글자/그래픽 선명도 개선
+  const dpr = Math.min(window.devicePixelRatio || 1, 2);
+  G.canvas.width = G.W * dpr;
+  G.canvas.height = G.H * dpr;
+  G.ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
   G.ctx.imageSmoothingEnabled = false;
 
   G.scenes = {
