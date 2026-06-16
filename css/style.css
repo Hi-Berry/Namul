@@ -34,8 +34,27 @@ html, body {
   justify-content: center;
 }
 
+/* 배경 산수화 — 달·먼 산 실루엣 (게임 액자 뒤) */
+body::before {
+  content:""; position: fixed; inset: 0; z-index: -2; pointer-events: none;
+  background:
+    radial-gradient(circle at 80% 20%, rgba(244,232,196,0.16) 0 54px, rgba(244,232,196,0.05) 56px 70px, transparent 72px),
+    radial-gradient(ellipse at 50% 22%, #2e2418 0%, #160e08 60%, #0b0704 100%);
+}
+body::after {
+  content:""; position: fixed; left:0; right:0; bottom:0; height: 52vh; z-index: -1; pointer-events: none;
+  background: #1a1b29; opacity: 0.5;
+  clip-path: polygon(0 58%, 10% 40%, 22% 55%, 34% 28%, 46% 50%, 58% 30%, 70% 52%, 82% 33%, 92% 50%, 100% 38%, 100% 100%, 0 100%);
+}
+html::after {
+  content:""; position: fixed; left:0; right:0; bottom:0; height: 38vh; z-index: -1; pointer-events: none;
+  background: #100c14; opacity: 0.7;
+  clip-path: polygon(0 70%, 14% 52%, 28% 66%, 44% 46%, 60% 64%, 76% 48%, 90% 64%, 100% 54%, 100% 100%, 0 100%);
+}
+
 #game-shell {
   --game-size: min(100%, 800px, calc(100dvh * 4 / 3));
+  position: relative; z-index: 1;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -262,10 +281,10 @@ canvas#game {
   text-shadow: 0 0 18px rgba(241,210,122,0.3), 3px 3px 0 #000; margin-bottom: 6px; letter-spacing: 6px; }
 .fullscreen .sub { color: #b9a47c; margin-bottom: 28px; font-size: 14px; font-family: var(--font-title); letter-spacing:2px; }
 .fullscreen .big-btn {
-  background: linear-gradient(180deg,#5a8a44,#3c6630); border: 2px solid #7cb35f; color: #fff;
+  background: linear-gradient(180deg,#5a8a44,#3c6630), var(--hanji); border: 2px solid #7cb35f; color: #fff;
   font-size: 18px; padding: 12px 36px; border-radius: 6px; cursor: pointer; margin: 6px;
   font-family: var(--font-title); letter-spacing:1px;
-  box-shadow: 0 4px 14px rgba(0,0,0,0.5);
+  box-shadow: 0 4px 14px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.2);
 }
 .fullscreen .big-btn:hover { filter: brightness(1.16); }
 .fullscreen .big-btn.alt { background: linear-gradient(180deg,var(--wood3),var(--wood)); border-color: var(--gold); }
