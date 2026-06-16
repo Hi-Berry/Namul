@@ -166,8 +166,12 @@ const Trading = {
     update(dt){ const T=Trading; if(!T.active)return; T.custT-=dt; if(T.msgT>0)T.msgT-=dt; if(T.custT<=0)T._leave(); },
     render(ctx){
       const T=Trading;
-      ctx.fillStyle="#2a1c10"; ctx.fillRect(0,0,G.W,G.H);
+      const bg=ctx.createLinearGradient(0,0,0,G.H); bg.addColorStop(0,"#2e1f10"); bg.addColorStop(1,"#1b120a");
+      ctx.fillStyle=bg; ctx.fillRect(0,0,G.W,G.H);
+      const lg=ctx.createRadialGradient(G.W/2,80,18,G.W/2,80,280); lg.addColorStop(0,"rgba(255,190,92,0.18)"); lg.addColorStop(1,"rgba(255,190,92,0)");
+      ctx.fillStyle=lg; ctx.fillRect(0,0,G.W,320);
       ctx.fillStyle="#3a2a16"; ctx.fillRect(0,108,G.W,250);
+      ctx.fillStyle="rgba(0,0,0,0.22)"; ctx.fillRect(0,108,G.W,4);
       const phEmoji=["🌞","🌆","🌙"][T.phaseIdx]||"🌞";
       ctx.fillStyle="#e7c66b"; ctx.font="bold 21px 'Malgun Gothic'"; ctx.textAlign="center"; ctx.fillText(`🍶 주 막 장 사  ${phEmoji} ${T.phaseName()}`, G.W/2, 38);
       ctx.font="12px 'Malgun Gothic'"; ctx.fillStyle="#cbb892";

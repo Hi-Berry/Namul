@@ -239,7 +239,16 @@ const Combat = {
       const g=ctx.createLinearGradient(0,0,0,G.H);
       g.addColorStop(0,"#1a2a1a"); g.addColorStop(1,"#0d160d");
       ctx.fillStyle=g; ctx.fillRect(0,0,G.W,G.H);
+      // 달빛
+      const cm=ctx.createRadialGradient(660,90,12,660,90,140); cm.addColorStop(0,"rgba(220,235,210,0.35)"); cm.addColorStop(1,"rgba(220,235,210,0)");
+      ctx.fillStyle=cm; ctx.beginPath(); ctx.arc(660,90,140,0,Math.PI*2); ctx.fill();
+      ctx.fillStyle="#dfeacd"; ctx.beginPath(); ctx.arc(660,90,30,0,Math.PI*2); ctx.fill();
+      // 먼 나무 실루엣
+      ctx.fillStyle="#0f1a10";
+      for(let i=0;i<9;i++){ const tx=i*100+20, th=70+((i*53)%50); ctx.beginPath(); ctx.moveTo(tx-22,300); ctx.lineTo(tx,300-th); ctx.lineTo(tx+22,300); ctx.closePath(); ctx.fill(); }
       ctx.fillStyle="#16241a"; ctx.fillRect(0,300,G.W,300);
+      // 바닥 안개
+      ctx.fillStyle="rgba(150,170,150,0.06)"; ctx.fillRect(0,290,G.W,26);
 
       // 적
       const n=C.enemies.length;

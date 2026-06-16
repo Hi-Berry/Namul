@@ -231,6 +231,13 @@ canvas#game {
 }
 
 #menu.big { left: 60px; right: 60px; top: 50px; bottom: 50px; display: flex; flex-direction: column; }
+/* 단청 모서리 장식 (큰 패널) */
+#menu.big::before, #menu.big::after,
+#mainmenu .mm-wrap::before, #mainmenu .mm-wrap::after {
+  content:""; position:absolute; width:18px; height:18px; pointer-events:none; z-index:5;
+}
+#menu.big::before, #mainmenu .mm-wrap::before { top:7px; left:7px; border-top:2px solid var(--gold); border-left:2px solid var(--gold); }
+#menu.big::after, #mainmenu .mm-wrap::after { bottom:7px; right:7px; border-bottom:2px solid var(--gold); border-right:2px solid var(--gold); }
 .menu-head {
   display: flex; justify-content: space-between; align-items: center;
   padding: 13px 16px; border-bottom: 1px solid var(--gold-dim);

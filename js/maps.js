@@ -206,6 +206,12 @@ const Maps = {
         // 바탕 풀
         ctx.fillStyle = ((x+y)&1) ? grassTop : grassBot;
         ctx.fillRect(px,py,TILE,TILE);
+        if (c === "."){ // 풀잎 디테일(고정 패턴)
+          ctx.fillStyle = ((x+y)&1) ? grassBot : grassTop;
+          const o=(x*7+y*13)%5;
+          ctx.fillRect(px+6+o, py+23, 2, 6);
+          ctx.fillRect(px+22-o, py+13, 2, 5);
+        }
         if (c === ","){ // 흙길
           ctx.fillStyle = ((x+y)&1) ? "#b08a55" : "#a07e4c";
           ctx.fillRect(px,py,TILE,TILE);
@@ -215,16 +221,20 @@ const Maps = {
           ctx.fillRect(px+4, py+6+((Math.floor(G.time.min)+x)%6), TILE-12, 2);
         } else if (c === "T"){ // 나무
           ctx.fillStyle = ((x+y)&1) ? grassTop : grassBot; ctx.fillRect(px,py,TILE,TILE);
+          ctx.fillStyle = "rgba(0,0,0,0.18)"; ctx.beginPath(); ctx.ellipse(px+TILE/2, py+TILE-6, 12,4,0,0,Math.PI*2); ctx.fill();
           ctx.fillStyle = "#5b3a1a"; ctx.fillRect(px+TILE/2-3, py+TILE-14, 6, 12);
-          ctx.fillStyle = season==="겨울" ? "#dfe8ec" : (season==="가을"?"#c9702e":"#2f6b2f");
-          ctx.beginPath(); ctx.arc(px+TILE/2, py+TILE/2-2, 13, 0, Math.PI*2); ctx.fill();
-          ctx.fillStyle = "rgba(255,255,255,0.08)";
+          const leaf = season==="겨울" ? "#dfe8ec" : (season==="가을"?"#c9702e":"#2f6b2f");
+          ctx.fillStyle = Maps._shade(leaf,-22); ctx.beginPath(); ctx.arc(px+TILE/2, py+TILE/2+2, 13, 0, Math.PI*2); ctx.fill();
+          ctx.fillStyle = leaf; ctx.beginPath(); ctx.arc(px+TILE/2, py+TILE/2-2, 13, 0, Math.PI*2); ctx.fill();
+          ctx.fillStyle = "rgba(255,255,255,0.10)";
           ctx.beginPath(); ctx.arc(px+TILE/2-4, py+TILE/2-6, 5,0,Math.PI*2); ctx.fill();
         } else if (c === "R"){ // 바위
+          ctx.fillStyle = "rgba(0,0,0,0.16)"; ctx.beginPath(); ctx.ellipse(px+TILE/2, py+TILE-7, 12,4,0,0,Math.PI*2); ctx.fill();
           ctx.fillStyle = "#8a8a8a"; ctx.beginPath();
           ctx.moveTo(px+6,py+TILE-6); ctx.lineTo(px+TILE/2,py+8); ctx.lineTo(px+TILE-6,py+TILE-6);
           ctx.closePath(); ctx.fill();
           ctx.fillStyle = "#a8a8a8"; ctx.fillRect(px+12,py+18,8,6);
+          ctx.fillStyle = "#5a7a3a"; ctx.fillRect(px+TILE/2-1, py+13, 4,3);   // 이끼
         } else if (c === "x"){ // 가시풀 함정 (밟으면 HP-5)
           ctx.strokeStyle = "#3a5a2a"; ctx.lineWidth=2;
           for(let i=0;i<5;i++){ const bx=px+5+i*7, by=py+TILE-5;
