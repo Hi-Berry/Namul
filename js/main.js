@@ -58,19 +58,39 @@ const Game = {
     enter(){},
     update(dt){},
     render(ctx){
-      // 밤 산 배경
+      const t = performance.now()/1000;
+      // 밤하늘 그라데이션
       const g=ctx.createLinearGradient(0,0,0,G.H);
-      g.addColorStop(0,"#1b2740"); g.addColorStop(1,"#2b1d2f");
+      g.addColorStop(0,"#16213d"); g.addColorStop(0.55,"#243049"); g.addColorStop(1,"#2b1d2f");
       ctx.fillStyle=g; ctx.fillRect(0,0,G.W,G.H);
-      ctx.fillStyle="#f5e9c0"; ctx.beginPath(); ctx.arc(640,120,46,0,Math.PI*2); ctx.fill();
-      ctx.fillStyle="#1b2740"; ctx.beginPath(); ctx.arc(660,108,40,0,Math.PI*2); ctx.fill();
-      // 먼 산
-      const hills=[["#3a3a52",420],["#2f2f44",480],["#262636",540]];
-      hills.forEach(([col,base])=>{
+      // 별 (반짝임)
+      for(let i=0;i<60;i++){ const sx=(i*173)%G.W, sy=(i*97)%300;
+        const tw=0.35+0.6*Math.abs(Math.sin(t*1.5+i)); ctx.fillStyle=`rgba(255,250,220,${tw*0.7})`; ctx.fillRect(sx,sy,1.6,1.6); }
+      // 달 + 달무리
+      const mx=648,my=120;
+      const mg=ctx.createRadialGradient(mx,my,10,mx,my,120); mg.addColorStop(0,"rgba(245,233,192,0.5)"); mg.addColorStop(1,"rgba(245,233,192,0)");
+      ctx.fillStyle=mg; ctx.beginPath(); ctx.arc(mx,my,120,0,Math.PI*2); ctx.fill();
+      ctx.fillStyle="#f5e9c0"; ctx.beginPath(); ctx.arc(mx,my,46,0,Math.PI*2); ctx.fill();
+      ctx.fillStyle="#243049"; ctx.beginPath(); ctx.arc(mx+22,my-12,40,0,Math.PI*2); ctx.fill();
+      // 흐르는 구름
+      ctx.fillStyle="rgba(40,48,73,0.5)";
+      for(let i=0;i<4;i++){ const cw=170+i*40, cx=((t*(8+i*4)+i*320)%(G.W+cw))-cw; const cy=78+i*40;
+        ctx.beginPath(); ctx.ellipse(cx,cy,cw/2,17,0,0,Math.PI*2); ctx.fill(); }
+      // 먼 산 + 옅은 안개
+      const hills=[["#33405e",420],["#2a3450",480],["#222a3e",540]];
+      hills.forEach(([col,base],hi)=>{
         ctx.fillStyle=col; ctx.beginPath(); ctx.moveTo(0,G.H);
-        for(let x=0;x<=G.W;x+=40){ ctx.lineTo(x, base - Math.sin(x*0.01)*40 - ((x*7)%60)); }
+        for(let x=0;x<=G.W;x+=40){ ctx.lineTo(x, base - Math.sin(x*0.01+hi)*40 - ((x*7)%60)); }
         ctx.lineTo(G.W,G.H); ctx.closePath(); ctx.fill();
+        ctx.fillStyle=`rgba(180,190,210,${0.05+hi*0.02})`; ctx.fillRect(0, base-8, G.W, 22);
       });
+      // 반딧불
+      for(let i=0;i<10;i++){ const fx=(i*131%G.W)+Math.sin(t*0.6+i)*26, fy=380+(i*53%180)+Math.cos(t*0.5+i)*16;
+        const a=0.4+0.4*Math.sin(t*2+i); ctx.fillStyle=`rgba(200,255,160,${Math.max(0,a)*0.6})`;
+        ctx.beginPath(); ctx.arc(fx,fy,1.8,0,Math.PI*2); ctx.fill(); }
+      // 비네트
+      const vg=ctx.createRadialGradient(G.W/2,G.H/2,G.H*0.4,G.W/2,G.H/2,G.H*0.82);
+      vg.addColorStop(0,"rgba(0,0,0,0)"); vg.addColorStop(1,"rgba(0,0,0,0.42)"); ctx.fillStyle=vg; ctx.fillRect(0,0,G.W,G.H);
     },
   },
 };

@@ -499,7 +499,15 @@ body.touch-ui #game-shell {
 #cutscene.fade-out { opacity: 0; }
 #cutscene #cs-img {
   max-width: 100%; max-height: 100%; object-fit: contain;
-  image-rendering: pixelated;
+  animation: csDrift 20s ease-in-out infinite alternate;
+}
+@keyframes csDrift { from { transform: scale(1.02); } to { transform: scale(1.08); } }
+/* 비네트 + 레터박스 */
+#cutscene #cs-vig {
+  position: absolute; inset: 0; pointer-events: none;
+  background:
+    linear-gradient(180deg, rgba(0,0,0,0.85) 0%, transparent 12%, transparent 80%, rgba(0,0,0,0.9) 100%),
+    radial-gradient(ellipse at 50% 46%, transparent 52%, rgba(0,0,0,0.55) 100%);
 }
 #cutscene #cs-skip {
   position: absolute; top: 14px; right: 14px; z-index: 2;

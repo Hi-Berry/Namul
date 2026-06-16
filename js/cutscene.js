@@ -27,6 +27,7 @@ const Cutscene = {
     d.id = "cutscene";
     d.innerHTML = `
       <img id="cs-img" alt="컷씬"/>
+      <div id="cs-vig"></div>
       <button id="cs-skip">건너뛰기 ⏭</button>
       <div id="cs-box"><div id="cs-text"></div><div id="cs-cont">▼ 클릭 / 스페이스</div></div>`;
     document.body.appendChild(d);

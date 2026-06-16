@@ -221,6 +221,7 @@ const World = {
         if (meta.tint){ ctx.fillStyle=meta.tint; ctx.fillRect(0,0,G.W,G.H); }
         if (meta.fog){ World._drawFog(ctx); }
       }
+      World._drawAmbience(ctx, z);
 
       // 상호작용 하이라이트 (카메라 보정)
       if (World.near && !World.hoe){
@@ -440,6 +441,34 @@ const World = {
     if (lines.length>4) html += `<div class="qt-more">…외 ${lines.length-4}건</div>`;
     if (el._h !== html){ el._h = html; el.innerHTML = html; }
     el.classList.remove("hidden");
+  },
+
+  /* 시간대 색감 + 비네트 + 밤 반딧불 (분위기 연출) */
+  _drawAmbience(ctx, z){
+    const indoor = (z === "interior");
+    const h = (G.DAY_START_MIN + G.time.min) / 60;   // 현재 시각(시)
+    if (!indoor){
+      let tint = null;
+      if (h < 7.5)            tint = `rgba(64,86,150,${clamp((7.5-h)/3,0,1)*0.30})`;   // 새벽 푸름
+      else if (h>=17 && h<19.5) tint = `rgba(255,128,48,${(h-17)/2.5*0.20})`;          // 노을
+      else if (h>=19.5)       tint = `rgba(22,32,82,${clamp((h-19.5)/3,0,1)*0.42})`;   // 밤
+      if (tint){ ctx.fillStyle = tint; ctx.fillRect(0,0,G.W,G.H); }
+    }
+    // 비네트(가장자리 어둠)
+    const g = ctx.createRadialGradient(G.W/2,G.H*0.46,G.H*0.34, G.W/2,G.H/2,G.H*0.78);
+    g.addColorStop(0,"rgba(0,0,0,0)"); g.addColorStop(1,"rgba(0,0,0,0.36)");
+    ctx.fillStyle = g; ctx.fillRect(0,0,G.W,G.H);
+    // 밤 반딧불 (실외 한정)
+    if (!indoor && (h>=19.5 || h<5.5)){
+      const t = performance.now()/1000;
+      for (let i=0;i<14;i++){
+        const fx = (i*137 % G.W) + Math.sin(t*0.5+i)*30;
+        const fy = 110 + (i*89 % (G.H-200)) + Math.cos(t*0.4+i*2)*22;
+        const a = 0.35 + 0.4*Math.sin(t*2+i);
+        ctx.fillStyle = `rgba(192,255,150,${Math.max(0,a)*0.7})`;
+        ctx.beginPath(); ctx.arc(fx,fy,1.7,0,Math.PI*2); ctx.fill();
+      }
+    }
   },
 
   /* 깊은 숲 안개 — 떠다니는 반투명 덩어리로 시야 방해 */
