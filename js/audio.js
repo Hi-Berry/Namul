@@ -7,6 +7,14 @@ const Sound = {
   muted:false, started:false,
   _cur:null, _timer:null, _next:0, _step:0, _song:null,
 
+  // 실제 BGM 파일(mp3) — 씬/구역별
+  BGM_SRC: {
+    morning: "assets/Sound/Bgm/The_Morning_Harvest.mp3",   // 시작·마을·기본
+    copper:  "assets/Sound/Bgm/Copper_Gong_Strikes.mp3",   // 전투
+    final:   "assets/Sound/Bgm/The_Final_Gong_Strike.mp3", // 깊은 숲(mtn3)
+  },
+  bgm: { cur:null, els:{}, vol:0.5 }, _bgmInit:false,
+
   // 음이름 → 주파수
   NF: (()=>{ const m={}; const names=["C","C#","D","D#","E","F","F#","G","G#","A","A#","B"];
     for(let o=2;o<=6;o++) for(let i=0;i<12;i++){ m[names[i]+o]=440*Math.pow(2,((o-4)*12+i-9)/12); }
@@ -26,9 +34,31 @@ const Sound = {
   toggleMute(){
     this.muted=!this.muted;
     if (this.master) this.master.gain.value = this.muted?0:0.6;
+    const e = this.bgm.cur ? this.bgm.els[this.bgm.cur] : null;
+    if (e) e.volume = this.muted?0:this.bgm.vol;
     toast(this.muted?"🔇 음소거":"🔊 소리 켜짐","");
     return this.muted;
   },
+
+  /* ---- 실제 BGM(mp3) 재생기 ---- */
+  initBgm(){
+    if (this._bgmInit) return; this._bgmInit=true;
+    for (const k in this.BGM_SRC){
+      const a = new Audio(this.BGM_SRC[k]);
+      a.loop = true; a.preload = "auto"; a.volume = 0;
+      this.bgm.els[k] = a;
+    }
+  },
+  playBgm(key){
+    this.initBgm();
+    const el = this.bgm.els[key]; if (!el) return;
+    if (this.bgm.cur===key && !el.paused) return;   // 이미 재생 중이면 유지
+    for (const k in this.bgm.els){ if (k!==key){ const o=this.bgm.els[k]; o.pause(); } }
+    this.bgm.cur = key;
+    el.volume = this.muted ? 0 : this.bgm.vol;
+    const p = el.play(); if (p && p.catch) p.catch(()=>{});   // 자동재생 정책 차단 무시(다음 입력 때 재시도)
+  },
+  stopBgm(){ for (const k in this.bgm.els) this.bgm.els[k].pause(); this.bgm.cur=null; },
 
   /* ---- 한 음 ---- */
   tone(freq, dur, type, gain, when, dest){
@@ -120,15 +150,11 @@ const Sound = {
     }
   },
 
-  // 씬/구역에 맞는 곡 자동 선택
+  // 씬/구역에 맞는 BGM(mp3) 자동 선택
   forScene(){
-    if (G.scene==="title") return this.playMusic("title");
-    if (G.scene==="combat") return this.playMusic("combat");
-    if (G.scene==="trade") return this.playMusic("trade");
-    if (G.scene==="world"){
-      if (World.zone==="house"||World.zone==="interior") return this.playMusic("house");
-      if (DATA.isMtn(World.zone)) return this.playMusic("mountain");
-      return this.playMusic("village");
-    }
+    this.stopMusic();  // 절차적 합성 BGM 끔 (실제 mp3 사용)
+    if (G.scene==="combat") return this.playBgm("copper");            // 전투
+    if (G.scene==="world" && World.zone==="mtn3") return this.playBgm("final"); // 깊은 숲
+    return this.playBgm("morning");  // 시작(타이틀)·마을·집·기타 구역·주막 기본
   },
 };
