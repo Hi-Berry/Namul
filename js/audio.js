@@ -168,8 +168,9 @@ const Sound = {
     if (G.scene==="world"){
       const z = World.zone;
       if (z==="mtn3") return this.playBgm("deepforest");               // 깊은 숲
-      if (z==="village" || z==="interior") return this.playBgm("town"); // 마을·실내(랜덤)
-      return this.playBgm("field");                                     // 집·산1·2·4 등 필드
+      // 내 집·마을·실내는 같은 생활권 → town 그룹 공유(오갈 때 곡 안 바뀜)
+      if (z==="house" || z==="village" || z==="interior") return this.playBgm("town");
+      return this.playBgm("field");                                     // 산 입구·중턱·정상 등 필드
     }
     return this.playBgm("field");  // 타이틀 등 기본
   },

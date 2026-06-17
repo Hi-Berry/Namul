@@ -21,8 +21,10 @@ assets/Sound/Bgm/
 | 상황 | 그룹 | 곡 |
 |---|---|---|
 | 오프닝 컷씬 | `cutscene` | Leaving_the_Bitter_Hearth |
-| 마을 / 건물 실내 / 주막 장사 | `town` | Town 폴더에서 **랜덤** (진입 시 1곡 선택, 유지) |
-| 필드 — 내 집·산 입구(mtn1)·중턱(mtn2)·정상(mtn4) | `field` | Between_Pine_and_Mist |
+| 내 집 / 마을 / 건물 실내 / 주막 장사 | `town` | Town 폴더에서 **랜덤** (진입 시 1곡 선택, 유지) |
+| 필드 — 산 입구(mtn1)·중턱(mtn2)·정상(mtn4) | `field` | Between_Pine_and_Mist |
+
+> 내 집과 마을은 같은 생활권으로 묶여 있어, 둘 사이를 오가도 BGM이 다시 무작위로 바뀌지 않고 유지됩니다.
 | 전투 | `combat` | Copper_Gong_Strikes |
 | 깊은 숲 — 3구역(mtn3) | `deepforest` | The_Final_Gong_Strike |
 | 타이틀 화면 | `field` | Between_Pine_and_Mist |
