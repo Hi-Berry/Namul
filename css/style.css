@@ -297,6 +297,21 @@ canvas#game {
 .fullscreen .big-btn.alt { background: linear-gradient(180deg,var(--wood3),var(--wood)); border-color: var(--gold); }
 .fullscreen p.tip { margin-top: 24px; color: #9c8458; font-size: 12px; max-width: 520px; line-height: 1.7; }
 
+/* 타이틀 배경 이미지(MAIN.png) + 그림 속 버튼 위 투명 클릭 영역 */
+.fullscreen.title-bg {
+  display: block;
+  background: #0c0805 url("../assets/cut/MAIN.png") center/contain no-repeat;
+}
+.fullscreen.title-bg h1, .fullscreen.title-bg .sub, .fullscreen.title-bg p.tip { display: none; }
+.title-hot {
+  position: absolute; left: 2%; width: 31%; height: 6%;
+  background: transparent; border: 0; border-radius: 7px; cursor: pointer;
+  transition: background .12s, box-shadow .12s;
+}
+#btn-new.title-hot  { top: 78.5%; }
+#btn-cont.title-hot { top: 85%; }
+.title-hot:hover { background: rgba(255,232,154,0.16); box-shadow: 0 0 0 1px rgba(241,210,122,0.55) inset; }
+
 /* ===== Mobile Controls (touch-ui 기기만) ===== */
 #mobile-controls {
   pointer-events: none;
