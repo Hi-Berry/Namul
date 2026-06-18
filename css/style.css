@@ -304,12 +304,12 @@ canvas#game {
 }
 .fullscreen.title-bg h1, .fullscreen.title-bg .sub, .fullscreen.title-bg p.tip { display: none; }
 .title-hot {
-  position: absolute; left: 2%; width: 31%; height: 6%;
-  background: transparent; border: 0; border-radius: 7px; cursor: pointer;
+  position: absolute; left: 6.4%; width: 17.6%;
+  background: transparent; border: 0; border-radius: 8px; cursor: pointer;
   transition: background .12s, box-shadow .12s;
 }
-#btn-new.title-hot  { top: 78.5%; }
-#btn-cont.title-hot { top: 85%; }
+#btn-new.title-hot  { top: 72.8%; height: 6.2%; }
+#btn-cont.title-hot { top: 79.3%; height: 6.5%; }
 .title-hot:hover { background: rgba(255,232,154,0.16); box-shadow: 0 0 0 1px rgba(241,210,122,0.55) inset; }
 
 /* ===== Mobile Controls (touch-ui 기기만) ===== */
