@@ -36,8 +36,10 @@ const Game = {
     const hasSave = Save.exists();
     // MAIN.png(제목·버튼 포함 일러스트)를 배경으로 + 그림 속 버튼 위에 투명 클릭 영역
     UI.showScreen(`
-      <button class="title-hot" id="btn-new" aria-label="새로 시작"></button>
-      <button class="title-hot" id="btn-cont" aria-label="이어하기"></button>
+      <div class="title-art">
+        <button class="title-hot" id="btn-new" aria-label="새로 시작"></button>
+        <button class="title-hot" id="btn-cont" aria-label="이어하기"></button>
+      </div>
     `);
     document.getElementById("screen").classList.add("title-bg");
     document.getElementById("btn-new").onclick = ()=>{
