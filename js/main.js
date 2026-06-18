@@ -34,24 +34,17 @@ const Game = {
   showTitle(){
     setScene("title");
     const hasSave = Save.exists();
+    // MAIN.png(제목·버튼 포함 일러스트)를 배경으로 + 그림 속 버튼 위에 투명 클릭 영역
     UI.showScreen(`
-      <h1>조선 나물전기</h1>
-      <div class="sub">朝鮮 나물傳記 — 약초 경영 RPG</div>
-      <button class="big-btn" id="btn-new">🌱 새로 시작</button>
-      ${hasSave?'<button class="big-btn alt" id="btn-cont">📂 이어하기</button>':''}
-      <p class="tip">
-        방향키/WASD 이동 · Space/E 상호작용 · I 봇짐 · 마을의 NPC와 대화하세요.<br>
-        하루는 06:00~24:00(실시간 약 9분), 30일마다 계절이 바뀝니다. 장날은 5·10일!<br>
-        <b>F1</b> 또는 <b>G</b> 키로 테스트용 GM 콘솔을 열 수 있어요.<br>
-        산에서 약초를 캐고 요괴와 싸우며, 주막 장사로 큰돈을 벌어보세요.
-      </p>
+      <button class="title-hot" id="btn-new" aria-label="새로 시작"></button>
+      <button class="title-hot" id="btn-cont" aria-label="이어하기"></button>
     `);
+    document.getElementById("screen").classList.add("title-bg");
     document.getElementById("btn-new").onclick = ()=>{
       if (hasSave && !confirm("새로 시작하면 기존 기록이 사라집니다. 계속할까요?")) return;
       Game.newGame();
     };
-    const c=document.getElementById("btn-cont");
-    if (c) c.onclick = ()=> Game.continueGame();
+    document.getElementById("btn-cont").onclick = ()=> Game.continueGame();
   },
 
   titleScene:{

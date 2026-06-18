@@ -121,6 +121,7 @@ const UI = {
   /* ---------------- 풀스크린 ---------------- */
   showScreen(html){
     const s = document.getElementById("screen");
+    s.classList.remove("title-bg");   // 타이틀 전용 배경 해제(게임오버 등 다른 화면)
     s.innerHTML = html; s.classList.remove("hidden");
   },
   hideScreen(){ document.getElementById("screen").classList.add("hidden"); },
