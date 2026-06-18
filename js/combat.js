@@ -225,16 +225,6 @@ const Combat = {
   },
 
   /* ---------------- 씬 ---------------- */
-  // 몬스터 그림 캐시/로더 (id → assets/monster/*.png)
-  _mimg:{},
-  _monImg(id){
-    if (this._mimg[id]!==undefined) return this._mimg[id];
-    const names={ dokkaebi_m:"도깨비", mulgwisin:"물귀신", gumiho:"구미호", dueok:"두억시니" };
-    const nm=names[id];
-    if(!nm){ this._mimg[id]=null; return null; }
-    const img=new Image(); img.src=encodeURI("assets/monster/"+nm+".png");
-    this._mimg[id]=img; return img;
-  },
   scene:{
     enter(){},
     update(dt){
@@ -267,8 +257,8 @@ const Combat = {
         const y = 180 + (e.hitT>0?randInt(-4,4):0);
         ctx.globalAlpha = e.alive?1:0.25;
         ctx.textAlign="center";
-        const img = Combat._monImg(e.id);
-        if (img && img.complete && img.naturalWidth>0){
+        const img = Sprites.monImg(e.id);
+        if (img){
           const ih = (e.id==="dueok")?160:130, iw=Math.round(img.naturalWidth*ih/img.naturalHeight);
           ctx.drawImage(img, Math.round(x-iw/2), Math.round(y-ih+8), iw, ih);
         } else {

@@ -14,6 +14,10 @@ const Sprites = {
   // 상태별 애니메이션 프레임 세트 (#6) — 채집/요리/공격
   ACT:{ gather:["b3_2","b3_3"], cook:["b4_2","b4_3"], attack:["b4_0","b4_1"] },
 
+  // 요괴 이미지 (id → 파일명)
+  MON_SRC: { dokkaebi_m:"도깨비", mulgwisin:"물귀신", gumiho:"구미호", dueok:"두억시니" },
+  mon:{},
+
   load(){
     this.total = this.NAMES.length;
     this.NAMES.forEach(nm=>{
@@ -23,7 +27,14 @@ const Sprites = {
       img.src = "assets/frames/" + nm + ".png?v=6";  // 이미지 캐시 무력화(재슬라이스 시 +1)
       this.frames[nm] = img;
     });
+    // 요괴 이미지 프리로드 (#21)
+    for (const k in this.MON_SRC){
+      const img = new Image(); img.src = encodeURI("assets/monster/" + this.MON_SRC[k] + ".png");
+      this.mon[k] = img;
+    }
   },
+  // 로드된 요괴 이미지 반환(없으면 null)
+  monImg(id){ const i=this.mon[id]; return (i && i.complete && i.naturalWidth>0) ? i : null; },
 
   has(nm){ const i=this.frames[nm]; return i && i.complete && i.naturalWidth>0; },
 

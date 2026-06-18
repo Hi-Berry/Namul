@@ -7,7 +7,8 @@ const World = {
   nodes:[],     // 산 채집 노드
   symbols:[],   // 산 몬스터 심볼
   near:null,    // 현재 상호작용 가능한 대상
-  hoe:null,     // 진행 중인 호미질 {kind,target,need,hits}
+  hoe:null,     // 진행 중인 호미질 {kind,target,need,hits,cd}
+  HOE_CD:0.7,   // 호미질 입력 쿨타임(초) — 연타 방지(#20)
   cam:{x:0,y:0},// 카메라(확장 맵에서 플레이어 추적)
   HALF:12,
   pet:{ x:0, y:0, animT:0, blinkT:0 },
@@ -101,8 +102,9 @@ const World = {
       const blocked = UI.dialogueOpen||UI.menuOpen||(window.MainMenu&&MainMenu.open);
       if (blocked){ dx=0; dy=0; }
       P.moving = (dx||dy);
-      // 호미질 중 이동하면 중단
+      // 호미질 중 이동하면 중단 / 쿨타임 감소
       if (World.hoe && (P.moving || blocked)) World._cancelHoe();
+      else if (World.hoe && World.hoe.cd>0) World.hoe.cd -= dt;
       if (P.moving){
         if (dx&&dy){ dx*=0.707; dy*=0.707; }
         if (Math.abs(dx)>Math.abs(dy)) P.dir = dx<0?"left":"right";
@@ -207,7 +209,13 @@ const World = {
         World.symbols.forEach(s=>{
           const jx = s.shake ? randInt(-2,2) : 0, jy = s.shake ? randInt(-2,2) : 0;
           ctx.fillStyle="rgba(0,0,0,0.3)"; ctx.beginPath(); ctx.ellipse(s.x,s.y+12,12,5,0,0,Math.PI*2); ctx.fill();
-          ctx.font="26px serif"; ctx.textAlign="center"; ctx.fillText(s.ic, s.x+jx, s.y+8+jy);
+          const img = Sprites.monImg(s.mid);
+          if (img){
+            const ih = (s.mid==="dueok")?52:44, iw=Math.round(img.naturalWidth*ih/img.naturalHeight);
+            ctx.drawImage(img, Math.round(s.x-iw/2+jx), Math.round(s.y+10-ih+jy), iw, ih);
+          } else {
+            ctx.font="26px serif"; ctx.textAlign="center"; ctx.fillText(s.ic, s.x+jx, s.y+8+jy);
+          }
         });
       }
       World._drawPet(ctx);
@@ -590,12 +598,12 @@ const World = {
 
   /* ---- 호미질(다단계 입력) #9/#10 ---- */
   _startHoe(kind, target, need){
-    World.hoe = { kind, target, need, hits:0 };
+    World.hoe = { kind, target, need, hits:0, cd:0 };
     World._hoeHit();   // 시작 입력이 곧 첫 호미질
   },
   _hoeHit(){
-    const h=World.hoe; if(!h) return;
-    h.hits++;
+    const h=World.hoe; if(!h || h.cd>0) return;   // 쿨타임(모션) 중엔 입력 씹힘
+    h.hits++; h.cd = World.HOE_CD;
     Sound.sfx("gather");
     if (h.hits >= h.need) World._finishHoe();
   },

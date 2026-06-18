@@ -84,7 +84,7 @@ const NPC = {
     rows += `<div class="shop-row"><div class="item-ic" style="background:#33240f">⚒️</div>
       <div class="grow"><div class="item-name">무기 강화 (+${DATA.WEAPON_UPGRADE.atkBonus} 공격력)</div>
       <div class="item-sub">현재 무기를 더 단단하게</div></div>
-      <button data-act="up" ${P.money<DATA.WEAPON_UPGRADE.cost?"disabled":""}>${DATA.WEAPON_UPGRADE.cost}냥</button></div>`;
+      <button data-act="up" ${P.money<DATA.weaponUpgradeCost(P.weaponLv)?"disabled":""}>${DATA.weaponUpgradeCost(P.weaponLv)}냥</button></div>`;
     // 호미 등급(채집 품질)
     const homiCost = P.homiTier*45;
     rows += `<div class="shop-row"><div class="item-ic" style="background:#33240f">⛏️</div>
@@ -100,7 +100,7 @@ const NPC = {
         ${owned?`<button disabled>장착중</button>`:`<button data-act="buyw" data-id="${it.id}" ${P.money<50?"disabled":""}>50냥</button>`}</div>`;
     });
     UI.openMenu("대장간", rows, (act,id)=>{
-      if (act==="up"){ if (Player.spendMoney(DATA.WEAPON_UPGRADE.cost)){ P.weaponLv++; Sound.sfx("confirm"); toast("무기를 강화했다! 공격력 상승","good"); NPC._daejangShop(); } else Sound.sfx("error"); }
+      if (act==="up"){ if (Player.spendMoney(DATA.weaponUpgradeCost(P.weaponLv))){ P.weaponLv++; Sound.sfx("confirm"); toast("무기를 제련했다! 공격력 상승","good"); NPC._daejangShop(); } else Sound.sfx("error"); }
       else if (act==="homi"){ const c=P.homiTier*45; if (Player.spendMoney(c)){ P.homiTier++; Sound.sfx("confirm"); toast(`호미 등급 ${P.homiTier}! 채집 품질 상승`,"good"); NPC._daejangShop(); } else Sound.sfx("error"); }
       else if (act==="buyw"){ if (Player.spendMoney(50)){ P.weapon=id; P.weaponLv=0; Sound.sfx("confirm"); toast(`${DATA.WEAPONS[id].name} 장착!`,"good"); NPC._daejangShop(); } else Sound.sfx("error"); }
       UI.refreshHUD();
