@@ -18,10 +18,12 @@ const Cutscene = {
       "그래도 남들보다 눈썰미 하나는 타고났으니 어떻게든 굶어 죽진 않겠지!",
       "이 버려진 주막을 멋지게 고쳐서 맛있는 나물 요리도 팔고, 보란 듯이 떵떵거리며 잘 살아주겠어!" ] },
   ],
-  si:0, li:0, onDone:null, el:null, _keyHandler:null,
+  si:0, li:0, onDone:null, el:null, _keyHandler:null, active:false,
 
   play(onDone){
     this.onDone = onDone; this.si = 0; this.li = 0;
+    this.active = true;
+    Sound.resume(); Sound.playBgm("cutscene");   // 컷씬 전용 BGM
     if (this.el) this.el.remove();
     const d = document.createElement("div");
     d.id = "cutscene";
@@ -58,6 +60,7 @@ const Cutscene = {
   _finish(){
     if (this._keyHandler){ window.removeEventListener("keydown", this._keyHandler, true); this._keyHandler=null; }
     if (this.el){ this.el.classList.add("fade-out"); const el=this.el; this.el=null; setTimeout(()=>el.remove(), 450); }
+    this.active = false;   // 이후 forScene이 월드 BGM(필드/마을)로 전환
     const cb = this.onDone; this.onDone=null; if (cb) cb();
   },
 };
