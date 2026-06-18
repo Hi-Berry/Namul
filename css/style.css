@@ -300,11 +300,13 @@ canvas#game {
 /* 타이틀 배경 이미지(MAIN.png) + 그림 속 버튼 위 투명 클릭 영역 */
 .fullscreen.title-bg {
   display: block;
-  background: #0c0805 url("../assets/cut/MAIN.png") center/contain no-repeat;
+  background: #0c0805 url("../assets/cut/MAIN.png") no-repeat;
+  background-size: contain;
+  background-position: calc(50% - 2px) center;   /* 커버 이미지 왼쪽으로 2px */
 }
 .fullscreen.title-bg h1, .fullscreen.title-bg .sub, .fullscreen.title-bg p.tip { display: none; }
 .title-hot {
-  position: absolute; left: 6.4%; width: 17.6%;
+  position: absolute; left: calc(6.4% - 2px); width: 17.6%;   /* 이미지와 함께 2px 좌측 */
   background: transparent; border: 0; border-radius: 8px; cursor: pointer;
   transition: background .12s, box-shadow .12s;
 }
