@@ -9,7 +9,7 @@ const Quests = {
     /* ---------- 오프닝 직후 자동 수락 튜토리얼 ---------- */
     q_naengi: {
       giver:"chonjang", story:true, auto:true, title:"첫 나물 채집",
-      desc:"산 입구(마을 오른쪽 너머)로 가서 나물을 3번 캐 오기. 봄나물이면 무엇이든 좋다(냉이가 으뜸!).",
+      desc:"산 입구(집에서 위쪽)로 가서 나물을 3번 캐 오기. 봄나물이면 무엇이든 좋다(냉이가 으뜸!).",
       goal:{ type:"gather", count:3 },
       ready:["산 나물 향이 코끝에 도는구나! 이 솜씨면 버려진 주막도 일으키겠어."],
       reward:{ money:60, exp:8, item:{id:"season",n:2} },
@@ -29,7 +29,7 @@ const Quests = {
       desc:"산에서 약초·나물 6개를 채집해 오기.",
       goal:{ type:"gather", count:6 },
       start:["약초꾼이라면 산을 알아야지. 산에 올라 나물 여섯 줌만 캐 오게.",
-             "(산은 마을 오른쪽 출구 너머에 있다네)"],
+             "(산은 집 위쪽 출구 너머에 있다네)"],
       ready:["벌써 한 봇짐이구먼! 솜씨가 제법일세."],
       reward:{ money:90, exp:12, item:{id:"season",n:3} },
     },
