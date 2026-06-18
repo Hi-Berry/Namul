@@ -70,11 +70,28 @@ const NPC = {
 
   /* ---------------- 대장장이: 무기/강화/호미 ---------------- */
   daejang(){
+    const bst = G.flags.bridgeStage||0;
+    const extra = (bst===1||bst===2) ? [{label:"🌉 무너진 다리에 대해 묻는다", value:"bridge"}] : [];
     UI.startDialogue("대장장이 🔨",
       ["쇠붙이라면 뭐든 두드려주지. 무기를 손볼 텐가?"],
-      { choices: Quests.npcChoices("daejang").concat([ {label:"대장간 열기", value:"shop"}, {label:"황기를 선물 (정 +1)", value:"gift"}, {label:"나간다", value:"bye"} ]),
-        onChoice(v){ if (Quests.handleChoice(v)) return; if (v==="shop") NPC._daejangShop(); else if (v==="gift") NPC._gift("daejang","hwanggi",1); }
+      { choices: Quests.npcChoices("daejang").concat([{label:"대장간 열기", value:"shop"}], extra, [{label:"황기를 선물 (정 +1)", value:"gift"}, {label:"나간다", value:"bye"}]),
+        onChoice(v){ if (Quests.handleChoice(v)) return;
+          if (v==="shop") NPC._daejangShop();
+          else if (v==="gift") NPC._gift("daejang","hwanggi",1);
+          else if (v==="bridge") NPC._bridgeTalk();
+        }
       });
+  },
+  _bridgeTalk(){
+    if ((G.flags.bridgeStage||0)===2){ UI.startDialogue("대장장이 🔨", ["돈은 확실히 받았네. 내일 아침 다리 앞에서 보세."]); return; }
+    UI.startDialogue("대장장이 🔨", ["영산으로 가는 다리가 끊겼군 그래… 자재도 많이 들고 위험하니 30,000냥은 받아야겠어."], {
+      choices:[ {label:"💰 30,000냥 낸다", value:"y"}, {label:"다음에", value:"n"} ],
+      onChoice(v){ if(v!=="y") return;
+        if (Player.spendMoney(30000)){ G.flags.bridgeStage=2; Sound.sfx("levelup");
+          UI.startDialogue("대장장이 🔨", ["돈은 확실하군. 내일 아침 다리 앞에서 보세."]); UI.refreshHUD(); }
+        else { Sound.sfx("error"); toast("돈이 모자라다 (30,000냥 필요)","bad"); }
+      }
+    });
   },
 
   _daejangShop(){
@@ -84,7 +101,7 @@ const NPC = {
     rows += `<div class="shop-row"><div class="item-ic" style="background:#33240f">⚒️</div>
       <div class="grow"><div class="item-name">무기 강화 (+${DATA.WEAPON_UPGRADE.atkBonus} 공격력)</div>
       <div class="item-sub">현재 무기를 더 단단하게</div></div>
-      <button data-act="up" ${P.money<DATA.WEAPON_UPGRADE.cost?"disabled":""}>${DATA.WEAPON_UPGRADE.cost}냥</button></div>`;
+      <button data-act="up" ${P.money<DATA.weaponUpgradeCost(P.weaponLv)?"disabled":""}>${DATA.weaponUpgradeCost(P.weaponLv)}냥</button></div>`;
     // 호미 등급(채집 품질)
     const homiCost = P.homiTier*45;
     rows += `<div class="shop-row"><div class="item-ic" style="background:#33240f">⛏️</div>
@@ -100,7 +117,7 @@ const NPC = {
         ${owned?`<button disabled>장착중</button>`:`<button data-act="buyw" data-id="${it.id}" ${P.money<50?"disabled":""}>50냥</button>`}</div>`;
     });
     UI.openMenu("대장간", rows, (act,id)=>{
-      if (act==="up"){ if (Player.spendMoney(DATA.WEAPON_UPGRADE.cost)){ P.weaponLv++; Sound.sfx("confirm"); toast("무기를 강화했다! 공격력 상승","good"); NPC._daejangShop(); } else Sound.sfx("error"); }
+      if (act==="up"){ if (Player.spendMoney(DATA.weaponUpgradeCost(P.weaponLv))){ P.weaponLv++; Sound.sfx("confirm"); toast("무기를 제련했다! 공격력 상승","good"); NPC._daejangShop(); } else Sound.sfx("error"); }
       else if (act==="homi"){ const c=P.homiTier*45; if (Player.spendMoney(c)){ P.homiTier++; Sound.sfx("confirm"); toast(`호미 등급 ${P.homiTier}! 채집 품질 상승`,"good"); NPC._daejangShop(); } else Sound.sfx("error"); }
       else if (act==="buyw"){ if (Player.spendMoney(50)){ P.weapon=id; P.weaponLv=0; Sound.sfx("confirm"); toast(`${DATA.WEAPONS[id].name} 장착!`,"good"); NPC._daejangShop(); } else Sound.sfx("error"); }
       UI.refreshHUD();

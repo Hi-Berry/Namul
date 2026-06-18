@@ -16,8 +16,8 @@ const Maps = {
   house: {
     name: "내 집", danger: false,
     grid: [
-      "TTTTTTTTTTTTTTTTTTTT",
-      "T..................T",
+      "TTTTTTTTT,,TTTTTTTTT",  // 상단 산 출구(#23)
+      "T........,,........T",
       "T..................T",
       "T..................T",
       "T..................T",
@@ -39,7 +39,11 @@ const Maps = {
       { type:"plot", tx:3, ty:9, plot:3 }, { type:"plot", tx:4, ty:9, plot:4 }, { type:"plot", tx:5, ty:9, plot:5 },
       { type:"sign", tx:8, ty:7, solid:true, label:"안내판", action:"sign_house" },
     ],
-    exits: [ { tx:19, ty:7, to:"village", sx:1, sy:7 } ],
+    exits: [
+      { tx:19, ty:7, to:"village", sx:1, sy:7 },              // 오른쪽 → 마을
+      { tx:9,  ty:0, to:"mtn1", sx:15, sy:20 },                // 위쪽 → 산 입구 (#23)
+      { tx:10, ty:0, to:"mtn1", sx:15, sy:20 },
+    ],
     spawn: { tx:10, ty:7 },
   },
 
@@ -89,7 +93,6 @@ const Maps = {
     ],
     exits: [
       { tx:0,  ty:7, to:"house", sx:18, sy:7 },
-      { tx:19, ty:7, to:"mtn1", sx:1, sy:10 },
     ],
     spawn: { tx:10, ty:9 },
   },
@@ -101,14 +104,17 @@ const Maps = {
     objects: [
       { type:"sign", tx:3, ty:8, solid:true, label:"산 입구 표석", action:"sign_mtn" },
       { type:"shrine", tx:16, ty:3, w:2, h:2, solid:true, label:"당나무 제단", action:"shrine" },
+      { type:"obstacle", sub:"rock", tx:27, ty:9, w:2, h:3, solid:true, action:"gate_rock", gate:"rockRemoved", label:"무너진 바위" },
     ],
-    exits: [ { tx:0, ty:10, to:"village", sx:18, sy:7 }, { tx:29, ty:10, to:"mtn2", sx:1, sy:10 } ],
-    spawn: { tx:2, ty:10 },
+    exits: [ { tx:15, ty:21, to:"house", sx:10, sy:1 }, { tx:29, ty:10, to:"mtn2", sx:1, sy:10, gate:"rockRemoved" } ],
+    spawn: { tx:15, ty:20 },
   },
   mtn2: {
     name: "산 중턱", danger: true, cols:30, rows:22,
-    objects: [ { type:"sign", tx:3, ty:8, solid:true, label:"중턱 이정표", action:"sign_mtn" } ],
-    exits: [ { tx:0, ty:10, to:"mtn1", sx:28, sy:10 }, { tx:29, ty:10, to:"mtn3", sx:1, sy:10 } ],
+    objects: [ { type:"sign", tx:3, ty:8, solid:true, label:"중턱 이정표", action:"sign_mtn" },
+      { type:"obstacle", sub:"bridge", tx:27, ty:9, w:2, h:3, solid:true, action:"gate_bridge", gate:"bridgeDone", label:"무너진 다리" },
+    ],
+    exits: [ { tx:0, ty:10, to:"mtn1", sx:28, sy:10 }, { tx:29, ty:10, to:"mtn3", sx:1, sy:10, gate:"bridgeDone" } ],
     spawn: { tx:2, ty:10 },
   },
   mtn3: {
@@ -177,9 +183,17 @@ const Maps = {
     // 솔리드 오브젝트
     for (const o of Maps[zone].objects){
       if (!o.solid) continue;
+      if (o.gate && Maps._gateOpen(o.gate)) continue;   // 해금된 장애물은 통과
       const ox = o.tx*TILE, oy = o.ty*TILE, ow=(o.w||1)*TILE, oh=(o.h||1)*TILE;
       if (px+halfW > ox && px-halfW < ox+ow && py+halfH > oy && py-halfH < oy+oh) return true;
     }
+    return false;
+  },
+
+  // 진행 게이트 해금 여부 (#18 바위 / #19 다리)
+  _gateOpen(g){
+    if (g==="rockRemoved") return !!(G.flags && G.flags.rockRemoved);
+    if (g==="bridgeDone")  return (((G.flags && G.flags.bridgeStage) || 0) >= 3);
     return false;
   },
 
@@ -248,6 +262,7 @@ const Maps = {
   drawObjects(ctx, zone){
     for (const o of Maps[zone].objects){
       if (o.marketOnly && !Time.isMarketDay()) continue;  // 장날에만 출현
+      if (o.type==="obstacle" && Maps._gateOpen(o.gate)) continue;  // 해금된 장애물은 숨김
       const px = o.tx*TILE, py=o.ty*TILE, ow=(o.w||1)*TILE, oh=(o.h||1)*TILE;
       if (o.type === "house"){
         ctx.fillStyle = "#c9a86a"; ctx.fillRect(px, py+oh*0.45, ow, oh*0.55);   // 벽
@@ -314,6 +329,23 @@ const Maps = {
         // 향로 불빛
         ctx.fillStyle="rgba(231,198,107,0.8)"; ctx.beginPath(); ctx.arc(cx, baseY-26, 3+Math.sin(performance.now()/300)*1, 0, Math.PI*2); ctx.fill();
         Maps._label(ctx, "산정 제단", cx, py-6);
+      } else if (o.type === "obstacle"){
+        if (o.sub==="rock"){
+          // 거대 바위 더미
+          ctx.fillStyle="#6f6a63"; ctx.fillRect(px+2, py+oh*0.35, ow-4, oh*0.6);
+          ctx.fillStyle="#8a857c"; ctx.beginPath();
+          ctx.moveTo(px+4, py+oh-4); ctx.lineTo(px+ow*0.32, py+8); ctx.lineTo(px+ow*0.6, py+oh*0.5); ctx.lineTo(px+ow*0.8, py+12); ctx.lineTo(px+ow-4, py+oh-4); ctx.closePath(); ctx.fill();
+          ctx.fillStyle="#9c968c"; ctx.fillRect(px+ow*0.3, py+oh*0.45, ow*0.18, oh*0.18);
+          ctx.fillStyle="#5a554e"; ctx.fillRect(px+ow*0.55, py+oh*0.55, ow*0.12, oh*0.2);
+          Maps._label(ctx, o.label||"바위", px+ow/2, py-4);
+        } else {
+          // 무너진 다리 (끊긴 널판)
+          ctx.fillStyle="#3a2a16"; ctx.fillRect(px, py+oh*0.45, ow*0.42, oh*0.18);
+          ctx.fillRect(px+ow*0.62, py+oh*0.5, ow*0.38, oh*0.18);
+          ctx.fillStyle="#2a1c10"; for(let i=0;i<3;i++) ctx.fillRect(px+4+i*10, py+oh*0.63, 4, oh*0.3);
+          ctx.fillStyle="rgba(60,90,130,0.4)"; ctx.fillRect(px+ow*0.42, py+oh*0.55, ow*0.2, oh*0.35); // 협곡 물
+          Maps._label(ctx, o.label||"무너진 다리", px+ow/2, py-4);
+        }
       }
     }
   },
@@ -359,11 +391,12 @@ const Maps = {
     // 지형 산포 (내부)
     const scatter=(ch,d)=>{ for(let y=2;y<rows-2;y++)for(let x=2;x<cols-2;x++){ if(g[y][x]==="." && rnd()<d) g[y][x]=ch; } };
     scatter("T", opts.T); scatter("R", opts.R); scatter("W", opts.W); if(opts.x) scatter("x", opts.x);
-    // 통로(가로 EX행 전체 + 세로 15열) — 산포 위에 덮어써서 항상 통행
-    for(let x=0;x<cols;x++) g[EX][x]=",";
-    for(let y=1;y<rows-1;y++) g[y][15]=",";
-    // 가지 통로 몇 개(탐색로)
-    [5,9,22,25].forEach(cx=>{ const top=2+Math.floor(rnd()*5), bot=rows-3-Math.floor(rnd()*5); for(let y=Math.min(top,EX);y<=Math.max(bot,EX);y++) g[y][cx]=","; });
+    // 통로 — 넓은 길(3칸): 가로 EX±1행 전체 + 세로 14~16열 (#23 길 너비 확장/회피 동선)
+    for(let x=0;x<cols;x++) for(let dy=-1;dy<=1;dy++){ const yy=EX+dy; if(yy>0&&yy<rows-1) g[yy][x]=","; }
+    for(let y=1;y<rows-1;y++) for(let dx=-1;dx<=1;dx++){ const xx=15+dx; if(xx>0&&xx<cols-1) g[y][xx]=","; }
+    // 가지 통로 몇 개(미로형 탐색로, 2칸 너비)
+    [6,10,21,24].forEach(cx=>{ const top=2+Math.floor(rnd()*5), bot=rows-3-Math.floor(rnd()*5);
+      for(let y=Math.min(top,EX);y<=Math.max(bot,EX);y++) for(let dx=0;dx<=1;dx++){ const xx=cx+dx; if(xx>0&&xx<cols-1) g[y][xx]=","; } });
     // 오브젝트 발자국 비우기 + 통로까지 연결
     (Maps[zone].objects||[]).forEach(o=>{
       const w=o.w||1, h=o.h||1;
@@ -386,6 +419,8 @@ Maps.zones = { house: Maps.house, village: Maps.village, mtn1: Maps.mtn1, mtn2: 
 
 // 산 구역 그리드 생성 (결정적 시드)
 Maps.mtn1.grid = Maps._genMtnGrid("mtn1", 1001, { T:0.12, R:0.06, W:0.03, x:0.05 });
+// #23: 십자형 동선 — mtn1 하단(집에서 올라옴) 출구 통로 개방 (세로 14~16열을 바닥까지)
+(function(){ const g=Maps.mtn1.grid; for(let y=10;y<g.length;y++){ let r=g[y]; for(const c of [14,15,16]) r=r.substring(0,c)+","+r.substring(c+1); g[y]=r; } })();
 Maps.mtn2.grid = Maps._genMtnGrid("mtn2", 2002, { T:0.10, R:0.08, W:0.05, x:0.06 });
 Maps.mtn3.grid = Maps._genMtnGrid("mtn3", 3003, { T:0.16, R:0.07, W:0.04, x:0.07 });
 Maps.mtn4.grid = Maps._genMtnGrid("mtn4", 4004, { T:0.10, R:0.06, W:0.02, x:0 });

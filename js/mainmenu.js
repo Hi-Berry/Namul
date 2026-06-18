@@ -111,13 +111,14 @@ const MainMenu = {
 
   /* ---- 우측 탭 ---- */
   _renderTabs(){
-    const tabs=[["map","🗺 지도"],["npc","🤝 인맥"],["quest","📜 할 일"],["set","⚙ 설정"]];
+    const tabs=[["map","🗺 지도"],["recipe","📋 레시피북"],["npc","🤝 인맥"],["quest","📜 할 일"],["set","⚙ 설정"]];
     document.getElementById("mm-tabs").innerHTML = tabs.map(([k,n])=>
       `<button data-mm="tab:${k}" class="${MainMenu.tab===k?'on':''}">${n}</button>`).join("");
   },
   _renderTabBody(){
     const b=document.getElementById("mm-tabbody");
     if (MainMenu.tab==="map") b.innerHTML = MainMenu._mapHTML();
+    else if (MainMenu.tab==="recipe") b.innerHTML = MainMenu._recipeHTML();
     else if (MainMenu.tab==="npc") b.innerHTML = MainMenu._npcHTML();
     else if (MainMenu.tab==="quest") b.innerHTML = MainMenu._questHTML();
     else b.innerHTML = MainMenu._setHTML();
@@ -143,6 +144,28 @@ const MainMenu = {
         h+=`<figure class="nm-card"><img src="${encodeURI('assets/namul/'+o.f)}" alt="${label}" loading="lazy"><figcaption>${o.t}등급 · ${label}</figcaption></figure>`; });
       h+=`</div>`;
     }
+    return h;
+  },
+  _recipeHTML(){
+    const lv=Player.cookLv(), stars="★".repeat(lv)+"☆".repeat(5-lv), bonus=lv*5;
+    let h=`<p class="mm-p">요리 숙련 <b>${lv}단계</b> <span style="color:#e7c66b">${stars}</span> · 음식값 +${bonus}%</p>`;
+    h+=`<div class="mm-recipes">`;
+    ["jeon","jangtteok","bindaetteok","gondre_rice","dureup_sukhoe","gosari_tang","naengi_sujebi"].forEach(id=>{
+      const r=DATA.RECIPES[id]; if(!r) return;
+      const known=Player.hasRecipe(id);
+      const steps=r.steps.map(s=>(DATA.INGREDIENTS[s]||{icon:"?"}).icon).join(" ");
+      let lockTxt="";
+      if(!known){ const m=DATA.FAME_UNLOCKS.find(u=>u.recipes.includes(id)); lockTxt = m?`🔒 명성 ${m.fame} 돌파 시 해금`:"🔒 미해금"; }
+      h+=`<div class="rb-card${known?(lv>=5?" max":""):" locked"}">
+        <div class="rb-ic">${known?r.icon:"🔒"}</div>
+        <div class="rb-name">${r.name}</div>
+        <div class="rb-steps">${steps}</div>
+        ${known
+          ? `<div class="rb-stars">${stars}</div><div class="rb-sub">기본 ${r.price}냥 · +${bonus}%</div>`
+          : `<div class="rb-lock">${lockTxt}</div>`}
+      </div>`;
+    });
+    h+=`</div>`;
     return h;
   },
   _npcHTML(){

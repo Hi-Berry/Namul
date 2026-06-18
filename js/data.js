@@ -40,6 +40,10 @@ DATA.HERBS = {
   bokryeong:{ id:"bokryeong",name:"복령",     tier:3, season:"겨울", icon:"⚪", price:118,heal:36 },
 };
 
+/* #18: 약초 등급별 상점 판매가 고정 (T1=8 / T2=25 / T3=110) */
+DATA.HERB_TIER_PRICE = { 1:8, 2:25, 3:110 };
+Object.values(DATA.HERBS).forEach(h=>{ h.price = DATA.HERB_TIER_PRICE[h.tier] || h.price; });
+
 /* 계절별 채집 가능 약초 id 묶음 (등급별 가중치 부여용) */
 DATA.herbsBySeason = function(season){
   return Object.values(DATA.HERBS).filter(h => h.season === season);
@@ -53,7 +57,7 @@ DATA.GOODS = {
 
 /* ---- 메밀밭 ---- */
 DATA.BUCKWHEAT = {
-  seedPrice: 15,     // 장날 종자 구매
+  seedPrice: 12,     // 장날 종자 구매 (#18: 15→12 하향)
   growDays: 4,       // 4일 후 수확 가능
   harvestStamina: 2, // 수확 기력
   yield: 5,          // 수확 시 메밀가루 수량
@@ -68,7 +72,9 @@ DATA.WEAPONS = {
   jeolgu:  { id:"jeolgu",  name:"절굿공이", icon:"🪵", atk:13, weight:5, stun:0.35, type:"둔기", desc:"느리지만 강하고 적을 기절시킨다." },
   buduk:   { id:"buduk",   name:"부지깽이", icon:"🔥", atk:11, weight:4, stun:0.2,  type:"둔기", desc:"적당한 무게에 기절 효과." },
 };
-DATA.WEAPON_UPGRADE = { cost: 60, atkBonus: 4 }; // 대장간 강화
+DATA.WEAPON_UPGRADE = { cost: 60, atkBonus: 4 }; // 대장간 강화(기본)
+/* #18/#20: 무기 제련 비용 곡선 — 60 → 120 → 240 (단계별 2배) */
+DATA.weaponUpgradeCost = function(lv){ return 60 * Math.pow(2, lv||0); };
 
 /* ---- 마법 (당나무 제단에서 '공물'을 바쳐 해금) ----
  * tribute: 필요한 공물(드롭) id, need: 필요 수량
@@ -338,10 +344,12 @@ DATA.CONST = {
   PORRIDGE_HERBS: 2,    // 나물죽 재료(나물 2개)
   DEFEAT_TIME_LOSS: 300,// 패배 시 게임시간 5시간(분)
   // 진행/성장
-  COOK_XP_PER_SERVE: 3, // 손님 1명 대접 시 요리 숙련 경험치
+  COOK_XP_PER_SERVE: 1, // 손님 1명 대접 = 요리 성공 1회(누적)
   FAME_PER_SERVE: 1,    // 명성 (메뉴/손님 해금에 사용)
 };
 
 /* 요리 숙련도: 레벨에 따른 보수 배율 & 빠른서빙 관대함 */
-DATA.cookLevel = function(xp){ return Math.floor(Math.sqrt(xp/20)); }; // 0,1,2... 완만
-DATA.cookPayBonus = function(xp){ return 1 + DATA.cookLevel(xp)*0.08; }; // 레벨당 +8%
+/* #22: 요리 숙련 계단식 곡선 — 누적 성공 3/7/12/18회에 단계 상승, 최대 5단계 */
+DATA.COOK_THRESHOLDS = [3, 7, 12, 18];
+DATA.cookLevel = function(serves){ let lv=1; for (const t of DATA.COOK_THRESHOLDS) if (serves>=t) lv++; return Math.min(lv,5); };
+DATA.cookPayBonus = function(serves){ return 1 + DATA.cookLevel(serves)*0.05; }; // 단계당 +5% (최대 +25%)

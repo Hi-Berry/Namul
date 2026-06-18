@@ -298,20 +298,27 @@ canvas#game {
 .fullscreen p.tip { margin-top: 24px; color: #9c8458; font-size: 12px; max-width: 520px; line-height: 1.7; }
 
 /* 타이틀 배경 이미지(MAIN.png) + 그림 속 버튼 위 투명 클릭 영역 */
+/* 타이틀: 컷씬처럼 화면을 가득 채움 (게임 액자 밖, 전체 뷰포트) */
 .fullscreen.title-bg {
-  display: block;
-  background: #0c0805 url("../assets/cut/MAIN.png") no-repeat;
-  background-size: contain;
-  background-position: calc(50% - 4px) center;   /* 커버 이미지 왼쪽으로 4px */
+  position: fixed; inset: 0; z-index: 200;
+  display: flex; align-items: center; justify-content: center;
+  background: #0c0805;
 }
-.fullscreen.title-bg h1, .fullscreen.title-bg .sub, .fullscreen.title-bg p.tip { display: none; }
+.title-art {
+  position: relative;
+  aspect-ratio: 1695 / 928;
+  width: min(100vw, calc(100dvh * 1695 / 928));
+  max-height: 100dvh;
+  background: url("../assets/cut/MAIN.png") center / contain no-repeat;
+}
+/* 그림 속 명패 위 투명 클릭 영역 (그림 비율 기준 %) */
 .title-hot {
-  position: absolute; left: calc(6.4% - 4px); width: 17.6%;   /* 이미지와 함께 4px 좌측 */
+  position: absolute; left: 6.5%; width: 17.5%;
   background: transparent; border: 0; border-radius: 8px; cursor: pointer;
   transition: background .12s, box-shadow .12s;
 }
-#btn-new.title-hot  { top: 72.8%; height: 6.2%; }
-#btn-cont.title-hot { top: 79.3%; height: 6.5%; }
+#btn-new.title-hot  { top: 81.5%; height: 8.5%; }
+#btn-cont.title-hot { top: 90%;   height: 9%; }
 .title-hot:hover { background: rgba(255,232,154,0.16); box-shadow: 0 0 0 1px rgba(241,210,122,0.55) inset; }
 
 /* ===== Mobile Controls (touch-ui 기기만) ===== */
@@ -594,4 +601,15 @@ body.touch-ui #game-shell {
 #mainmenu .nm-card { background: #241a0e; border: 1px solid var(--gold-dim); border-radius: 6px; overflow: hidden; }
 #mainmenu .nm-card img { width: 100%; height: 120px; object-fit: cover; display: block; background:#1a130a; }
 #mainmenu .nm-card figcaption { font-size: 11px; color: var(--text-dim); padding: 4px 6px; text-align: center; }
+/* 레시피북 (#22) */
+#mainmenu .mm-recipes { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; }
+#mainmenu .rb-card { background: #241a0e; border: 1px solid var(--gold-dim); border-radius: 7px; padding: 8px 10px; text-align: center; }
+#mainmenu .rb-card.locked { opacity: 0.6; filter: grayscale(0.5); }
+#mainmenu .rb-card.max { border-color: var(--gold-bright); box-shadow: 0 0 8px rgba(241,210,122,0.35) inset; }
+#mainmenu .rb-ic { font-size: 26px; }
+#mainmenu .rb-name { font-size: 13px; color: var(--text); font-weight: bold; margin: 2px 0; }
+#mainmenu .rb-steps { font-size: 14px; letter-spacing: 2px; }
+#mainmenu .rb-stars { color: var(--gold-bright); font-size: 13px; margin-top: 3px; }
+#mainmenu .rb-sub { font-size: 10.5px; color: var(--text-dim); }
+#mainmenu .rb-lock { font-size: 11px; color: #c89b6a; margin-top: 4px; }
 @media (max-width: 680px){ #mainmenu .mm-wrap{ flex-direction: column; } #mainmenu .mm-left{ width: 100%; border-right: none; border-bottom: 2px solid #50412a; max-height: 48%; } }

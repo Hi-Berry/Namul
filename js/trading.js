@@ -19,7 +19,8 @@ const Trading = {
     // 낮 페이즈 진입 비용 즉시 선차감
     const before=P.stamina; Player.spendStamina(this.phaseEntryCost[0]); this.spent = before-P.stamina;
     this.phaseIdx = 0;
-    this.total = clamp(8 + Player.cookLv() + Math.floor(P.fame/120) + (Time.dayOfSeason()===10?2:0), 8, 18);
+    // #18: 명성 구간별 손님 방문 규모 (0~499: 8~10 / 500~1499: 11~14 / 1500+: 15~18)
+    this.total = P.fame>=1500 ? randInt(15,18) : P.fame>=500 ? randInt(11,14) : randInt(8,10);
     this.perPhase = Math.ceil(this.total/3);
     this.queue = [];
     for (let i=0;i<this.total;i++) this.queue.push(Object.assign({}, choice(DATA.CUSTOMERS)));

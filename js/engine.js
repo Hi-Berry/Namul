@@ -79,6 +79,8 @@ function sleep(forced){
   Player.onNewDay();
   Farming.onNewDay();
   World.onNewDay();
+  // #19: 다리 대금 지불(2) 다음 날 아침 → 재건 완료(3)
+  if ((G.flags.bridgeStage||0)===2){ G.flags.bridgeStage=3; setTimeout(()=>toast("🌉 대장장이가 다리를 새로 놓았다! 영산(3구역)으로 갈 수 있다.","gold"), 600); }
   Save.auto();
   const head = forced ? "쓰러지듯 잠들었다…" : "잘 잤다!";
   const md = Time.isMarketDay() ? " 오늘은 <b>장날</b>입니다!" : "";
