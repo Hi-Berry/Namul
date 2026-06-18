@@ -70,11 +70,28 @@ const NPC = {
 
   /* ---------------- 대장장이: 무기/강화/호미 ---------------- */
   daejang(){
+    const bst = G.flags.bridgeStage||0;
+    const extra = (bst===1||bst===2) ? [{label:"🌉 무너진 다리에 대해 묻는다", value:"bridge"}] : [];
     UI.startDialogue("대장장이 🔨",
       ["쇠붙이라면 뭐든 두드려주지. 무기를 손볼 텐가?"],
-      { choices: Quests.npcChoices("daejang").concat([ {label:"대장간 열기", value:"shop"}, {label:"황기를 선물 (정 +1)", value:"gift"}, {label:"나간다", value:"bye"} ]),
-        onChoice(v){ if (Quests.handleChoice(v)) return; if (v==="shop") NPC._daejangShop(); else if (v==="gift") NPC._gift("daejang","hwanggi",1); }
+      { choices: Quests.npcChoices("daejang").concat([{label:"대장간 열기", value:"shop"}], extra, [{label:"황기를 선물 (정 +1)", value:"gift"}, {label:"나간다", value:"bye"}]),
+        onChoice(v){ if (Quests.handleChoice(v)) return;
+          if (v==="shop") NPC._daejangShop();
+          else if (v==="gift") NPC._gift("daejang","hwanggi",1);
+          else if (v==="bridge") NPC._bridgeTalk();
+        }
       });
+  },
+  _bridgeTalk(){
+    if ((G.flags.bridgeStage||0)===2){ UI.startDialogue("대장장이 🔨", ["돈은 확실히 받았네. 내일 아침 다리 앞에서 보세."]); return; }
+    UI.startDialogue("대장장이 🔨", ["영산으로 가는 다리가 끊겼군 그래… 자재도 많이 들고 위험하니 30,000냥은 받아야겠어."], {
+      choices:[ {label:"💰 30,000냥 낸다", value:"y"}, {label:"다음에", value:"n"} ],
+      onChoice(v){ if(v!=="y") return;
+        if (Player.spendMoney(30000)){ G.flags.bridgeStage=2; Sound.sfx("levelup");
+          UI.startDialogue("대장장이 🔨", ["돈은 확실하군. 내일 아침 다리 앞에서 보세."]); UI.refreshHUD(); }
+        else { Sound.sfx("error"); toast("돈이 모자라다 (30,000냥 필요)","bad"); }
+      }
+    });
   },
 
   _daejangShop(){

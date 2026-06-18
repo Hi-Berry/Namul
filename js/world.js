@@ -138,7 +138,10 @@ const World = {
       if (!blocked){
         const ptx=Math.floor(P.x/TILE), pty=Math.floor(P.y/TILE);
         for(const ex of Maps[z].exits){
-          if (ex.tx===ptx && ex.ty===pty){ World.changeZone(ex.to, ex.sx, ex.sy); break; }
+          if (ex.tx===ptx && ex.ty===pty){
+            if (ex.gate && !Maps._gateOpen(ex.gate)) break;   // 잠긴 게이트는 통과 불가(장애물이 막음)
+            World.changeZone(ex.to, ex.sx, ex.sy); break;
+          }
         }
       }
 
@@ -502,6 +505,7 @@ const World = {
     for(const o of Maps[z].objects){
       if (!o.action && o.type !== "plot") continue;
       if (o.marketOnly && !Time.isMarketDay()) continue;  // 장날 게스트는 장날에만 상호작용
+      if (o.type==="obstacle" && Maps._gateOpen(o.gate)) continue;  // 해금된 장애물은 상호작용 없음
       const ox=o.tx*TILE, oy=o.ty*TILE, ow=(o.w||1)*TILE, oh=(o.h||1)*TILE;
       const dx=Math.max(ox-P.x, 0, P.x-(ox+ow));
       const dy=Math.max(oy-P.y, 0, P.y-(oy+oh));
@@ -533,6 +537,8 @@ const World = {
     if (o.action==="sign_house"||o.action==="sign_mtn") return "📖 안내판 읽기";
     if (o.action==="shrine") return "🌳 당나무 제단 (신통력 해금)";
     if (o.action==="altar") return "⛩️ 산정 제단 살펴보기";
+    if (o.action==="gate_rock") return "🪨 길을 막은 바위 살펴보기";
+    if (o.action==="gate_bridge") return "🌉 무너진 다리 살펴보기";
     if (o.type==="plot"){ const p=Farming.plotState(o.plot);
       return p.state==="empty"?"🌰 메밀 심기":p.state==="ready"?`🌾 메밀 수확 (호미질 ${Farming.harvestHits()}회)`:"🌱 자라는 중"; }
     return "조사";
@@ -564,6 +570,8 @@ const World = {
         "안쪽으로 갈수록 약초 등급도, 요괴도 강해진다. 요괴는 멀리서도 너를 감지해 쫓아온다!",
         "패하면 약초 절반과 시간을 잃으니 조심. 요괴 부산물(공물)은 <b>당나무 제단</b>에 바쳐 신통력을 얻어라."]); break;
       case "shrine": Shrine.open(); break;
+      case "gate_rock": World._rockGate(); break;
+      case "gate_bridge": World._bridgeGate(); break;
       case "altar":
         if (Quests.isActive("q_truth") && !G.flags.altarSeen){
           G.flags.altarSeen = true;
@@ -616,6 +624,37 @@ const World = {
     }
   },
   _cancelHoe(){ if(!World.hoe) return; World.hoe=null; toast("호미질을 멈췄다",""); },
+
+  /* #18: 1→2구역 거대 바위 (명성 500 + 2,000냥) */
+  _rockGate(){
+    if (G.flags.rockRemoved) return;
+    if (P.fame < 500){
+      UI.startDialogue("🪨 무너진 바위", [
+        "산사태로 굴러온 거대한 바위가 길을 막고 있다.",
+        "(주막 소문이 더 자자해지면 — 명성 500 — 마을에서 치울 방도를 찾을 듯하다.)" ]);
+      return;
+    }
+    UI.startDialogue("🪨 무너진 바위", [
+      "대장간 일꾼을 부르면 치울 수 있다. 품삯은 2,000냥.",
+      "바위를 치우고 깊은 산(2구역)으로 갈까?" ], {
+      choices:[ {label:"💰 2,000냥 내고 치운다", value:"y"}, {label:"아직 …", value:"n"} ],
+      onChoice(v){ if(v!=="y") return;
+        if (Player.spendMoney(2000)){ G.flags.rockRemoved=true; Sound.sfx("levelup");
+          UI.startDialogue("🪨", ["우르릉— 일꾼들이 바위를 깨부쉈다! 깊은 산으로 가는 길이 열렸다."]); UI.refreshHUD(); }
+        else { Sound.sfx("error"); toast("돈이 모자라다 (2,000냥 필요)","bad"); }
+      }
+    });
+  },
+
+  /* #19: 2→3구역 무너진 다리 (대장장이 의뢰 30,000냥 + 하룻밤) */
+  _bridgeGate(){
+    const st = G.flags.bridgeStage || 0;
+    if (st>=3) return;
+    if (st===0){ G.flags.bridgeStage=1;
+      UI.startDialogue("🌉 무너진 다리", ["깊은 골짜기의 다리가 무너져 영산(3구역)으로 넘어갈 수 없다.","대장간에 가서 물어보자."]); return; }
+    if (st===1){ UI.startDialogue("🌉 무너진 다리", ["다리를 다시 놓으려면 대장장이의 손이 필요하다. 대장간에 가보자."]); return; }
+    UI.startDialogue("🌉 무너진 다리", ["대장장이가 내일 아침 다리를 놓아주기로 했다. 하룻밤 자고 오자."]);
+  },
 
   // 카메라: 플레이어 중심, 맵 경계로 클램프(맵이 화면보다 작으면 중앙 고정)
   _updateCamera(){
