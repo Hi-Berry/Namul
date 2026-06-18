@@ -573,4 +573,8 @@ body.touch-ui #game-shell {
 #mainmenu .mm-p { font-size: 12.5px; color: #cbb892; margin: 4px 0 8px; }
 #mainmenu .mm-tabbody .mm-row button { background: #3a2c1a; color: #f3e9d2; border: 1px solid #6b5736; border-radius: 4px; padding: 4px 10px; font-size: 12px; cursor: pointer; }
 #mainmenu .mm-tabbody .mm-row button:hover { background: #6b5736; }
+#mainmenu .mm-namul { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; }
+#mainmenu .nm-card { background: #241a0e; border: 1px solid var(--gold-dim); border-radius: 6px; overflow: hidden; }
+#mainmenu .nm-card img { width: 100%; height: 120px; object-fit: cover; display: block; background:#1a130a; }
+#mainmenu .nm-card figcaption { font-size: 11px; color: var(--text-dim); padding: 4px 6px; text-align: center; }
 @media (max-width: 680px){ #mainmenu .mm-wrap{ flex-direction: column; } #mainmenu .mm-left{ width: 100%; border-right: none; border-bottom: 2px solid #50412a; max-height: 48%; } }

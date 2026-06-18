@@ -6,6 +6,14 @@
 const MainMenu = {
   open:false, el:null, tab:"map", filter:"all", sel:null,
 
+  // 계절·등급별 나물 도감 그림 (assets/namul) — 시트의 약초명/계절은 참고용
+  NAMUL_IMG: {
+    "봄":  [{f:"spring_level1 (쑥, 달래, 냉이).png",t:1},{f:"spring_level2 (참취나물, 두릅, 명이).png",t:2},{f:"spring_level3 (산갓).png",t:3},{f:"spring_level3 (산삼).png",t:3}],
+    "여름":[{f:"summer_level1 (비름나물, 깻잎, 고구마순).png",t:1}],
+    "가을":[{f:"fall_level1 (도라지, 참나물, 무청).png",t:1},{f:"fall_level2 (산더덕, 참당귀, 느타리).png",t:2},{f:"fall_level3 (송이버섯, 백년도라지).png",t:3}],
+    "겨울":[{f:"winter_level2 (봄동, 세발나물, 동초).png",t:2}],
+  },
+
   init(){
     const d = document.createElement("div");
     d.id = "mainmenu"; d.className = "hidden";
@@ -126,6 +134,14 @@ const MainMenu = {
       const herbs=DATA.herbsBySeason(Time.season()).filter(x=> meta.tier>0 && x.tier<=meta.tier);
       h+=`<div class="mm-sec">이 구역 채집 나물(${Time.season()})</div><p class="mm-p">${herbs.map(x=>x.icon+x.name).join(" ")||"없음"}</p>`;
       h+=`<div class="mm-sec">출몰 요괴</div><p class="mm-p">${(meta.monsters||[]).map(m=>DATA.MONSTERS[m].icon+DATA.MONSTERS[m].name).join(" ")||"없음(안전)"}</p>`;
+    }
+    // 나물 도감 (계절 그림)
+    const ng = MainMenu.NAMUL_IMG[Time.season()] || [];
+    if (ng.length){
+      h+=`<div class="mm-sec">나물 도감 (${Time.season()})</div><div class="mm-namul">`;
+      ng.forEach(o=>{ const label=(o.f.match(/\(([^)]*)\)/)||[])[1]||"";
+        h+=`<figure class="nm-card"><img src="${encodeURI('assets/namul/'+o.f)}" alt="${label}" loading="lazy"><figcaption>${o.t}등급 · ${label}</figcaption></figure>`; });
+      h+=`</div>`;
     }
     return h;
   },
