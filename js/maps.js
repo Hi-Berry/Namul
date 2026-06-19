@@ -16,14 +16,14 @@ const Maps = {
   house: {
     name: "내 집", danger: false,
     grid: [
-      "TTTTTTTTT,,TTTTTTTTT",  // 상단 산 출구(#23)
+      "TTTTTTTT,,,,TTTTTTTT",  // 상단 산 출구(넓힘) #23
+      "T.......,,,,.......T",
       "T........,,........T",
-      "T..................T",
-      "T..................T",
-      "T..................T",
-      "T..............,,,,T",
-      "T..............,,,,T",
-      "T..............,,,,,",  // 우측 마을 출구
+      "T........,,........T",
+      "T........,,........T",
+      "T........,,....,,,,T",
+      "T........,,....,,,,T",
+      "T........,,....,,,,,",  // 우측 마을 출구 + 중앙 산길
       "T..............,,,,T",
       "T..................T",
       "T..................T",
@@ -41,8 +41,10 @@ const Maps = {
     ],
     exits: [
       { tx:19, ty:7, to:"village", sx:1, sy:7 },              // 오른쪽 → 마을
-      { tx:9,  ty:0, to:"mtn1", sx:15, sy:20 },                // 위쪽 → 산 입구 (#23)
+      { tx:8, ty:0, to:"mtn1", sx:15, sy:20 },                // 위쪽 → 산 입구 (넓은 출구) #23
+      { tx:9, ty:0, to:"mtn1", sx:15, sy:20 },
       { tx:10, ty:0, to:"mtn1", sx:15, sy:20 },
+      { tx:11, ty:0, to:"mtn1", sx:15, sy:20 },
     ],
     spawn: { tx:10, ty:7 },
   },
@@ -106,7 +108,7 @@ const Maps = {
       { type:"shrine", tx:16, ty:3, w:2, h:2, solid:true, label:"당나무 제단", action:"shrine" },
       { type:"obstacle", sub:"rock", tx:27, ty:9, w:2, h:3, solid:true, action:"gate_rock", gate:"rockRemoved", label:"무너진 바위" },
     ],
-    exits: [ { tx:15, ty:21, to:"house", sx:10, sy:1 }, { tx:29, ty:10, to:"mtn2", sx:1, sy:10, gate:"rockRemoved" } ],
+    exits: [ { tx:14, ty:21, to:"house", sx:10, sy:1 }, { tx:15, ty:21, to:"house", sx:10, sy:1 }, { tx:16, ty:21, to:"house", sx:10, sy:1 }, { tx:29, ty:10, to:"mtn2", sx:1, sy:10, gate:"rockRemoved" } ],
     spawn: { tx:15, ty:20 },
   },
   mtn2: {
