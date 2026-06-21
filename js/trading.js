@@ -122,7 +122,8 @@ const Trading = {
       // 나물 등급 보정(#13): 접시 최고 등급 기준 가격 배율 + 명성
       const bestTier = tiers.length ? Math.max(...tiers) : 1;
       const tr = DATA.TIER_REWARD[bestTier] || DATA.TIER_REWARD[1];
-      const pay=Math.round(payDish.price*speed*(this.cur.payMult||1)*cookB*tr.mult)+(this.cur.tip||0);
+      const princeBonus = (window.Romance && Romance.hasBuff("prince")) ? 1.1 : 1;  // 연인(위장 유생) 버프
+      const pay=Math.round(payDish.price*speed*(this.cur.payMult||1)*cookB*tr.mult*princeBonus)+(this.cur.tip||0);
       this.earnings+=pay; P.money+=pay; this.served++;
       P.cookXp+=DATA.CONST.COOK_XP_PER_SERVE; P.fame+=tr.fame;   // 명성 +10/+15/+25 (#8)
       Player.checkFameUnlocks();

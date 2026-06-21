@@ -28,6 +28,8 @@ const P = {
   pet: null,            // {id,name,icon} — 퀘스트 보상
   buff: null,           // 보양식 버프 {id,name,icon,kind,power} — 다음 취침까지 유지
   cauldronDay: 0,       // 가마솥 보양식을 끓인 날(일일 1회 제한)
+  romance: {},          // 연애 NPC 호감도 {id:0~100} (#24)
+  lover: null,          // 확정된 연인 id
 
   // 진행/성장
   cookXp: 0,            // 요리 숙련 경험치
@@ -53,6 +55,7 @@ const Player = {
     P.pet = null;
     P.cookXp = 0; P.fame = 0; P.recipes = DATA.START_RECIPES.slice(); P.cookTrain = 0; P.farmPlots = 6;
     P.buff = null; P.cauldronDay = 0;
+    P.romance = {}; P.lover = null;
     P.inv = {};
   },
 
@@ -87,11 +90,11 @@ const Player = {
   costumeData(){ return DATA.COSTUMES[P.costume] || DATA.COSTUMES.plain; },
   accessoryData(){ return DATA.ACCESSORIES[P.accessory] || DATA.ACCESSORIES.none; },
   // 의상 강화(단계당 -3% 소모, +3% 이동) + 보양식(기력효율↑)
-  staminaMult(){ return Player.costumeData().staminaMult * (1 - (P.costumeLv||0)*0.03) * (1 - Player.buffFactor("stamina")); },
+  staminaMult(){ return Player.costumeData().staminaMult * (1 - (P.costumeLv||0)*0.03) * (1 - Player.buffFactor("stamina")) * ((window.Romance && Romance.hasBuff("guard"))?0.8:1); },
   speedMult(){ return Player.costumeData().speedMult * (1 + (P.costumeLv||0)*0.03) * (1 + Player.buffFactor("speed")); },
   // 장신구 인챈트(단계당 드롭 +3%, 신력 +5)
   dropBonus(){ return Player.accessoryData().dropBonus + (P.accLv||0)*0.03 + Player.buffFactor("drop"); },
-  mpCap(){ return P.maxMp + Player.accessoryData().mpBonus + (P.accLv||0)*5; },
+  mpCap(){ return P.maxMp + Player.accessoryData().mpBonus + (P.accLv||0)*5 + ((window.Romance && Romance.hasBuff("spirit"))?20:0); },
   // 부산물(드롭) 목록
   dropList(){ return Object.keys(P.inv).filter(id => DATA.DROPS[id]); },
 

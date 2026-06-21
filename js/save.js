@@ -19,6 +19,7 @@ const Save = {
         costume: P.costume, costumeLv: P.costumeLv, accessory: P.accessory, accLv: P.accLv, shrinePoints: P.shrinePoints,
         cookXp: P.cookXp, fame: P.fame, recipes: P.recipes, cookTrain: P.cookTrain, farmPlots: P.farmPlots,
         buff: P.buff, cauldronDay: P.cauldronDay,
+        romance: P.romance, lover: P.lover,
       },
       farm: Farming.save(),
       quests: Quests.save(),

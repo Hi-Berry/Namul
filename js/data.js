@@ -199,6 +199,11 @@ DATA.NPCS = {
   sori:      { id:"sori",      name:"소리꾼",     icon:"🎤", color:"#8e44ad" },
   daegam:    { id:"daegam",    name:"양반 대감",   icon:"👴", color:"#7a5c2e" },
   namu:      { id:"namu",      name:"나무꾼",     icon:"🪓", color:"#5a6b23" },
+  // 연애 NPC (#24)
+  musa:      { id:"musa",      name:"허름한 사내", icon:"🧔", color:"#5d4037" },
+  spirit:    { id:"spirit",    name:"젊은 선비",   icon:"🦊", color:"#6d4c8f" },
+  prince:    { id:"prince",    name:"위장 유생",   icon:"🎓", color:"#2e5e8f" },
+  rival:     { id:"rival",     name:"백세루 후계자", icon:"🍶", color:"#9e6b2e" },
 };
 
 /* ---- 마을 건물 (내부 진입 가능) ----

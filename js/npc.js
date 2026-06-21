@@ -301,6 +301,13 @@ const NPC = {
       <div class="grow"><div class="item-name">장신구 인챈트 (⟡${P.accLv||0} → ⟡${(P.accLv||0)+1})</div>
       <div class="item-sub">단계당 최대 신력 +5, 드롭 +3% (최대 ⟡5, 장신구 착용 시)</div></div>
       ${nmax?`<button disabled>최고</button>`:`<button data-act="ench" ${(P.money<ncost||P.accessory==="none")?"disabled":""}>${ncost}냥</button>`}</div>`;
+    // 동백실 가락지 — 연인 증표(평생 1회, 3,000냥) #24
+    if (!G.flags.hasRing && !P.lover){
+      rows += `<div class="shop-row"><div class="item-ic" style="background:#3a1020">💍</div>
+        <div class="grow"><div class="item-name">동백실 가락지 <span class="item-sub">(증표 · 평생 1회)</span></div>
+        <div class="item-sub">마음을 정한 이에게 건네는 귀한 증표</div></div>
+        <button data-act="ring" ${P.money<3000?"disabled":""}>3,000냥</button></div>`;
+    }
     rows += `<hr style="border-color:#50412a;margin:10px 0"><p class="note">장신구 구입</p>`;
     Object.values(DATA.ACCESSORIES).forEach(a=>{
       const worn = P.accessory===a.id;
@@ -318,6 +325,10 @@ const NPC = {
         const c=80*((P.accLv||0)+1);
         if (Player.spendMoney(c)){ P.accLv=(P.accLv||0)+1; P.mp=clamp(P.mp,0,Player.mpCap()); Sound.sfx("levelup"); toast(`장신구 인챈트 ⟡${P.accLv}! 신력이 깃들었다`,"gold"); NPC._geonchukShop(); UI.refreshHUD(); }
         else Sound.sfx("error");
+      } else if (act==="ring"){
+        if (G.flags.hasRing||P.lover){ Sound.sfx("error"); return; }
+        if (Player.spendMoney(3000)){ G.flags.hasRing=true; Sound.sfx("levelup"); toast("💍 동백실 가락지를 마련했다. 마음을 정한 이에게…","gold"); NPC._geonchukShop(); UI.refreshHUD(); }
+        else { Sound.sfx("error"); toast("돈이 모자라다 (3,000냥 필요)","bad"); }
       }
     });
   },

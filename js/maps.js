@@ -92,6 +92,11 @@ const Maps = {
       { type:"person", tx:16, ty:4, npc:"sori",   action:"npc", marketOnly:true },
       { type:"person", tx:7,  ty:9, npc:"daegam", action:"npc", marketOnly:true },
       { type:"person", tx:12, ty:9, npc:"namu",   action:"npc", marketOnly:true },
+      // 연애 NPC (#24) — 시간대 순찰(Romance.update가 tx/ty 갱신)
+      { type:"person", tx:16, ty:9, npc:"musa",   action:"romance", romance:true },
+      { type:"person", tx:9,  ty:3, npc:"spirit", action:"romance", romance:true },
+      { type:"person", tx:6,  ty:3, npc:"prince", action:"romance", romance:true },
+      { type:"person", tx:9,  ty:6, npc:"rival",  action:"romance", romance:true },
     ],
     exits: [
       { tx:0,  ty:7, to:"house", sx:18, sy:7 },

@@ -176,6 +176,8 @@ const World = {
         }
       }
 
+      // 연애 NPC 시간대 순찰 위치 갱신 (#24)
+      if (window.Romance) Romance.update();
       // 상호작용 대상 탐색
       World.near = World._findNear();
 
@@ -533,6 +535,7 @@ const World = {
     if (o.action==="enter"){ const b=DATA.BUILDINGS[o.bldg]; return `🚪 ${b?b.name:"건물"} 들어가기`; }
     if (o.action==="exit_interior") return "🚪 나가기";
     if (o.action==="npc") return `${DATA.NPCS[o.npc].icon} ${DATA.NPCS[o.npc].name}와 대화`;
+    if (o.action==="romance") return `${DATA.NPCS[o.npc].icon} ${DATA.NPCS[o.npc].name} (호감 ${Romance.pts(o.npc)})`;
     if (o.action==="market") return Maps.stallActive()?"🪧 장터 좌판":"🪧 장터(장날 오전만)";
     if (o.action==="sign_house"||o.action==="sign_mtn") return "📖 안내판 읽기";
     if (o.action==="shrine") return "🌳 당나무 제단 (신통력 해금)";
@@ -560,6 +563,7 @@ const World = {
       case "enter": Interior.enter(o.bldg, Math.floor(P.x/TILE), Math.floor(P.y/TILE)); break;
       case "exit_interior": Interior.exit(); break;
       case "npc": NPC.interact(o.npc); break;
+      case "romance": Romance.talk(o.npc); break;
       case "market": NPC.market(); break;
       case "sign_house": UI.startDialogue("📖 안내판",[
         "여기는 내 집. 문 앞에서 잠을 자면 다음 날이 되고 기력이 회복된다.",
